@@ -194,7 +194,7 @@
                         <div>
                             <h3 class="font-semibold">Munkaidő PRO</h3>
                             <p class="text-sm text-gray-600">Készítette: Princz Attila</p>
-                            <p class="text-xs text-gray-500 mt-1">Verzió: 3.09</p>
+                            <p class="text-xs text-gray-500 mt-1">Verzió: 3.10</p>
                         </div>
                     </div>
                 </div>
@@ -1044,6 +1044,10 @@ function generateMonthlyReport() {
             </table>
         </div>
     </div>`;
+    
+    document.getElementById('monthlyReportContent').innerHTML = reportHTML;
+    document.getElementById('pdfExportBtn').classList.remove('hidden'); 
+}
     
     document.getElementById('monthlyReportContent').innerHTML = reportHTML;
     document.getElementById('pdfExportBtn').classList.remove('hidden'); 
