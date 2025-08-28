@@ -194,7 +194,7 @@
                         <div>
                             <h3 class="font-semibold">Munkaidő PRO</h3>
                             <p class="text-sm text-gray-600">Készítette: Princz Attila</p>
-                            <p class="text-xs text-gray-500 mt-1">Verzió: 3.08</p>
+                            <p class="text-xs text-gray-500 mt-1">Verzió: 3.09</p>
                         </div>
                     </div>
                 </div>
@@ -960,45 +960,196 @@ async function deleteRecordFromStorage(id) {
         function initMonthlyReport() { document.getElementById('monthSelector').value = new Date().toISOString().slice(0, 7);
             document.getElementById('monthlyReportContent').innerHTML = '';
             document.getElementById('pdfExportBtn').classList.add('hidden'); }
-        function generateMonthlyReport() { const selectedMonth = document.getElementById("monthSelector").value; const monthRecords = records.filter(record => record.date.startsWith(selectedMonth)); if (monthRecords.length === 0) { document.getElementById("monthlyReportContent").innerHTML = '<div class="text-center text-gray-500 py-8">Nincs adat</div>'; return; }
-            monthRecords.sort((a, b) => new Date(a.date) - new Date(b.date)); const [year, month] = selectedMonth.split('-'); const monthName = germanMonths[parseInt(month) - 1];
-            currentMonthlyData = { month: `${monthName} ${year}`, records: monthRecords }; const reportHTML = `<div class="bg-white"><div class="text-center mb-6"><h1 class="text-2xl font-bold">ARBEITSZEIT-NACHWEIS</h1><h2 class="text-xl text-gray-600">${monthName} ${year}</h2></div><div class="overflow-x-auto"><table class="w-full text-xs border-collapse border border-gray-300"><thead><tr class="bg-gray-100"><th class="border p-2 text-left">Datum</th><th class="border p-2">Beginn/Ort</th><th class="border p-2">Ende/Ort</th><th class="border p-2">Arbeitsz.</th><th class="border p-2">Nachtz.</th><th class="border p-2">Fahrtz.</th><th class="border p-2">km</th></tr></thead><tbody>${monthRecords.map(record=>{const isOvernight=new Date(`1970-01-01T${record.endTime}`)<new Date(`1970-01-01T${record.startTime}`);const endDate=new Date(record.date+"T00:00:00Z");let startDate=new Date(endDate);if(isOvernight)startDate.setUTCDate(startDate.getUTCDate()-1);return`<tr><td class="border p-2">${formatDateGerman(startDate)}</td><td class="border p-2 text-center">${record.startTime}<br><span class="text-gray-500">${record.startLocation||"-"}</span></td><td class="border p-2 text-center">${record.endTime}<br><span class="text-gray-500">${record.endLocation||"-"}</span></td><td class="border p-2 text-center font-semibold">${formatTimeGerman(record.workMinutes)}</td><td class="border p-2 text-center text-purple-600">${formatTimeGerman(record.nightWorkMinutes||0)}</td><td class="border p-2 text-center text-blue-600">${formatTimeGerman(record.driveMinutes)}</td><td class="border p-2 text-center">${record.kmDriven}</td></tr>${(r.crossings&&r.crossings.length>0)?`<tr class="bg-indigo-50"><td class="border p-1 text-right text-indigo-800 font-semibold" colspan="3">Grenzübergänge:</td><td class="border p-1 text-indigo-700" colspan="4">${record.crossings.map(c=>`${c.from} - ${c.to} (${c.time})`).join(", ")}</td></tr>`:""}`}).join('')}</tbody></table></div></div>`;
-            document.getElementById('monthlyReportContent').innerHTML = reportHTML;
-            document.getElementById('pdfExportBtn').classList.remove('hidden'); }
-        function exportToPDF() { try { if (!currentMonthlyData) { alert("Először generálj riportot!"); return; } const { jsPDF } = window.jspdf; const doc = new jsPDF(); const userName = document.getElementById('userNameInput').value || '';
-                doc.setFontSize(18);
-                doc.setFont(undefined, 'bold');
-                doc.text('ARBEITSZEIT-NACHWEIS', 105, 15, { align: 'center' });
-                doc.setFontSize(14);
+        // Cseréld le a teljes riport részt ezekre a függvényekre:
+
+const germanMonths = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const germanDays = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+let currentMonthlyData = null;
+
+function formatTimeGerman(minutes) { 
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60; 
+    return `${hours.toString().padStart(2,"0")}:${mins.toString().padStart(2,"0")}`;
+}
+
+function formatDateGerman(dateObj) { 
+    if (!(dateObj instanceof Date) || isNaN(dateObj)) return 'Hibás Dátum'; 
+    const d = dateObj.getUTCDate().toString().padStart(2, "0");
+    const e = (dateObj.getUTCMonth() + 1).toString().padStart(2, "0");
+    const f = dateObj.getUTCFullYear();
+    const g = germanDays[dateObj.getUTCDay()]; 
+    return `${g}, ${d}.${e}.${f}`;
+}
+
+function initMonthlyReport() { 
+    document.getElementById('monthSelector').value = new Date().toISOString().slice(0, 7);
+    document.getElementById('monthlyReportContent').innerHTML = '';
+    document.getElementById('pdfExportBtn').classList.add('hidden'); 
+}
+
+function generateMonthlyReport() { 
+    const selectedMonth = document.getElementById("monthSelector").value; 
+    const monthRecords = records.filter(record => record.date.startsWith(selectedMonth)); 
+    
+    if (monthRecords.length === 0) { 
+        document.getElementById("monthlyReportContent").innerHTML = '<div class="text-center text-gray-500 py-8">Nincs adat</div>'; 
+        return; 
+    }
+    
+    monthRecords.sort((a, b) => new Date(a.date) - new Date(b.date)); 
+    const [year, month] = selectedMonth.split('-'); 
+    const monthName = germanMonths[parseInt(month) - 1];
+    currentMonthlyData = { month: `${monthName} ${year}`, records: monthRecords }; 
+    
+    const reportHTML = `<div class="bg-white">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold">ARBEITSZEIT-NACHWEIS</h1>
+            <h2 class="text-xl text-gray-600">${monthName} ${year}</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs border-collapse border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border p-2 text-left">Datum</th>
+                        <th class="border p-2">Beginn/Ort</th>
+                        <th class="border p-2">Ende/Ort</th>
+                        <th class="border p-2">Arbeitsz.</th>
+                        <th class="border p-2">Nachtz.</th>
+                        <th class="border p-2">Fahrtz.</th>
+                        <th class="border p-2">km</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${monthRecords.map(record => {
+                        const isOvernight = new Date(`1970-01-01T${record.endTime}`) < new Date(`1970-01-01T${record.startTime}`);
+                        const endDate = new Date(record.date + "T00:00:00Z");
+                        let startDate = new Date(endDate);
+                        if(isOvernight) startDate.setUTCDate(startDate.getUTCDate() - 1);
+                        
+                        return `<tr>
+                            <td class="border p-2">${formatDateGerman(startDate)}</td>
+                            <td class="border p-2 text-center">${record.startTime}<br><span class="text-gray-500">${record.startLocation || "-"}</span></td>
+                            <td class="border p-2 text-center">${record.endTime}<br><span class="text-gray-500">${record.endLocation || "-"}</span></td>
+                            <td class="border p-2 text-center font-semibold">${formatTimeGerman(record.workMinutes)}</td>
+                            <td class="border p-2 text-center text-purple-600">${formatTimeGerman(record.nightWorkMinutes || 0)}</td>
+                            <td class="border p-2 text-center text-blue-600">${formatTimeGerman(record.driveMinutes)}</td>
+                            <td class="border p-2 text-center">${record.kmDriven}</td>
+                        </tr>
+                        ${(record.crossings && record.crossings.length > 0) ? `<tr class="bg-indigo-50">
+                            <td class="border p-1 text-right text-indigo-800 font-semibold" colspan="3">Grenzübergänge:</td>
+                            <td class="border p-1 text-indigo-700" colspan="4">${record.crossings.map(c => `${c.from} - ${c.to} (${c.time})`).join(", ")}</td>
+                        </tr>` : ""}`;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    </div>`;
+    
+    document.getElementById('monthlyReportContent').innerHTML = reportHTML;
+    document.getElementById('pdfExportBtn').classList.remove('hidden'); 
+}
+
+function exportToPDF() { 
+    try { 
+        if (!currentMonthlyData) { 
+            alert("Először generálj riportot!"); 
+            return; 
+        } 
+        const { jsPDF } = window.jspdf; 
+        const doc = new jsPDF(); 
+        const userName = document.getElementById('userNameInput').value || '';
+        
+        doc.setFontSize(18);
+        doc.setFont(undefined, 'bold');
+        doc.text('ARBEITSZEIT-NACHWEIS', 105, 15, { align: 'center' });
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'normal');
+        doc.text(currentMonthlyData.month, 105, 23, { align: 'center' }); 
+        if (userName) { 
+            doc.setFontSize(12);
+            doc.text(userName, 105, 31, { align: 'center' }); 
+        } 
+        
+        let yPos = 40; 
+        const pageBottom = 280; 
+        const leftMargin = 15; 
+        const tableWidth = 180; 
+        const headers = ['Datum', 'Beginn/Ort', 'Ende/Ort', 'Arbeit', 'Nacht', 'Fahrt', 'km']; 
+        const colWidths = [30, 37, 37, 18, 18, 18, 17]; 
+        
+        const drawHeader = () => { 
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'bold'); 
+            let xPos = leftMargin;
+            headers.forEach((h, i) => { 
+                doc.rect(xPos, yPos, colWidths[i], 6);
+                doc.text(h, xPos + colWidths[i] / 2, yPos + 4, { align: 'center' });
+                xPos += colWidths[i]; 
+            });
+            yPos += 6;
+            doc.setFont(undefined, 'normal'); 
+        };
+        
+        drawHeader();
+        
+        currentMonthlyData.records.forEach(record => { 
+            const isOvernight = new Date(`1970-01-01T${record.endTime}`) < new Date(`1970-01-01T${record.startTime}`); 
+            const endDate = new Date(record.date + 'T00:00:00Z'); 
+            let startDate = new Date(endDate); 
+            if (isOvernight) startDate.setUTCDate(startDate.getUTCDate() - 1); 
+            const hasCrossings = record.crossings && record.crossings.length > 0; 
+            const rowData = [
+                `${formatDateGerman(startDate).slice(4)}`, 
+                `${record.startTime}\n${record.startLocation || "-"}`, 
+                `${isOvernight ? formatDateGerman(endDate).slice(4) + " " : ""}${record.endTime}\n${record.endLocation || "-"}`, 
+                formatTimeGerman(record.workMinutes), 
+                formatTimeGerman(record.nightWorkMinutes || 0), 
+                formatTimeGerman(record.driveMinutes), 
+                String(record.kmDriven || 0)
+            ]; 
+            let maxLines = 1;
+            rowData.forEach((data, i) => maxLines = Math.max(maxLines, doc.splitTextToSize(data, colWidths[i] - 2).length)); 
+            const mainRowHeight = maxLines * 4.5 + 3; 
+            let crossingBlockHeight = 0; 
+            let crossingLines = []; 
+            if (hasCrossings) { 
+                const crossingsText = `Grenzübergänge: ${record.crossings.map(c => `${c.from} - ${c.to} (${c.time})`).join(", ")}`;
+                crossingLines = doc.splitTextToSize(crossingsText, tableWidth - 4);
+                crossingBlockHeight = crossingLines.length * 3.5 + 3; 
+            } 
+            const totalBlockHeight = mainRowHeight + crossingBlockHeight; 
+            if (yPos + totalBlockHeight > pageBottom) { 
+                doc.addPage();
+                yPos = 20;
+                drawHeader(); 
+            } 
+            let xPos = leftMargin;
+            rowData.forEach((data, i) => { 
+                doc.rect(xPos, yPos, colWidths[i], mainRowHeight);
+                doc.text(data, xPos + colWidths[i] / 2, yPos + mainRowHeight / 2, { align: 'center', baseline: 'middle' });
+                xPos += colWidths[i]; 
+            }); 
+            if (hasCrossings) { 
+                yPos += mainRowHeight;
+                doc.setFillColor(245, 245, 245);
+                doc.rect(leftMargin, yPos, tableWidth, crossingBlockHeight, 'F');
+                doc.setFontSize(7);
+                doc.setFont(undefined, 'italic');
+                doc.text(crossingLines, leftMargin + 2, yPos + crossingBlockHeight / 2, { baseline: 'middle' });
+                doc.setFontSize(9);
                 doc.setFont(undefined, 'normal');
-                doc.text(currentMonthlyData.month, 105, 23, { align: 'center' }); if (userName) { doc.setFontSize(12);
-                    doc.text(userName, 105, 31, { align: 'center' }); } let yPos = 40; const pageBottom = 280; const leftMargin = 15; const tableWidth = 180; const headers = ['Datum', 'Beginn/Ort', 'Ende/Ort', 'Arbeit', 'Nacht', 'Fahrt', 'km']; const colWidths = [30, 37, 37, 18, 18, 18, 17]; const drawHeader = () => { doc.setFontSize(9);
-                    doc.setFont(undefined, 'bold'); let xPos = leftMargin;
-                    headers.forEach((h, i) => { doc.rect(xPos, yPos, colWidths[i], 6);
-                        doc.text(h, xPos + colWidths[i] / 2, yPos + 4, { align: 'center' });
-                        xPos += colWidths[i]; });
-                    yPos += 6;
-                    doc.setFont(undefined, 'normal'); };
-                drawHeader();
-                currentMonthlyData.records.forEach(record => { const isOvernight = new Date(`1970-01-01T${record.endTime}`) < new Date(`1970-01-01T${record.startTime}`); const endDate = new Date(record.date + 'T00:00:00Z'); let startDate = new Date(endDate); if (isOvernight) startDate.setUTCDate(startDate.getUTCDate() - 1); const hasCrossings = record.crossings && record.crossings.length > 0; const rowData = [`${formatDateGerman(startDate).slice(4)}`, `${record.startTime}\n${record.startLocation||"-"}`, `${isOvernight?formatDateGerman(endDate).slice(4)+" ":""}${record.endTime}\n${record.endLocation||"-"}`, formatTimeGerman(record.workMinutes), formatTimeGerman(record.nightWorkMinutes || 0), formatTimeGerman(record.driveMinutes), String(record.kmDriven || 0)]; let maxLines = 1;
-                    rowData.forEach((data, i) => maxLines = Math.max(maxLines, doc.splitTextToSize(data, colWidths[i] - 2).length)); const mainRowHeight = maxLines * 4.5 + 3; let crossingBlockHeight = 0; let crossingLines = []; if (hasCrossings) { const crossingsText = `Grenzübergänge: ${record.crossings.map(c=>`${c.from} - ${c.to} (${c.time})`).join(", ")}`;
-                        crossingLines = doc.splitTextToSize(crossingsText, tableWidth - 4);
-                        crossingBlockHeight = crossingLines.length * 3.5 + 3; } const totalBlockHeight = mainRowHeight + crossingBlockHeight; if (yPos + totalBlockHeight > pageBottom) { doc.addPage();
-                        yPos = 20;
-                        drawHeader(); } let xPos = leftMargin;
-                    rowData.forEach((data, i) => { doc.rect(xPos, yPos, colWidths[i], mainRowHeight);
-                        doc.text(data, xPos + colWidths[i] / 2, yPos + mainRowHeight / 2, { align: 'center', baseline: 'middle' });
-                        xPos += colWidths[i]; }); if (hasCrossings) { yPos += mainRowHeight;
-                        doc.setFillColor(245, 245, 245);
-                        doc.rect(leftMargin, yPos, tableWidth, crossingBlockHeight, 'F');
-                        doc.setFontSize(7);
-                        doc.setFont(undefined, 'italic');
-                        doc.text(crossingLines, leftMargin + 2, yPos + crossingBlockHeight / 2, { baseline: 'middle' });
-                        doc.setFontSize(9);
-                        doc.setFont(undefined, 'normal');
-                        yPos += crossingBlockHeight; } else { yPos += mainRowHeight; } });
-                doc.save(`Arbeitszeit-${userName.replace(/ /g,"_")}-${currentMonthlyData.month}.pdf`); } catch (e) { console.error("PDF generálási hiba:", e);
-                alert("Hiba történt a PDF generálása közben: " + e.message); } }
+                yPos += crossingBlockHeight; 
+            } else { 
+                yPos += mainRowHeight; 
+            } 
+        });
+        
+        doc.save(`Arbeitszeit-${userName.replace(/ /g,"_")}-${currentMonthlyData.month}.pdf`); 
+    } catch (e) { 
+        console.error("PDF generálási hiba:", e);
+        alert("Hiba történt a PDF generálása közben: " + e.message); 
+    } 
+}
         
         function saveSettings() {
             localStorage.setItem('userName', document.getElementById('userNameInput').value);
