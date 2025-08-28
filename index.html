@@ -235,6 +235,8 @@
 
         // CSERÉLD KI A TELJES BEJELENTKEZÉS KEZELŐ RÉSZT ERRE:
 
+// CSERÉLD LE AZ EGÉSZ FIREBASE RÉSZT ERRE A DEBUG VERZIÓRA:
+
 // Firebase és Auth változók
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -246,74 +248,107 @@ const loggedInView = document.getElementById('logged-in-view');
 const loggedOutView = document.getElementById('logged-out-view');
 const userNameEl = document.getElementById('user-name');
 
-// JAVÍTOTT BEJELENTKEZÉS POPUP-PAL
-loginButton.addEventListener('click', async () => {
-    try {
-        // Loading állapot megjelenítése
-        loginButton.disabled = true;
-        loginButton.innerHTML = `
-            <div class="inline-flex items-center">
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Bejelentkezés...
-            </div>
-        `;
-
-        const provider = new firebase.auth.GoogleAuthProvider();
-        
-        // Scope-ok hozzáadása
-        provider.addScope('email');
-        provider.addScope('profile');
-        
-        // Popup megnyitása
-        const result = await auth.signInWithPopup(provider);
-        console.log('Sikeres bejelentkezés:', result.user);
-        
-        // A handleUserSession automatikusan meghívódik az onAuthStateChanged által
-        
-    } catch (error) {
-        console.error('Bejelentkezési hiba:', error);
-        
-        // Részletes hibakezelés
-        let errorMessage = 'Ismeretlen hiba történt.';
-        
-        switch(error.code) {
-            case 'auth/popup-closed-by-user':
-                errorMessage = 'A bejelentkezési ablakot bezárta.';
-                break;
-            case 'auth/popup-blocked':
-                errorMessage = 'A böngésző blokkolta a popup ablakot. Kérlek engedélyezd a popup ablakokat ezen az oldalon.';
-                break;
-            case 'auth/cancelled-popup-request':
-                errorMessage = 'A bejelentkezés megszakítva.';
-                break;
-            case 'auth/network-request-failed':
-                errorMessage = 'Hálózati hiba. Ellenőrizd az internetkapcsolatot.';
-                break;
-            case 'auth/too-many-requests':
-                errorMessage = 'Túl sok kísérlet. Próbáld újra később.';
-                break;
-            case 'auth/account-exists-with-different-credential':
-                errorMessage = 'Ez az email cím már használatban van másik bejelentkezési móddal.';
-                break;
-            case 'auth/auth-domain-config-required':
-                errorMessage = 'Firebase konfigurációs hiba. Lépj kapcsolatba a fejlesztővel.';
-                break;
-            default:
-                errorMessage = error.message || 'Bejelentkezési hiba történt.';
-        }
-        
-        showCustomAlert(errorMessage, 'info');
-        
-    } finally {
-        // Gomb visszaállítása
-        resetLoginButton();
-    }
+// Debug console log-ok
+console.log('Firebase inicializálva:', !!auth);
+console.log('UI elemek megtalálva:', {
+    loginButton: !!loginButton,
+    logoutButton: !!logoutButton,
+    loggedInView: !!loggedInView,
+    loggedOutView: !!loggedOutView,
+    userNameEl: !!userNameEl
 });
 
+// JAVÍTOTT BEJELENTKEZÉS POPUP-PAL
+if (loginButton) {
+    loginButton.addEventListener('click', async () => {
+        console.log('Bejelentkezés gomb lenyomva');
+        
+        try {
+            // Loading állapot megjelenítése
+            loginButton.disabled = true;
+            loginButton.innerHTML = `
+                <div class="inline-flex items-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Bejelentkezés...
+                </div>
+            `;
+
+            const provider = new firebase.auth.GoogleAuthProvider();
+            
+            // Scope-ok hozzáadása
+            provider.addScope('email');
+            provider.addScope('profile');
+            
+            console.log('Google provider létrehozva, popup indítása...');
+            
+            // Popup megnyitása
+            const result = await auth.signInWithPopup(provider);
+            console.log('Sikeres bejelentkezés eredmény:', {
+                user: result.user,
+                uid: result.user.uid,
+                email: result.user.email,
+                displayName: result.user.displayName
+            });
+            
+            // Explicit session kezelés
+            currentUser = result.user;
+            console.log('currentUser beállítva:', !!currentUser);
+            
+        } catch (error) {
+            console.error('Bejelentkezési hiba részletesen:', error);
+            console.log('Error kód:', error.code);
+            console.log('Error üzenet:', error.message);
+            
+            // Részletes hibakezelés
+            let errorMessage = 'Ismeretlen hiba történt.';
+            
+            switch(error.code) {
+                case 'auth/popup-closed-by-user':
+                    errorMessage = 'A bejelentkezési ablakot bezárta.';
+                    break;
+                case 'auth/popup-blocked':
+                    errorMessage = 'A böngésző blokkolta a popup ablakot. Kérlek engedélyezd a popup ablakokat ezen az oldalon.';
+                    break;
+                case 'auth/cancelled-popup-request':
+                    errorMessage = 'A bejelentkezés megszakítva.';
+                    break;
+                case 'auth/network-request-failed':
+                    errorMessage = 'Hálózati hiba. Ellenőrizd az internetkapcsolatot.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = 'Túl sok kísérlet. Próbáld újra később.';
+                    break;
+                case 'auth/account-exists-with-different-credential':
+                    errorMessage = 'Ez az email cím már használatban van másik bejelentkezési móddal.';
+                    break;
+                case 'auth/auth-domain-config-required':
+                    errorMessage = 'Firebase konfigurációs hiba. Lépj kapcsolatba a fejlesztővel.';
+                    break;
+                default:
+                    errorMessage = error.message || 'Bejelentkezési hiba történt.';
+            }
+            
+            if (typeof showCustomAlert === 'function') {
+                showCustomAlert(errorMessage, 'info');
+            } else {
+                alert(errorMessage);
+            }
+            
+        } finally {
+            // Gomb visszaállítása
+            resetLoginButton();
+        }
+    });
+} else {
+    console.error('Login button nem található az oldalon!');
+}
+
 function resetLoginButton() {
+    if (!loginButton) return;
+    
     loginButton.disabled = false;
     loginButton.innerHTML = `
         <svg class="w-5 h-5" viewBox="0 0 48 48">
@@ -326,11 +361,23 @@ function resetLoginButton() {
     `;
 }
 
-logoutButton.addEventListener('click', () => {
-    auth.signOut();
-});
+if (logoutButton) {
+    logoutButton.addEventListener('click', () => {
+        console.log('Kijelentkezés gomb lenyomva');
+        auth.signOut();
+    });
+} else {
+    console.error('Logout button nem található az oldalon!');
+}
 
 async function handleUserSession(user) {
+    console.log('handleUserSession meghívva:', {
+        user: !!user,
+        uid: user?.uid,
+        email: user?.email,
+        displayName: user?.displayName
+    });
+    
     currentUser = user;
     updateAuthUI(user);
 
@@ -339,40 +386,67 @@ async function handleUserSession(user) {
         await loadAndSyncData(user);
     } else {
         console.log("Nincs bejelentkezett felhasználó, helyi adatok használata.");
-        records = getRecordsFromLocal();
-        renderApp();
+        if (typeof getRecordsFromLocal === 'function') {
+            records = getRecordsFromLocal();
+        }
+        if (typeof renderApp === 'function') {
+            renderApp();
+        }
     }
 }
 
 async function loadAndSyncData(user) {
-    const firestoreRecords = await loadRecordsFromFirestore(user);
-    const localRecords = getRecordsFromLocal();
+    console.log('loadAndSyncData indítva:', user.uid);
+    
+    try {
+        const firestoreRecords = await loadRecordsFromFirestore(user);
+        console.log('Firestore rekordok betöltve:', firestoreRecords.length);
+        
+        const localRecords = getRecordsFromLocal();
+        console.log('Helyi rekordok betöltve:', localRecords.length);
 
-    if (firestoreRecords.length === 0 && localRecords.length > 0) {
-        console.log("Nincsenek felhő adatok, de vannak helyi adatok. Migráció indítása...");
-        showCustomAlert('Adatok feltöltése a felhőbe...', 'info');
-        await migrateLocalToFirestore(localRecords, user);
-        records = localRecords;
-    } else {
-        records = firestoreRecords;
+        if (firestoreRecords.length === 0 && localRecords.length > 0) {
+            console.log("Nincsenek felhő adatok, de vannak helyi adatok. Migráció indítása...");
+            if (typeof showCustomAlert === 'function') {
+                showCustomAlert('Adatok feltöltése a felhőbe...', 'info');
+            }
+            await migrateLocalToFirestore(localRecords, user);
+            records = localRecords;
+        } else {
+            records = firestoreRecords;
+        }
+        
+        console.log('Végső rekordok száma:', records.length);
+        
+        if (typeof renderApp === 'function') {
+            renderApp();
+        }
+        
+    } catch (error) {
+        console.error('Hiba a loadAndSyncData-ban:', error);
     }
-    renderApp();
 }
 
 function updateAuthUI(user) {
+    console.log('updateAuthUI meghívva:', !!user);
+    
     if (user) {
-        loggedInView.classList.remove('hidden');
-        loggedOutView.classList.add('hidden');
-        userNameEl.textContent = user.displayName || user.email;
+        if (loggedInView) loggedInView.classList.remove('hidden');
+        if (loggedOutView) loggedOutView.classList.add('hidden');
+        if (userNameEl) userNameEl.textContent = user.displayName || user.email;
+        console.log('UI frissítve: bejelentkezett állapot');
     } else {
-        loggedInView.classList.add('hidden');
-        loggedOutView.classList.remove('hidden');
-        userNameEl.textContent = '';
+        if (loggedInView) loggedInView.classList.add('hidden');
+        if (loggedOutView) loggedOutView.classList.remove('hidden');
+        if (userNameEl) userNameEl.textContent = '';
+        console.log('UI frissítve: kijelentkezett állapot');
     }
 }
 
 // JAVÍTOTT INICIALIZÁLÁS
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOM betöltve, Firebase inicializálás...');
+    
     try {
         // Redirect eredményének ellenőrzése (fallback)
         const result = await auth.getRedirectResult();
@@ -382,53 +456,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('Redirect eredmény hiba:', error);
         if (error.code !== 'auth/invalid-api-key' && error.code !== 'auth/web-storage-unsupported') {
-            showCustomAlert('Bejelentkezési hiba: ' + error.message, 'info');
+            if (typeof showCustomAlert === 'function') {
+                showCustomAlert('Bejelentkezési hiba: ' + error.message, 'info');
+            }
         }
     }
     
-    initTheme();
-    loadSettings();
+    // Egyéb inicializálások
+    if (typeof initTheme === 'function') initTheme();
+    if (typeof loadSettings === 'function') loadSettings();
 
     // Ez a központi figyelő, ami mindent kezel
+    console.log('onAuthStateChanged listener beállítása...');
     auth.onAuthStateChanged(async (user) => {
+        console.log('Auth state változott:', !!user);
         await handleUserSession(user);
     });
     
     // Egyéb esemény figyelők
     document.addEventListener('click', (event) => {
         const dropdownContainer = document.getElementById('dropdown-container');
-        if (!dropdownContainer.contains(event.target)) {
-            closeDropdown();
+        if (dropdownContainer && !dropdownContainer.contains(event.target)) {
+            if (typeof closeDropdown === 'function') closeDropdown();
         }
         if (!event.target.closest('.autocomplete-list') && !event.target.matches('input[placeholder="Város"]')) {
-            hideAutocomplete();
+            if (typeof hideAutocomplete === 'function') hideAutocomplete();
         }
     });
+    
+    console.log('Firebase inicializálás befejezve');
 });
 
-// JAVÍTOTT MIGRATE FÜGGVÉNY
-async function migrateLocalToFirestore(localRecords, user) {
-    if (!user) return;
-    
-    try {
-        const userRecordsRef = db.collection('users').doc(user.uid).collection('records');
-        const batch = db.batch();
-        
-        localRecords.forEach(record => {
-            const docRef = userRecordsRef.doc(String(record.id));
-            batch.set(docRef, record); // JAVÍTVA: teljes objektum átadása
-        });
-        
-        await batch.commit();
-        console.log('Helyi adatok sikeresen feltöltve a Firestore-ba');
-        showCustomAlert('A helyi adatok sikeresen a felhőbe töltve!', 'success');
-        
-    } catch (error) {
-        console.error("Hiba a helyi adatok feltöltésekor:", error);
-        showCustomAlert('Hiba történt a helyi adatok feltöltésekor: ' + error.message, 'info');
-    }
-}
-
+// Segédfüggvények
 function getRecordsFromLocal() {
     return JSON.parse(localStorage.getItem('workRecords') || '[]');
 }
@@ -442,8 +501,36 @@ async function loadRecordsFromFirestore(user) {
         return firestoreRecords;
     } catch (error) {
         console.error("Hiba az adatok Firestore-ból való letöltésekor:", error);
-        showCustomAlert("Hiba az adatok letöltésekor a felhőből.", 'info');
+        if (typeof showCustomAlert === 'function') {
+            showCustomAlert("Hiba az adatok letöltésekor a felhőből.", 'info');
+        }
         return [];
+    }
+}
+
+async function migrateLocalToFirestore(localRecords, user) {
+    if (!user) return;
+    
+    try {
+        const userRecordsRef = db.collection('users').doc(user.uid).collection('records');
+        const batch = db.batch();
+        
+        localRecords.forEach(record => {
+            const docRef = userRecordsRef.doc(String(record.id));
+            batch.set(docRef, record);
+        });
+        
+        await batch.commit();
+        console.log('Helyi adatok sikeresen feltöltve a Firestore-ba');
+        if (typeof showCustomAlert === 'function') {
+            showCustomAlert('A helyi adatok sikeresen a felhőbe töltve!', 'success');
+        }
+        
+    } catch (error) {
+        console.error("Hiba a helyi adatok feltöltésekor:", error);
+        if (typeof showCustomAlert === 'function') {
+            showCustomAlert('Hiba történt a helyi adatok feltöltésekor: ' + error.message, 'info');
+        }
     }
 }
 
@@ -455,11 +542,13 @@ async function saveRecord(record) {
             console.log("Bejegyzés mentve/frissítve a Firestore-ba:", recordId);
         } catch (error) {
             console.error("Hiba a Firestore-ba mentéskor:", error);
-            showCustomAlert("Hiba a felhőbe mentéskor.", 'info');
+            if (typeof showCustomAlert === 'function') {
+                showCustomAlert("Hiba a felhőbe mentéskor.", 'info');
+            }
         }
     }
     
-    if (editingId) {
+    if (typeof editingId !== 'undefined' && editingId) {
         records = records.map(r => r.id === editingId ? record : r);
     } else {
         records.push(record);
@@ -479,7 +568,9 @@ async function deleteRecordFromStorage(id) {
             console.log("Bejegyzés törölve a Firestore-ból:", recordId);
         } catch(error) {
             console.error("Hiba a Firestore-ból való törléskor:", error);
-            showCustomAlert("Hiba a felhőből való törléskor.", 'info');
+            if (typeof showCustomAlert === 'function') {
+                showCustomAlert("Hiba a felhőből való törléskor.", 'info');
+            }
         }
     }
 }
