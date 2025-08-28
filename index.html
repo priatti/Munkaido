@@ -1006,10 +1006,12 @@ async function deleteRecordFromStorage(id) {
             showCustomAlert('Beállítások mentve!', 'success');
         }
         function loadSettings() {
-            document.getElementById('userNameInput').value = localStorage.getItem('userName') || '';
-            document.getElementById('autoBackupFrequency').value = localStorage.getItem('autoBackupFrequency') || 'never';
-            document.getElementById('themeSelector').value = localStorage.getItem('theme') || 'auto';
-        }
+    const userNameInput = document.getElementById('userNameInput');
+    const themeSelector = document.getElementById('themeSelector');
+    
+    if (userNameInput) userNameInput.value = localStorage.getItem('userName') || '';
+    if (themeSelector) themeSelector.value = localStorage.getItem('theme') || 'auto';
+}
         function exportData() { if (records.length === 0) { showCustomAlert('Nincsenek adatok az exportáláshoz!', 'info'); return; } const dataStr = JSON.stringify(records, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
             a.href = url;
             a.download = `munkaido_backup_${new Date().toISOString().split("T")[0]}.json`;
