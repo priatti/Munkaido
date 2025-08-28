@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Bejelentkezés Teszt</title>
+</head>
+<body>
+
+    <h1>Firebase Bejelentkezés Teszt</h1>
+    <button id="test-login-button" style="padding: 1rem; font-size: 1.2rem;">Bejelentkezés Tesztelése Google-fiókkal</button>
+    <div id="status">Várakozás...</div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyD3KtLdfZvygs8DXf9jrVrQIcGNM4tvjPw",
+        authDomain: "munkaido-a58c0.firebaseapp.com",
+        projectId: "munkaido-a58c0",
+        storageBucket: "munkaido-a58c0.firebasestorage.app",
+        messagingSenderId: "326526618039",
+        appId: "1:326526618039:web:aad1c16955ffc5d9130032"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script>
+        const auth = firebase.auth();
+        const loginButton = document.getElementById('test-login-button');
+        const statusDiv = document.getElementById('status');
+
+        loginButton.addEventListener('click', () => {
+            statusDiv.textContent = "Bejelentkezés indítása...";
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithRedirect(provider);
+        });
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                statusDiv.textContent = `Sikeres bejelentkezés! Név: ${user.displayName}, Email: ${user.email}`;
+                statusDiv.style.color = 'green';
+            } else {
+                statusDiv.textContent = "Nincs bejelentkezett felhasználó.";
+            }
+        });
+    </script>
+
+</body>
+</html>
