@@ -230,163 +230,257 @@
     </script>
 	
     <script>
-        // =======================================================
-        // ===== ÚJ, HIBRID FIREBASE LOGIKA (JAVÍTOTT) ==========
-        // =======================================================
 
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        let currentUser = null;
+        // CSERÉLD KI A TELJES BEJELENTKEZÉS KEZELŐ RÉSZT ERRE:
 
-        const loginButton = document.getElementById('login-button');
-        const logoutButton = document.getElementById('logout-button');
-        const loggedInView = document.getElementById('logged-in-view');
-        const loggedOutView = document.getElementById('logged-out-view');
-        const userNameEl = document.getElementById('user-name');
+// Firebase és Auth változók
+const auth = firebase.auth();
+const db = firebase.firestore();
+let currentUser = null;
+
+const loginButton = document.getElementById('login-button');
+const logoutButton = document.getElementById('logout-button');
+const loggedInView = document.getElementById('logged-in-view');
+const loggedOutView = document.getElementById('logged-out-view');
+const userNameEl = document.getElementById('user-name');
+
+// JAVÍTOTT BEJELENTKEZÉS POPUP-PAL
+loginButton.addEventListener('click', async () => {
+    try {
+        // Loading állapot megjelenítése
+        loginButton.disabled = true;
+        loginButton.innerHTML = `
+            <div class="inline-flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Bejelentkezés...
+            </div>
+        `;
+
+        const provider = new firebase.auth.GoogleAuthProvider();
         
-        loginButton.addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithRedirect(provider);
+        // Scope-ok hozzáadása
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        // Popup megnyitása
+        const result = await auth.signInWithPopup(provider);
+        console.log('Sikeres bejelentkezés:', result.user);
+        
+        // A handleUserSession automatikusan meghívódik az onAuthStateChanged által
+        
+    } catch (error) {
+        console.error('Bejelentkezési hiba:', error);
+        
+        // Részletes hibakezelés
+        let errorMessage = 'Ismeretlen hiba történt.';
+        
+        switch(error.code) {
+            case 'auth/popup-closed-by-user':
+                errorMessage = 'A bejelentkezési ablakot bezárta.';
+                break;
+            case 'auth/popup-blocked':
+                errorMessage = 'A böngésző blokkolta a popup ablakot. Kérlek engedélyezd a popup ablakokat ezen az oldalon.';
+                break;
+            case 'auth/cancelled-popup-request':
+                errorMessage = 'A bejelentkezés megszakítva.';
+                break;
+            case 'auth/network-request-failed':
+                errorMessage = 'Hálózati hiba. Ellenőrizd az internetkapcsolatot.';
+                break;
+            case 'auth/too-many-requests':
+                errorMessage = 'Túl sok kísérlet. Próbáld újra később.';
+                break;
+            case 'auth/account-exists-with-different-credential':
+                errorMessage = 'Ez az email cím már használatban van másik bejelentkezési móddal.';
+                break;
+            case 'auth/auth-domain-config-required':
+                errorMessage = 'Firebase konfigurációs hiba. Lépj kapcsolatba a fejlesztővel.';
+                break;
+            default:
+                errorMessage = error.message || 'Bejelentkezési hiba történt.';
+        }
+        
+        showCustomAlert(errorMessage, 'info');
+        
+    } finally {
+        // Gomb visszaállítása
+        resetLoginButton();
+    }
+});
+
+function resetLoginButton() {
+    loginButton.disabled = false;
+    loginButton.innerHTML = `
+        <svg class="w-5 h-5" viewBox="0 0 48 48">
+            <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+            <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+            <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+            <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.215,44,30.035,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+        </svg>
+        Bejelentkezés Google-fiókkal
+    `;
+}
+
+logoutButton.addEventListener('click', () => {
+    auth.signOut();
+});
+
+async function handleUserSession(user) {
+    currentUser = user;
+    updateAuthUI(user);
+
+    if (user) {
+        console.log("Bejelentkezve:", user.uid);
+        await loadAndSyncData(user);
+    } else {
+        console.log("Nincs bejelentkezett felhasználó, helyi adatok használata.");
+        records = getRecordsFromLocal();
+        renderApp();
+    }
+}
+
+async function loadAndSyncData(user) {
+    const firestoreRecords = await loadRecordsFromFirestore(user);
+    const localRecords = getRecordsFromLocal();
+
+    if (firestoreRecords.length === 0 && localRecords.length > 0) {
+        console.log("Nincsenek felhő adatok, de vannak helyi adatok. Migráció indítása...");
+        showCustomAlert('Adatok feltöltése a felhőbe...', 'info');
+        await migrateLocalToFirestore(localRecords, user);
+        records = localRecords;
+    } else {
+        records = firestoreRecords;
+    }
+    renderApp();
+}
+
+function updateAuthUI(user) {
+    if (user) {
+        loggedInView.classList.remove('hidden');
+        loggedOutView.classList.add('hidden');
+        userNameEl.textContent = user.displayName || user.email;
+    } else {
+        loggedInView.classList.add('hidden');
+        loggedOutView.classList.remove('hidden');
+        userNameEl.textContent = '';
+    }
+}
+
+// JAVÍTOTT INICIALIZÁLÁS
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Redirect eredményének ellenőrzése (fallback)
+        const result = await auth.getRedirectResult();
+        if (result.user) {
+            console.log('Sikeres bejelentkezés redirect után:', result.user);
+        }
+    } catch (error) {
+        console.error('Redirect eredmény hiba:', error);
+        if (error.code !== 'auth/invalid-api-key' && error.code !== 'auth/web-storage-unsupported') {
+            showCustomAlert('Bejelentkezési hiba: ' + error.message, 'info');
+        }
+    }
+    
+    initTheme();
+    loadSettings();
+
+    // Ez a központi figyelő, ami mindent kezel
+    auth.onAuthStateChanged(async (user) => {
+        await handleUserSession(user);
+    });
+    
+    // Egyéb esemény figyelők
+    document.addEventListener('click', (event) => {
+        const dropdownContainer = document.getElementById('dropdown-container');
+        if (!dropdownContainer.contains(event.target)) {
+            closeDropdown();
+        }
+        if (!event.target.closest('.autocomplete-list') && !event.target.matches('input[placeholder="Város"]')) {
+            hideAutocomplete();
+        }
+    });
+});
+
+// JAVÍTOTT MIGRATE FÜGGVÉNY
+async function migrateLocalToFirestore(localRecords, user) {
+    if (!user) return;
+    
+    try {
+        const userRecordsRef = db.collection('users').doc(user.uid).collection('records');
+        const batch = db.batch();
+        
+        localRecords.forEach(record => {
+            const docRef = userRecordsRef.doc(String(record.id));
+            batch.set(docRef, record); // JAVÍTVA: teljes objektum átadása
         });
-
-        logoutButton.addEventListener('click', () => {
-            auth.signOut();
-        });
-
-        async function handleUserSession(user) {
-            currentUser = user;
-            updateAuthUI(user);
-
-            if (user) {
-                console.log("Bejelentkezve:", user.uid);
-                await loadAndSyncData(user);
-            } else {
-                console.log("Nincs bejelentkezett felhasználó, helyi adatok használata.");
-                records = getRecordsFromLocal();
-                renderApp();
-            }
-        }
         
-        async function loadAndSyncData(user) {
-            const firestoreRecords = await loadRecordsFromFirestore(user);
-            const localRecords = getRecordsFromLocal();
-
-            if (firestoreRecords.length === 0 && localRecords.length > 0) {
-                console.log("Nincsenek felhő adatok, de vannak helyi adatok. Migráció indítása...");
-                showCustomAlert('Adatok feltöltése a felhőbe...', 'info');
-                await migrateLocalToFirestore(localRecords, user);
-                records = localRecords;
-            } else {
-                records = firestoreRecords;
-            }
-            renderApp();
-        }
-
-        function updateAuthUI(user) {
-            if (user) {
-                loggedInView.classList.remove('hidden');
-                loggedOutView.classList.add('hidden');
-                userNameEl.textContent = user.displayName || user.email;
-            } else {
-                loggedInView.classList.add('hidden');
-                loggedOutView.classList.remove('hidden');
-                userNameEl.textContent = '';
-            }
-        }
+        await batch.commit();
+        console.log('Helyi adatok sikeresen feltöltve a Firestore-ba');
+        showCustomAlert('A helyi adatok sikeresen a felhőbe töltve!', 'success');
         
-        document.addEventListener('DOMContentLoaded', () => {
-            initTheme();
-            loadSettings();
+    } catch (error) {
+        console.error("Hiba a helyi adatok feltöltésekor:", error);
+        showCustomAlert('Hiba történt a helyi adatok feltöltésekor: ' + error.message, 'info');
+    }
+}
 
-            // Ez a központi figyelő, ami mindent kezel
-            auth.onAuthStateChanged(async (user) => {
-                await handleUserSession(user);
-            });
-            
-            document.addEventListener('click', (event) => {
-                const dropdownContainer = document.getElementById('dropdown-container');
-                if (!dropdownContainer.contains(event.target)) {
-                    closeDropdown();
-                }
-                if (!event.target.closest('.autocomplete-list') && !event.target.matches('input[placeholder="Város"]')) {
-                    hideAutocomplete();
-                }
-            });
-        });
+function getRecordsFromLocal() {
+    return JSON.parse(localStorage.getItem('workRecords') || '[]');
+}
 
-        async function migrateLocalToFirestore(localRecords, user) {
-             if (!user) return;
-             const userRecordsRef = db.collection('users').doc(user.uid).collection('records');
-             const batch = db.batch();
-             
-             localRecords.forEach(record => {
-                 const docRef = userRecordsRef.doc(String(record.id));
-                 batch.set(record);
-             });
-             
-             try {
-                 await batch.commit();
-                 showCustomAlert('A helyi adatok sikeresen a felhőbe töltve!', 'success');
-             } catch (error) {
-                 console.error("Hiba a helyi adatok feltöltésekor:", error);
-                 showCustomAlert('Hiba történt a helyi adatok feltöltésekor.', 'info');
-             }
-        }
-        
-        function getRecordsFromLocal() {
-            return JSON.parse(localStorage.getItem('workRecords') || '[]');
-        }
+async function loadRecordsFromFirestore(user) {
+    if (!user) return [];
+    try {
+        const snapshot = await db.collection('users').doc(user.uid).collection('records').get();
+        const firestoreRecords = snapshot.docs.map(doc => doc.data());
+        console.log(`${firestoreRecords.length} bejegyzés betöltve a Firestore-ból.`);
+        return firestoreRecords;
+    } catch (error) {
+        console.error("Hiba az adatok Firestore-ból való letöltésekor:", error);
+        showCustomAlert("Hiba az adatok letöltésekor a felhőből.", 'info');
+        return [];
+    }
+}
 
-        async function loadRecordsFromFirestore(user) {
-            if (!user) return [];
-            try {
-                const snapshot = await db.collection('users').doc(user.uid).collection('records').get();
-                const firestoreRecords = snapshot.docs.map(doc => doc.data());
-                console.log(`${firestoreRecords.length} bejegyzés betöltve a Firestore-ból.`);
-                return firestoreRecords;
-            } catch (error) {
-                console.error("Hiba az adatok Firestore-ból való letöltésekor:", error);
-                showCustomAlert("Hiba az adatok letöltésekor a felhőből.", 'info');
-                return [];
-            }
+async function saveRecord(record) {
+    if (currentUser) {
+        try {
+            const recordId = String(record.id);
+            await db.collection('users').doc(currentUser.uid).collection('records').doc(recordId).set(record);
+            console.log("Bejegyzés mentve/frissítve a Firestore-ba:", recordId);
+        } catch (error) {
+            console.error("Hiba a Firestore-ba mentéskor:", error);
+            showCustomAlert("Hiba a felhőbe mentéskor.", 'info');
         }
-        
-        async function saveRecord(record) {
-             if (currentUser) {
-                try {
-                    const recordId = String(record.id);
-                    await db.collection('users').doc(currentUser.uid).collection('records').doc(recordId).set(record);
-                    console.log("Bejegyzés mentve/frissítve a Firestore-ba:", recordId);
-                } catch (error) {
-                    console.error("Hiba a Firestore-ba mentéskor:", error);
-                    showCustomAlert("Hiba a felhőbe mentéskor.", 'info');
-                }
-             }
-             
-            if (editingId) {
-                records = records.map(r => r.id === editingId ? record : r);
-            } else {
-                records.push(record);
-            }
+    }
+    
+    if (editingId) {
+        records = records.map(r => r.id === editingId ? record : r);
+    } else {
+        records.push(record);
+    }
 
-            if(!currentUser) {
-                localStorage.setItem('workRecords', JSON.stringify(records));
-                console.log("Bejegyzés mentve a localStorage-be.");
-            }
-        }
+    if(!currentUser) {
+        localStorage.setItem('workRecords', JSON.stringify(records));
+        console.log("Bejegyzés mentve a localStorage-be.");
+    }
+}
 
-        async function deleteRecordFromStorage(id) {
-            const recordId = String(id);
-            if (currentUser) {
-                try {
-                    await db.collection('users').doc(currentUser.uid).collection('records').doc(recordId).delete();
-                    console.log("Bejegyzés törölve a Firestore-ból:", recordId);
-                } catch(error) {
-                     console.error("Hiba a Firestore-ból való törléskor:", error);
-                    showCustomAlert("Hiba a felhőből való törléskor.", 'info');
-                }
-            }
+async function deleteRecordFromStorage(id) {
+    const recordId = String(id);
+    if (currentUser) {
+        try {
+            await db.collection('users').doc(currentUser.uid).collection('records').doc(recordId).delete();
+            console.log("Bejegyzés törölve a Firestore-ból:", recordId);
+        } catch(error) {
+            console.error("Hiba a Firestore-ból való törléskor:", error);
+            showCustomAlert("Hiba a felhőből való törléskor.", 'info');
         }
+    }
+}
         
         let records = []; 
         let editingId = null;
