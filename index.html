@@ -151,9 +151,9 @@
                         <h3 class="font-semibold mb-2">☁️ Felhő Szinkronizáció</h3>
                         <div id="logged-out-view">
                             <p class="text-sm text-gray-600 mb-3">Jelentkezz be a Google fiókoddal, hogy az adataidat a felhőbe mentsd és több eszközön is elérd.</p>
-                            <button id="login-button" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center justify-center gap-2">
+                            <button id="login-button" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg inline-flex items-center justify-center gap-2 hover:bg-gray-50">
                                 <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.215,44,30.035,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
-                                Bejelentkezés
+                                Bejelentkezés Google-fiókkal
                             </button>
                         </div>
                         <div id="logged-in-view" class="hidden">
@@ -161,7 +161,7 @@
                             <button id="logout-button" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg">Kijelentkezés</button>
                         </div>
                     </div>
-                     <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
                         <h3 class="font-semibold mb-2">Személyes adatok</h3>
                         <label class="block text-sm font-medium mb-1">Név (riportokhoz)</label>
                         <input type="text" id="userNameInput" class="w-full p-2 border rounded-lg mb-3" placeholder="Vezetéknév Keresztnév">
@@ -177,16 +177,6 @@
                         </select>
                     </div>
                     <div class="bg-gray-50 rounded-lg p-4">
-                        <h3 class="font-semibold mb-2">Automatikus mentés</h3>
-                        <label for="autoBackupFrequency" class="block text-sm text-gray-600 mb-1">Milyen gyakran készüljön mentés?</label>
-                        <select id="autoBackupFrequency" onchange="saveSettings()" class="w-full p-2 border rounded-lg bg-white">
-                            <option value="never">Soha</option>
-                            <option value="daily">Naponta</option>
-                            <option value="weekly">Hetente</option>
-                            <option value="monthly">Havonta</option>
-                        </select>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
                         <h3 class="font-semibold mb-2">Adatok exportálása (Backup)</h3>
                         <p class="text-sm text-gray-600 mb-3">Mentsd le az összes bejegyzésedet egy JSON fájlba.</p>
                         <button onclick="exportData()" class="w-full btn-secondary">📥 Adatok letöltése</button>
@@ -196,6 +186,14 @@
                         <p class="text-sm text-gray-600 mb-3">Tölts vissza egy korábban lementett adatfájlt. Figyelem: ez felülírja a jelenlegi adatokat!</p>
                         <input type="file" id="importFile" accept=".json" class="w-full text-sm">
                         <button onclick="importData()" class="w-full btn-primary mt-3">📤 Adatok visszatöltése</button>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 flex items-center gap-3">
+                        <span class="text-2xl">ℹ️</span>
+                        <div>
+                            <h3 class="font-semibold">Névjegy</h3>
+                            <p class="text-sm text-gray-600">Készítette: Princz Attila</p>
+                            <p class="text-xs text-gray-500 mt-1">Verzió: 3.05</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -209,12 +207,17 @@
         </div>
     </div>
 	
+    <!-- ======================================================= -->
+    <!-- ===== FIREBASE RÉSZEK A BODY VÉGÉRE ===== -->
+    <!-- ======================================================= -->
+
+    <!-- 1. Firebase könyvtárak (SDK-k) betöltése -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
+    <!-- 2. A te egyedi Firebase kapcsolódási kódod -->
     <script>
-      // Your web app's Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyDGgG3y0ppl4639bzjzKA7Yq8BmSkhR-LU",
         authDomain: "munkaido-3cc44.firebaseapp.com",
@@ -223,28 +226,24 @@
         messagingSenderId: "706081294435",
         appId: "1:706081294435:web:c8ae57cbe45477de415056"
       };
-
-      // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
     </script>
 	
     <script>
         // =======================================================
-        // ===== ÚJ, HIBRID FIREBASE LOGIKA ======================
+        // ===== ÚJ, HIBRID FIREBASE LOGIKA (JAVÍTOTT) ==========
         // =======================================================
 
         const auth = firebase.auth();
         const db = firebase.firestore();
         let currentUser = null;
 
-        // --- UI Elemek ---
         const loginButton = document.getElementById('login-button');
         const logoutButton = document.getElementById('logout-button');
         const loggedInView = document.getElementById('logged-in-view');
         const loggedOutView = document.getElementById('logged-out-view');
         const userNameEl = document.getElementById('user-name');
         
-        // --- Be- és kijelentkezési események ---
         loginButton.addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithRedirect(provider);
@@ -254,18 +253,15 @@
             auth.signOut();
         });
 
-        // --- Fő állapotkezelő ---
         async function handleUserSession(user) {
             currentUser = user;
             updateAuthUI(user);
 
             if (user) {
-                // FELHASZNÁLÓ BEJELENTKEZETT
                 console.log("Bejelentkezve:", user.uid);
                 await loadAndSyncData(user);
             } else {
-                // FELHASZNÁLÓ KIJELENTKEZETT
-                console.log("Kijelentkezve, helyi adatok használata.");
+                console.log("Nincs bejelentkezett felhasználó, helyi adatok használata.");
                 records = getRecordsFromLocal();
                 renderApp();
             }
@@ -286,42 +282,6 @@
             renderApp();
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Alkalmazás indítása
-            initTheme();
-            loadSettings();
-
-            auth.onAuthStateChanged(user => {
-                if (!user) {
-                    // Ha az oldal betöltésekor nincs aktív session, a helyi adatokkal indulunk
-                    handleUserSession(null);
-                }
-            });
-
-            auth.getRedirectResult()
-                .then(result => {
-                    if (result.user) {
-                        // Sikeres bejelentkezés átirányítás után
-                        handleUserSession(result.user);
-                    }
-                })
-                .catch(error => {
-                    console.error("Hiba a redirect eredményének feldolgozásakor:", error);
-                    showCustomAlert(`Hiba a bejelentkezés feldolgozásakor: ${error.message}`, 'info');
-                });
-
-            // Eseménykezelők, amiknek mindig futniuk kell
-            document.addEventListener('click', (event) => {
-                const dropdownContainer = document.getElementById('dropdown-container');
-                if (!dropdownContainer.contains(event.target)) {
-                    closeDropdown();
-                }
-                if (!event.target.closest('.autocomplete-list') && !event.target.matches('input[placeholder="Város"]')) {
-                    hideAutocomplete();
-                }
-            });
-        });
-
         function updateAuthUI(user) {
             if (user) {
                 loggedInView.classList.remove('hidden');
@@ -334,6 +294,26 @@
             }
         }
         
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            loadSettings();
+
+            // Ez a központi figyelő, ami mindent kezel
+            auth.onAuthStateChanged(async (user) => {
+                await handleUserSession(user);
+            });
+            
+            document.addEventListener('click', (event) => {
+                const dropdownContainer = document.getElementById('dropdown-container');
+                if (!dropdownContainer.contains(event.target)) {
+                    closeDropdown();
+                }
+                if (!event.target.closest('.autocomplete-list') && !event.target.matches('input[placeholder="Város"]')) {
+                    hideAutocomplete();
+                }
+            });
+        });
+
         async function migrateLocalToFirestore(localRecords, user) {
              if (!user) return;
              const userRecordsRef = db.collection('users').doc(user.uid).collection('records');
