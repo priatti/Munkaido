@@ -42,6 +42,10 @@ const translations = {
         finishShift: "Műszak Befejezése",
         discardWorkday: "Munkanap elvetése",
         recordedCrossings: "Rögzített átlépések:",
+        dashboardDriveThisWeek: "Vezetés ezen a héten",
+        dashboardWorkThisWeek: "Munkaidő ezen a héten",
+        dashboardDistanceThisMonth: "Távolság ebben a hónapban",
+        dashboardDistanceLastWeek: "Múlt heti távolság",
         // Teljes nap nézet
         fullDayTitle: "Teljes munkanap rögzítése",
         dateLabelFull: "Dátum (a munka befejezésének napja)",
@@ -146,8 +150,8 @@ const translations = {
         settingsVersion: "Verzió:",
         // Tachográf
         tachoTitle: "Tachográf Elemzés",
-        tachoAllowanceDrive10h: "Felh. 10ó vezetés",
-        tachoAllowanceReducedRest: "Felh. csökk. pihenő",
+        tachoAllowanceDrive10h: "Fennmaradó 10 órás vezetés",
+        tachoAllowanceReducedRest: "Fennmaradó csökk. pihenő",
         tachoCompensation: "Kompenzáció",
         tachoLongRest: "Hosszú pihenő",
         tachoRegularWeeklyRest: "Rendes heti pihenő",
@@ -174,6 +178,8 @@ const translations = {
         palletsActionTaken: "Felvett",
         palletsActionGiven: "Leadott",
         palletsActionExchange: "1:1 Csere",
+        palletsLicensePlate: "Rendszám (opcionális)",
+        palletsLicensePlatePlaceholder: "Pl. ABC-123",
         palletsSaveTransaction: "Tranzakció mentése",
         palletsHistory: "Előzmények",
         palletsNoTransactions: "Még nincsenek paletta tranzakciók rögzítve.",
@@ -249,6 +255,10 @@ const translations = {
         finishShift: "Schicht beenden",
         discardWorkday: "Arbeitstag verwerfen",
         recordedCrossings: "Erfasste Übergänge:",
+        dashboardDriveThisWeek: "Lenkzeit diese Woche",
+        dashboardWorkThisWeek: "Arbeitszeit diese Woche",
+        dashboardDistanceThisMonth: "Distanz diesen Monat",
+        dashboardDistanceLastWeek: "Distanz letzte Woche",
         // Ganzer Tag Ansicht
         fullDayTitle: "Ganzer Arbeitstag erfassen",
         dateLabelFull: "Datum (Tag des Arbeitsendes)",
@@ -353,8 +363,8 @@ const translations = {
         settingsVersion: "Version:",
         // Tachograph
         tachoTitle: "Tachographen-Analyse",
-        tachoAllowanceDrive10h: "Verf. 10h Lenkzeit",
-        tachoAllowanceReducedRest: "Verf. verk. Ruhezeit",
+        tachoAllowanceDrive10h: "Verbleibende 10-Std-Fahrten",
+        tachoAllowanceReducedRest: "Verbleibende verk. Ruhezeiten",
         tachoCompensation: "Ausgleich",
         tachoLongRest: "Lange Ruhezeit",
         tachoRegularWeeklyRest: "Regelmäßige wöchentliche Ruhezeit",
@@ -381,6 +391,8 @@ const translations = {
         palletsActionTaken: "Aufgenommen",
         palletsActionGiven: "Abgegeben",
         palletsActionExchange: "1:1 Tausch",
+        palletsLicensePlate: "Kennzeichen (optional)",
+        palletsLicensePlatePlaceholder: "Z.B. S-AB123",
         palletsSaveTransaction: "Transaktion speichern",
         palletsHistory: "Verlauf",
         palletsNoTransactions: "Noch keine Palettentransaktionen erfasst.",
@@ -428,7 +440,6 @@ function setLanguage(lang) {
     }
 }
 
-// CSERÉLD LE A RÉGI 'updateAllTexts' FUNKCIÓT ERRE AZ ÚJRA:
 function updateAllTexts() {
     const i18n = translations[currentLang];
 
@@ -442,14 +453,11 @@ function updateAllTexts() {
             } else if (el.title !== undefined && (el.tagName === 'BUTTON' || el.tagName === 'A')) {
                 el.title = translation;
             } else {
-                // "Okos" csere: megkeresi a szöveget, de békén hagyja az ikonokat
                 let targetNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0);
                 
                 if (targetNode) {
-                    // Ha van szöveg, csak azt cseréli
                     targetNode.textContent = translation;
                 } else if (el.tagName === 'SPAN' || el.tagName === 'P' || el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3') {
-                    // Ha nincs szöveg (pl. csak egy span), akkor beírja a fordítást
                     el.textContent = translation;
                 }
             }
@@ -459,13 +467,19 @@ function updateAllTexts() {
     document.title = i18n.appTitle;
     updateLanguageButtonStyles();
     
-    // NYELVFÜGGŐ ELEMEK MEGJELENÍTÉSE/ELREJTÉSE (most már itt van, így minden váltáskor lefut)
+    // NYELVFÜGGŐ ELEMEK MEGJELENÍTÉSE/ELREJTÉSE
     const compensationSectionDe = document.getElementById('compensation-section-de');
     if(compensationSectionDe) {
         compensationSectionDe.style.display = currentLang === 'de' ? 'none' : 'block';
     }
+    const compensationToggle = document.getElementById('toggleCompensation');
+    if(compensationToggle && compensationToggle.parentElement && compensationToggle.parentElement.parentElement) {
+        compensationToggle.parentElement.parentElement.style.display = currentLang === 'de' ? 'none' : 'flex';
+    }
 
-    // A nézetek frissítése, hogy az új nyelvi beállítások érvényesüljenek
+    // DINAMIKUS NÉZETEK FRISSÍTÉSE AZ ÚJ NYELVVEL
+    renderDashboard();
+    renderWeeklyAllowance();
     if (document.getElementById('content-list').style.display !== 'none') renderRecords();
     if (document.getElementById('content-summary').style.display !== 'none') renderSummary();
     if (document.getElementById('content-stats').style.display !== 'none') renderStats();
@@ -488,7 +502,7 @@ function updateLanguageButtonStyles() {
 }
 
 // =======================================================
-// ===== FIREBASE ÉS AUTHENTIKÁCIÓS LOGIKA (v8.01) =======
+// ===== FIREBASE ÉS AUTHENTIKÁCIÓS LOGIKA (v8.02) =======
 // =======================================================
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -579,9 +593,8 @@ async function migrateLocalToFirestore(localData, collectionName) {
 function updateAuthUI(user) { if (user) { loggedInView.classList.remove('hidden'); loggedOutView.classList.add('hidden'); userNameEl.textContent = user.displayName || user.email; } else { loggedInView.classList.add('hidden'); loggedOutView.classList.remove('hidden'); userNameEl.textContent = ''; } }
 async function saveRecord(record) { if (editingId) { records = records.map(r => r.id === editingId ? record : r); } else { records.push(record); } if (currentUser) { try { await db.collection('users').doc(currentUser.uid).collection('records').doc(String(record.id)).set(record); } catch (error) { console.error("Hiba a Firestore-ba mentéskor:", error); showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info'); } } else { localStorage.setItem('workRecords', JSON.stringify(records)); } }
 async function deleteRecordFromStorage(id) { if (currentUser) { try { await db.collection('users').doc(currentUser.uid).collection('records').doc(String(id)).delete(); } catch (error) { console.error("Hiba a Firestore-ból való törléskor:", error); showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info'); } } }
-
 // =======================================================
-// ===== ALKALMAZÁS LOGIKA (v8.01) =======================
+// ===== ALKALMAZÁS LOGIKA (v8.02) =======================
 // =======================================================
 
 let records = []; 
@@ -601,6 +614,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const splitRestToggle = document.getElementById('toggleSplitRest');
     if(splitRestToggle) {
         splitRestToggle.addEventListener('change', () => updateToggleVisuals(splitRestToggle));
+    }
+
+    const palletActionSelect = document.getElementById('palletAction');
+    if(palletActionSelect) {
+        palletActionSelect.addEventListener('change', handlePalletActionChange);
     }
 
     document.documentElement.lang = currentLang;
@@ -714,9 +732,32 @@ async function saveEntry() {
 function showTab(tabName) { 
     if(tabName === 'pallets') {
         document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
+        handlePalletActionChange();
     }
     const allTabs = document.querySelectorAll('.tab'); const mainTabs = ['live', 'full-day', 'list', 'pallets']; const dropdownButton = document.getElementById('dropdown-button'); const dropdownMenu = document.getElementById('dropdown-menu'); allTabs.forEach(t => t.classList.remove('tab-active')); dropdownButton.classList.remove('tab-active'); if (mainTabs.includes(tabName)) { document.getElementById(`tab-${tabName}`).classList.add('tab-active'); dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`; } else { dropdownButton.classList.add('tab-active'); const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`); if(selectedTitleEl) { const selectedTitle = selectedTitleEl.innerText; dropdownButton.innerHTML = `${selectedTitle} ▼`; } } document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); document.getElementById(`content-${tabName}`).classList.remove('hidden'); closeDropdown(); if (tabName === 'list') renderRecords(); if (tabName === 'summary') renderSummary(); if (tabName === 'stats') { statsDate = new Date(); renderStats(); } if (tabName === 'report') initMonthlyReport(); if (tabName === 'tachograph') renderTachographAnalysis(); if (tabName === 'pallets') renderPalletRecords(); }
-function renderDashboard() { const container = document.getElementById('dashboard-cards'); const now = new Date(); const thisWeek = calculateSummaryForDateRange(getWeekRange(now)); const lastWeek = calculateSummaryForDateRange(getWeekRange(now, -1)); const thisMonth = calculateSummaryForMonth(now); const cards = [ { label: 'Vezetés ezen a héten', value: formatDuration(thisWeek.driveMinutes), color: 'blue' }, { label: 'Munkaidő ezen a héten', value: formatDuration(thisWeek.workMinutes), color: 'green' }, { label: 'Távolság ebben a hónapban', value: `${thisMonth.kmDriven} km`, color: 'orange' }, { label: 'Múlt heti távolság', value: `${lastWeek.kmDriven} km`, color: 'indigo' } ]; container.innerHTML = cards.map(card => ` <div class="bg-${card.color}-50 border border-${card.color}-200 rounded-lg p-3 text-center"> <p class="text-xs text-${card.color}-700 font-semibold">${card.label}</p> <p class="text-lg font-bold text-${card.color}-800 mt-1">${card.value}</p> </div> `).join(''); }
+function renderDashboard() {
+    const i18n = translations[currentLang];
+    const container = document.getElementById('dashboard-cards');
+    const now = new Date();
+    const thisWeek = calculateSummaryForDateRange(getWeekRange(now));
+    const lastWeek = calculateSummaryForDateRange(getWeekRange(now, -1));
+    const thisMonth = calculateSummaryForMonth(now);
+    
+    const cards = [
+        { labelKey: 'dashboardDriveThisWeek', value: formatDuration(thisWeek.driveMinutes), color: 'blue' },
+        { labelKey: 'dashboardWorkThisWeek', value: formatDuration(thisWeek.workMinutes), color: 'green' },
+        { labelKey: 'dashboardDistanceThisMonth', value: `${thisMonth.kmDriven} km`, color: 'orange' },
+        { labelKey: 'dashboardDistanceLastWeek', value: `${lastWeek.kmDriven} km`, color: 'indigo' }
+    ];
+
+    container.innerHTML = cards.map(card => `
+        <div class="bg-${card.color}-50 border border-${card.color}-200 rounded-lg p-3 text-center">
+            <p class="text-xs text-${card.color}-700 font-semibold">${i18n[card.labelKey]}</p>
+            <p class="text-lg font-bold text-${card.color}-800 mt-1">${card.value}</p>
+        </div>
+    `).join('');
+}
 function renderLiveTabView() {
     const i18n = translations[currentLang];
     inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
@@ -930,7 +971,6 @@ function generateMonthlyReport() {
         document.getElementById('pdfShareBtn').classList.remove('hidden');
     }
 }
-
 const germanMonths = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const germanFullDays = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 function formatAsHoursAndMinutes(minutes) { const h = Math.floor(minutes / 60), m = minutes % 60; return `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}` } 
@@ -970,7 +1010,7 @@ function exportToPDF() {
             doc.setDrawColor(150, 150, 150);
             let xPos = leftMargin;
             headers.forEach((h, i) => {
-                doc.rect(xPos, yPos, colWidths[i], 7, 'S'); // 'S' for Stroke
+                doc.rect(xPos, yPos, colWidths[i], 7, 'S');
                 doc.text(h, xPos + colWidths[i] / 2, yPos + 4.5, { align: 'center' });
                 xPos += colWidths[i];
             });
@@ -1077,7 +1117,7 @@ async function sharePDF() {
             doc.setDrawColor(150, 150, 150);
             let xPos = leftMargin;
             headers.forEach((h, i) => {
-                doc.rect(xPos, yPos, colWidths[i], 7, 'S'); // 'S' for Stroke
+                doc.rect(xPos, yPos, colWidths[i], 7, 'S');
                 doc.text(h, xPos + colWidths[i] / 2, yPos + 4.5, { align: 'center' });
                 xPos += colWidths[i];
             });
@@ -1263,7 +1303,7 @@ function checkForAutoExport() {
 }
 
 // =======================================================
-// ===== SPECIÁLIS FUNKCIÓK KEZELÉSE (v8.01) =============
+// ===== SPECIÁLIS FUNKCIÓK KEZELÉSE (v8.02) =============
 // =======================================================
 
 const featureToggles = ['toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleCompensation'];
@@ -1313,7 +1353,6 @@ function applyFeatureToggles() {
     document.getElementById('km-section').style.display = showKm ? 'block' : 'none';
     document.getElementById('drivetime-section').style.display = showDriveTime ? 'block' : 'none';
     
-    // ITT VAN A JAVÍTÁS: 'compensation-section-de'-re cserélve
     const compensationSection = document.getElementById('compensation-section-de');
     if (compensationSection) {
         compensationSection.style.display = showCompensation ? 'block' : 'none';
@@ -1336,11 +1375,22 @@ function applyFeatureToggles() {
         showTab('live');
     }
 }
+
 // =======================================================
-// ===== PALETTA NYILVÁNTARTÓ MODUL (v8.01) ==============
+// ===== PALETTA NYILVÁNTARTÓ MODUL (v8.02) ==============
 // =======================================================
 
 let uniquePalletLocations = [];
+
+function handlePalletActionChange() {
+    const action = document.getElementById('palletAction').value;
+    const licensePlateContainer = document.getElementById('palletLicensePlateContainer');
+    if (action === 'csere') {
+        licensePlateContainer.classList.remove('hidden');
+    } else {
+        licensePlateContainer.classList.add('hidden');
+    }
+}
 
 function updateUniquePalletLocations() {
     const locations = new Set(palletRecords.map(r => r.location));
@@ -1365,6 +1415,7 @@ async function savePalletEntry() {
     const location = document.getElementById('palletLocation').value.trim();
     const quantity = parseInt(document.getElementById('palletQuantity').value, 10);
     const action = document.getElementById('palletAction').value;
+    const licensePlate = document.getElementById('palletLicensePlate').value.trim().toUpperCase();
 
     if (!date || !location || !quantity || quantity <= 0) {
         showCustomAlert(translations[currentLang].palletInvalidData, "info");
@@ -1376,8 +1427,13 @@ async function savePalletEntry() {
         date,
         location,
         quantity,
-        action
+        action,
+        licensePlate: action === 'csere' ? licensePlate : ''
     };
+
+    if (action === 'csere' && licensePlate) {
+        localStorage.setItem('lastPalletLicensePlate', licensePlate);
+    }
 
     palletRecords.push(newEntry);
     await savePalletData();
@@ -1386,6 +1442,7 @@ async function savePalletEntry() {
 
     document.getElementById('palletLocation').value = '';
     document.getElementById('palletQuantity').value = '';
+    document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
     showCustomAlert(translations[currentLang].palletSaveSuccess, "success");
 }
 
@@ -1452,12 +1509,17 @@ function renderPalletRecords() {
                 sign = '⇄';
                 break;
         }
+        
+        const licensePlateHTML = p.action === 'csere' && p.licensePlate
+            ? `<p class="text-xs text-gray-400 mt-1">Rendszám: ${p.licensePlate}</p>`
+            : '';
 
         return `
         <div class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border-l-4 ${actionClass} flex items-center justify-between">
             <div>
                 <p class="font-semibold text-gray-800 dark:text-gray-100">${p.location}</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">${p.date}</p>
+                ${licensePlateHTML}
             </div>
             <div class="text-right">
                  <p class="font-bold text-lg ${textColor}">${sign}${p.quantity} db</p>
@@ -1484,8 +1546,8 @@ function generatePalletReport() {
         doc.setFontSize(10); doc.text(`Generálva: ${new Date().toLocaleDateString('hu-HU')}`, 105, 31, { align: 'center' });
 
         let yPos = 40;
-        const headers = ['Dátum', 'Helyszín', 'Művelet', 'Mennyiség'];
-        const colWidths = [30, 90, 30, 30];
+        const headers = ['Dátum', 'Helyszín', 'Művelet', 'Mennyiség', 'Rendszám'];
+        const colWidths = [25, 80, 25, 20, 30];
 
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(10);
@@ -1508,7 +1570,7 @@ function generatePalletReport() {
                 case 'leadott': actionText = 'Leadott'; break;
                 case 'csere': actionText = '1:1 Csere'; break;
             }
-            const row = [p.date, p.location, actionText, `${p.quantity} db`];
+            const row = [p.date, p.location, actionText, `${p.quantity} db`, p.licensePlate || '-'];
             row.forEach((cell, i) => {
                 doc.text(String(cell), xPos, yPos);
                 xPos += colWidths[i];
@@ -1527,8 +1589,9 @@ function generatePalletReport() {
     }
 }
 
+
 // =======================================================
-// ===== TACHOGRÁF ELEMZŐ MODUL (v8.01) ==================
+// ===== TACHOGRÁF ELEMZŐ MODUL (v8.02) ==================
 // =======================================================
 
 function calculateRestDebt() {
@@ -1571,7 +1634,7 @@ function calculateWeeklyAllowance() {
         const restDurationHours = Math.round((currentStart - prevEnd) / 60000) / 60;
         if (restDurationHours >= 24) { break; }
         
-        const isSplitRest = splitData[previousRecord.id] === true;
+        const isSplitRest = splitData[previousRecord.id] === true || previousRecord.isSplitRest;
         if (isSplitRest) continue;
         
         const prevWorkDurationHours = previousRecord.workMinutes / 60;
@@ -1660,7 +1723,7 @@ function renderTachographAnalysis() {
             const restDurationMinutes = Math.round((currentStart - prevEnd) / 60000);
             restAnalysis.duration = restDurationMinutes;
             const restDurationHours = restDurationMinutes / 60;
-            const isSplitRest = splitRestData[previousRecord.id] === true;
+            const isSplitRest = splitRestData[previousRecord.id] === true || previousRecord.isSplitRest;
             const isMarkedAsWeekly = weeklyRestData[currentRecord.id] === true;
             const prevWorkDurationHours = previousRecord.workMinutes / 60;
 
@@ -1708,7 +1771,7 @@ function renderTachographAnalysis() {
         } else {
             driveAnalysis = { text: `${i18n.tachoNormalDrive} (${formatDuration(currentRecord.driveMinutes)})`, colorClass: 'bg-gray-300 text-gray-800' };
         }
-        analysisResults.push({ record: currentRecord, rest: restAnalysis, drive: driveAnalysis, isSplit: splitRestData[currentRecord.id] === true, isWeekly: weeklyRestData[currentRecord.id] === true });
+        analysisResults.push({ record: currentRecord, rest: restAnalysis, drive: driveAnalysis, isSplit: splitRestData[currentRecord.id] === true || currentRecord.isSplitRest, isWeekly: weeklyRestData[currentRecord.id] === true });
     }
 
     container.innerHTML = analysisResults.reverse().map(res => {
