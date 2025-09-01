@@ -477,6 +477,7 @@ function updateAllTexts() {
         compensationToggle.parentElement.parentElement.style.display = currentLang === 'de' ? 'none' : 'flex';
     }
 
+
     // DINAMIKUS NÉZETEK FRISSÍTÉSE AZ ÚJ NYELVVEL
     renderDashboard();
     renderWeeklyAllowance();
@@ -502,7 +503,7 @@ function updateLanguageButtonStyles() {
 }
 
 // =======================================================
-// ===== FIREBASE ÉS AUTHENTIKÁCIÓS LOGIKA (v8.02) =======
+// ===== FIREBASE ÉS AUTHENTIKÁCIÓS LOGIKA (v8.03) =======
 // =======================================================
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -594,7 +595,7 @@ function updateAuthUI(user) { if (user) { loggedInView.classList.remove('hidden'
 async function saveRecord(record) { if (editingId) { records = records.map(r => r.id === editingId ? record : r); } else { records.push(record); } if (currentUser) { try { await db.collection('users').doc(currentUser.uid).collection('records').doc(String(record.id)).set(record); } catch (error) { console.error("Hiba a Firestore-ba mentéskor:", error); showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info'); } } else { localStorage.setItem('workRecords', JSON.stringify(records)); } }
 async function deleteRecordFromStorage(id) { if (currentUser) { try { await db.collection('users').doc(currentUser.uid).collection('records').doc(String(id)).delete(); } catch (error) { console.error("Hiba a Firestore-ból való törléskor:", error); showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info'); } } }
 // =======================================================
-// ===== ALKALMAZÁS LOGIKA (v8.02) =======================
+// ===== ALKALMAZÁS LOGIKA (v8.03) =======================
 // =======================================================
 
 let records = []; 
@@ -1303,7 +1304,7 @@ function checkForAutoExport() {
 }
 
 // =======================================================
-// ===== SPECIÁLIS FUNKCIÓK KEZELÉSE (v8.02) =============
+// ===== SPECIÁLIS FUNKCIÓK KEZELÉSE (v8.03) =============
 // =======================================================
 
 const featureToggles = ['toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleCompensation'];
@@ -1377,7 +1378,7 @@ function applyFeatureToggles() {
 }
 
 // =======================================================
-// ===== PALETTA NYILVÁNTARTÓ MODUL (v8.02) ==============
+// ===== PALETTA NYILVÁNTARTÓ MODUL (v8.03) ==============
 // =======================================================
 
 let uniquePalletLocations = [];
@@ -1541,13 +1542,20 @@ function generatePalletReport() {
         const userName = document.getElementById('userNameInput').value || 'Név Nincs Megadva';
         const sortedRecords = [...palletRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
 
+        let currentBalance = 0;
+        const balanceAfterEach = sortedRecords.map(p => {
+            if (p.action === 'felvett') currentBalance += p.quantity;
+            if (p.action === 'leadott') currentBalance -= p.quantity;
+            return currentBalance;
+        });
+
         doc.setFontSize(18); doc.setFont(undefined, 'bold'); doc.text('Raklapmozgás Riport', 105, 15, { align: 'center' });
         doc.setFontSize(12); doc.text(userName, 105, 23, { align: 'center' });
-        doc.setFontSize(10); doc.text(`Generálva: ${new Date().toLocaleDateString('hu-HU')}`, 105, 31, { align: 'center' });
+        doc.setFontSize(10); doc.text(`Aktuális egyenleg: ${currentBalance} db`, 105, 31, { align: 'center' });
 
         let yPos = 40;
-        const headers = ['Dátum', 'Helyszín', 'Művelet', 'Mennyiség', 'Rendszám'];
-        const colWidths = [25, 80, 25, 20, 30];
+        const headers = ['Dátum', 'Helyszín', 'Művelet', 'Mennyiség', 'Rendszám', 'Egyenleg'];
+        const colWidths = [25, 65, 25, 20, 30, 20];
 
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(10);
@@ -1562,7 +1570,7 @@ function generatePalletReport() {
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
 
-        sortedRecords.forEach(p => {
+        sortedRecords.forEach((p, index) => {
             xPos = 15;
             let actionText = '';
             switch(p.action) {
@@ -1570,7 +1578,7 @@ function generatePalletReport() {
                 case 'leadott': actionText = 'Leadott'; break;
                 case 'csere': actionText = '1:1 Csere'; break;
             }
-            const row = [p.date, p.location, actionText, `${p.quantity} db`, p.licensePlate || '-'];
+            const row = [p.date, p.location, actionText, `${p.quantity} db`, p.licensePlate || '-', `${balanceAfterEach[index]} db`];
             row.forEach((cell, i) => {
                 doc.text(String(cell), xPos, yPos);
                 xPos += colWidths[i];
@@ -1591,7 +1599,7 @@ function generatePalletReport() {
 
 
 // =======================================================
-// ===== TACHOGRÁF ELEMZŐ MODUL (v8.02) ==================
+// ===== TACHOGRÁF ELEMZŐ MODUL (v8.03) ==================
 // =======================================================
 
 function calculateRestDebt() {
