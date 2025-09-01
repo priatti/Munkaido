@@ -106,6 +106,7 @@ const translations = {
         reportDownloadPDF: "PDF letöltés",
         reportSharePDF: "PDF megosztása",
         reportPrepared: "Riport előkészítve.",
+        palletReportGenerate: "Raklap riport generálása",
         // Beállítások
         settingsTitle: "Beállítások és Adatkezelés",
         settingsSyncTitle: "Felhő Szinkronizáció",
@@ -172,6 +173,7 @@ const translations = {
         palletsAction: "Művelet",
         palletsActionTaken: "Felvett",
         palletsActionGiven: "Leadott",
+        palletsActionExchange: "1:1 Csere",
         palletsSaveTransaction: "Tranzakció mentése",
         palletsHistory: "Előzmények",
         palletsNoTransactions: "Még nincsenek paletta tranzakciók rögzítve.",
@@ -197,6 +199,7 @@ const translations = {
         alertLocationFailed: "Helyszín lekérése sikertelen.",
         alertShareNotSupported: "A böngésződ nem támogatja ezt a funkciót.",
         alertGenerateReportFirst: "Először generálj riportot a megosztáshoz!",
+        alertReportNameMissing: "A riport generálásához kérlek, add meg a nevedet a Beállítások menüben!",
         palletSaveSuccess: "Tranzakció mentve!",
         palletInvalidData: "Kérlek tölts ki minden mezőt (a mennyiségnek pozitívnak kell lennie)!",
         autoBackupOn: "Automatikus mentés bekapcsolva!",
@@ -310,6 +313,7 @@ const translations = {
         reportDownloadPDF: "PDF herunterladen",
         reportSharePDF: "PDF teilen",
         reportPrepared: "Bericht vorbereitet.",
+        palletReportGenerate: "Palettenbericht erstellen",
         // Einstellungen
         settingsTitle: "Einstellungen und Datenverwaltung",
         settingsSyncTitle: "Cloud-Synchronisation",
@@ -376,6 +380,7 @@ const translations = {
         palletsAction: "Vorgang",
         palletsActionTaken: "Aufgenommen",
         palletsActionGiven: "Abgegeben",
+        palletsActionExchange: "1:1 Tausch",
         palletsSaveTransaction: "Transaktion speichern",
         palletsHistory: "Verlauf",
         palletsNoTransactions: "Noch keine Palettentransaktionen erfasst.",
@@ -401,6 +406,7 @@ const translations = {
         alertLocationFailed: "Standortermittlung fehlgeschlagen.",
         alertShareNotSupported: "Ihr Browser unterstützt diese Funktion nicht.",
         alertGenerateReportFirst: "Erstellen Sie zuerst einen Bericht, um ihn zu teilen!",
+        alertReportNameMissing: "Um einen Bericht zu erstellen, geben Sie bitte Ihren Namen im Einstellungsmenü ein!",
         palletSaveSuccess: "Transaktion gespeichert!",
         palletInvalidData: "Bitte alle Felder ausfüllen (Menge muss positiv sein)!",
         autoBackupOn: "Automatische Sicherung aktiviert!",
@@ -429,26 +435,22 @@ function updateAllTexts() {
         const key = el.dataset.translateKey;
         const translation = i18n[key];
         if (translation !== undefined) {
-            if (el.placeholder !== undefined) {
-                el.placeholder = translation;
-            } else if (el.title !== undefined && el.tagName === 'BUTTON') {
-                 el.title = translation;
-            } else if (el.tagName === 'OPTION' || el.tagName === 'SPAN') {
-                el.textContent = translation;
-            } else {
-                for (const node of el.childNodes) {
-                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
-                        node.textContent = ' ' + translation;
-                        break;
-                    }
-                }
-            }
+             const targetNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) || el;
+             if (el.placeholder !== undefined) el.placeholder = translation;
+             else if (el.title !== undefined) el.title = translation;
+             else targetNode.textContent = el.innerHTML.includes('▼') ? ` ${translation} ▼` : el.innerHTML.includes('📊') || el.innerHTML.includes('➕') || el.innerHTML.includes('📅') || el.innerHTML.includes('📦') ? ` ${translation}` : translation;
         }
     });
 
     document.title = i18n.appTitle;
     updateLanguageButtonStyles();
     
+    // NYELVFÜGGŐ ELEMEK MEGJELENÍTÉSE/ELREJTÉSE
+    const compensationSectionDe = document.getElementById('compensation-section-de');
+    if(compensationSectionDe) {
+        compensationSectionDe.style.display = currentLang === 'de' ? 'none' : 'block';
+    }
+
     renderLiveTabView();
     if (!document.getElementById('content-list').classList.contains('hidden')) renderRecords();
     if (!document.getElementById('content-summary').classList.contains('hidden')) renderSummary();
@@ -472,7 +474,7 @@ function updateLanguageButtonStyles() {
 }
 
 // =======================================================
-// ===== FIREBASE ÉS AUTHENTIKÁCIÓS LOGIKA (v7.03) =======
+// ===== FIREBASE ÉS AUTHENTIKÁCIÓS LOGIKA (v8.01) =======
 // =======================================================
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -565,7 +567,7 @@ async function saveRecord(record) { if (editingId) { records = records.map(r => 
 async function deleteRecordFromStorage(id) { if (currentUser) { try { await db.collection('users').doc(currentUser.uid).collection('records').doc(String(id)).delete(); } catch (error) { console.error("Hiba a Firestore-ból való törléskor:", error); showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info'); } } }
 
 // =======================================================
-// ===== ALKALMAZÁS LOGIKA (v7.03) =======================
+// ===== ALKALMAZÁS LOGIKA (v8.01) =======================
 // =======================================================
 
 let records = []; 
@@ -581,8 +583,15 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     loadSettings();
     initializeFeatureToggles();
+    
+    const splitRestToggle = document.getElementById('toggleSplitRest');
+    if(splitRestToggle) {
+        splitRestToggle.addEventListener('change', () => updateToggleVisuals(splitRestToggle));
+    }
+
     document.documentElement.lang = currentLang;
     updateAllTexts();
+
     document.addEventListener('click', (event) => {
         const dropdownContainer = document.getElementById('dropdown-container');
         if (dropdownContainer && !dropdownContainer.contains(event.target)) { closeDropdown(); }
@@ -636,6 +645,7 @@ async function saveEntry() {
         kmStart: parseFloat(document.getElementById('kmStart').value) || 0,
         kmEnd: parseFloat(document.getElementById('kmEnd').value) || 0,
         compensationTime: document.getElementById('compensationTime').value.trim(),
+        isSplitRest: document.getElementById('toggleSplitRest').checked,
         crossings: Array.from(document.querySelectorAll('#crossingsContainer .border-t')).map(row => ({
             from: row.querySelector(`input[id^="crossFrom-"]`).value.trim().toUpperCase(),
             to: row.querySelector(`input[id^="crossTo-"]`).value.trim().toUpperCase(),
@@ -659,6 +669,14 @@ async function saveEntry() {
         driveMinutes: Math.max(0, parseTimeToMinutes(recordData.weeklyDriveEndStr) - parseTimeToMinutes(recordData.weeklyDriveStartStr)),
         kmDriven: Math.max(0, recordData.kmEnd - recordData.kmStart)
     };
+    
+    const splitData = getSplitRestData();
+    if (newRecord.isSplitRest) {
+        splitData[newRecord.id] = true;
+    } else {
+        delete splitData[newRecord.id];
+    }
+    saveSplitRestData(splitData);
 
     const proceedWithSave = async () => {
         await saveRecord(newRecord);
@@ -679,7 +697,11 @@ async function saveEntry() {
         proceedWithSave();
     }
 }
-function showTab(tabName) { const allTabs = document.querySelectorAll('.tab'); const mainTabs = ['live', 'full-day', 'list', 'pallets']; const dropdownButton = document.getElementById('dropdown-button'); const dropdownMenu = document.getElementById('dropdown-menu'); allTabs.forEach(t => t.classList.remove('tab-active')); dropdownButton.classList.remove('tab-active'); if (mainTabs.includes(tabName)) { document.getElementById(`tab-${tabName}`).classList.add('tab-active'); dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`; } else { dropdownButton.classList.add('tab-active'); const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`); if(selectedTitleEl) { const selectedTitle = selectedTitleEl.innerText; dropdownButton.innerHTML = `${selectedTitle} ▼`; } } document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); document.getElementById(`content-${tabName}`).classList.remove('hidden'); closeDropdown(); if (tabName === 'list') renderRecords(); if (tabName === 'summary') renderSummary(); if (tabName === 'stats') { statsDate = new Date(); renderStats(); } if (tabName === 'report') initMonthlyReport(); if (tabName === 'tachograph') renderTachographAnalysis(); if (tabName === 'pallets') renderPalletRecords(); }
+function showTab(tabName) { 
+    if(tabName === 'pallets') {
+        document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
+    }
+    const allTabs = document.querySelectorAll('.tab'); const mainTabs = ['live', 'full-day', 'list', 'pallets']; const dropdownButton = document.getElementById('dropdown-button'); const dropdownMenu = document.getElementById('dropdown-menu'); allTabs.forEach(t => t.classList.remove('tab-active')); dropdownButton.classList.remove('tab-active'); if (mainTabs.includes(tabName)) { document.getElementById(`tab-${tabName}`).classList.add('tab-active'); dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`; } else { dropdownButton.classList.add('tab-active'); const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`); if(selectedTitleEl) { const selectedTitle = selectedTitleEl.innerText; dropdownButton.innerHTML = `${selectedTitle} ▼`; } } document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); document.getElementById(`content-${tabName}`).classList.remove('hidden'); closeDropdown(); if (tabName === 'list') renderRecords(); if (tabName === 'summary') renderSummary(); if (tabName === 'stats') { statsDate = new Date(); renderStats(); } if (tabName === 'report') initMonthlyReport(); if (tabName === 'tachograph') renderTachographAnalysis(); if (tabName === 'pallets') renderPalletRecords(); }
 function renderDashboard() { const container = document.getElementById('dashboard-cards'); const now = new Date(); const thisWeek = calculateSummaryForDateRange(getWeekRange(now)); const lastWeek = calculateSummaryForDateRange(getWeekRange(now, -1)); const thisMonth = calculateSummaryForMonth(now); const cards = [ { label: 'Vezetés ezen a héten', value: formatDuration(thisWeek.driveMinutes), color: 'blue' }, { label: 'Munkaidő ezen a héten', value: formatDuration(thisWeek.workMinutes), color: 'green' }, { label: 'Távolság ebben a hónapban', value: `${thisMonth.kmDriven} km`, color: 'orange' }, { label: 'Múlt heti távolság', value: `${lastWeek.kmDriven} km`, color: 'indigo' } ]; container.innerHTML = cards.map(card => ` <div class="bg-${card.color}-50 border border-${card.color}-200 rounded-lg p-3 text-center"> <p class="text-xs text-${card.color}-700 font-semibold">${card.label}</p> <p class="text-lg font-bold text-${card.color}-800 mt-1">${card.value}</p> </div> `).join(''); }
 function renderLiveTabView() {
     const i18n = translations[currentLang];
@@ -731,7 +753,7 @@ function getSortedRecords() { return [...(records || [])].sort((a, b) => new Dat
 function getLatestRecord() { if (!records || records.length === 0) return null; return getSortedRecords()[0]; }
 function showFullFormView() { resetEntryForm(); loadLastValues(); }
 function loadLastValues(forLiveForm = false) { const lastRecord = getLatestRecord(); const now = new Date(); if (forLiveForm) { document.getElementById('liveStartDate').value = now.toISOString().split('T')[0]; document.getElementById('liveStartTime').value = now.toTimeString().slice(0, 5); if (lastRecord) { document.getElementById('liveStartLocation').value = lastRecord.endLocation || ''; document.getElementById('liveWeeklyDriveStart').value = lastRecord.weeklyDriveEndStr || ''; document.getElementById('liveStartKm').value = lastRecord.kmEnd || ''; } } else { document.getElementById('date').value = now.toISOString().split('T')[0]; if (lastRecord) { document.getElementById('weeklyDriveStart').value = lastRecord.weeklyDriveEndStr || ''; document.getElementById('kmStart').value = lastRecord.kmEnd || ''; document.getElementById('startLocation').value = lastRecord.endLocation || ''; } } }
-function resetEntryForm() { ['date', 'startTime', 'endTime', 'startLocation', 'endLocation', 'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd'].forEach(id => document.getElementById(id).value = ''); document.getElementById('crossingsContainer').innerHTML = ''; editingId = null; updateDisplays(); }
+function resetEntryForm() { ['date', 'startTime', 'endTime', 'startLocation', 'endLocation', 'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd'].forEach(id => document.getElementById(id).value = ''); const splitRestToggle = document.getElementById('toggleSplitRest'); if(splitRestToggle) { splitRestToggle.checked = false; updateToggleVisuals(splitRestToggle); } document.getElementById('crossingsContainer').innerHTML = ''; editingId = null; updateDisplays(); }
 function updateDisplays() {
     const i18n = translations[currentLang];
     const workMinutes = calculateWorkMinutes(document.getElementById('startTime').value, document.getElementById('endTime').value); 
@@ -769,6 +791,12 @@ function editRecord(id) {
     const compensationEl = document.getElementById('compensationTime');
     if (compensationEl) {
         compensationEl.value = record.compensationMinutes ? formatAsHoursAndMinutes(record.compensationMinutes) : '';
+    }
+
+    const splitRestToggle = document.getElementById('toggleSplitRest');
+    if (splitRestToggle) {
+        splitRestToggle.checked = record.isSplitRest || false;
+        updateToggleVisuals(splitRestToggle);
     }
 
     document.getElementById('crossingsContainer').innerHTML = '';
@@ -871,6 +899,13 @@ function initMonthlyReport() {
 }
 function generateMonthlyReport() { 
     const i18n = translations[currentLang];
+    const userName = document.getElementById('userNameInput').value.trim();
+    if (!userName) {
+        showCustomAlert(i18n.alertReportNameMissing, 'info');
+        showTab('settings');
+        return;
+    }
+
     const selectedMonth = document.getElementById("monthSelector").value; 
     const monthRecords = records.filter(record => record.date.startsWith(selectedMonth)); 
     monthRecords.sort((a, b) => new Date(a.date) - new Date(b.date)); 
@@ -1214,15 +1249,8 @@ function checkForAutoExport() {
 }
 
 // =======================================================
-// ===== PALETTA NYILVÁNTARTÓ MODUL (v7.03) ==============
+// ===== SPECIÁLIS FUNKCIÓK KEZELÉSE (v8.01) =============
 // =======================================================
-
-let uniquePalletLocations = [];
-
-function updateUniquePalletLocations() {
-    const locations = new Set(palletRecords.map(r => r.location));
-    uniquePalletLocations = Array.from(locations).sort();
-}
 
 const featureToggles = ['toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleCompensation'];
 
@@ -1281,6 +1309,7 @@ function applyFeatureToggles() {
         palletTab.style.display = 'none';
     }
 
+
     if (!showCompensation) {
         document.getElementById('compensationTime').value = '';
     }
@@ -1288,6 +1317,17 @@ function applyFeatureToggles() {
     if (!showPallets && document.getElementById('tab-pallets').classList.contains('tab-active')) {
         showTab('live');
     }
+}
+
+// =======================================================
+// ===== PALETTA NYILVÁNTARTÓ MODUL (v8.01) ==============
+// =======================================================
+
+let uniquePalletLocations = [];
+
+function updateUniquePalletLocations() {
+    const locations = new Set(palletRecords.map(r => r.location));
+    uniquePalletLocations = Array.from(locations).sort();
 }
 
 async function savePalletData() {
@@ -1345,9 +1385,11 @@ async function deletePalletEntry(id) {
 
 function updatePalletBalance() {
     const i18n = translations[currentLang];
-    const balance = palletRecords.reduce((acc, curr) => {
-        return curr.action === 'felvett' ? acc + curr.quantity : acc - curr.quantity;
-    }, 0);
+    const balance = palletRecords
+        .filter(p => p.action !== 'csere')
+        .reduce((acc, curr) => {
+            return curr.action === 'felvett' ? acc + curr.quantity : acc - curr.quantity;
+        }, 0);
     
     const displayEl = document.getElementById('palletBalanceDisplay');
     let colorClass = 'text-gray-700 dark:text-gray-200';
@@ -1375,10 +1417,24 @@ function renderPalletRecords() {
     const sortedRecords = [...palletRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     container.innerHTML = sortedRecords.map(p => {
-        const isFelvett = p.action === 'felvett';
-        const actionClass = isFelvett ? 'pallet-entry-felvett' : 'pallet-entry-leadott';
-        const textColor = isFelvett ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300';
-        const sign = isFelvett ? '+' : '-';
+        let actionClass, textColor, sign;
+        switch (p.action) {
+            case 'felvett':
+                actionClass = 'pallet-entry-felvett';
+                textColor = 'text-green-700 dark:text-green-300';
+                sign = '+';
+                break;
+            case 'leadott':
+                actionClass = 'pallet-entry-leadott';
+                textColor = 'text-red-700 dark:text-red-300';
+                sign = '-';
+                break;
+            case 'csere':
+                actionClass = 'pallet-entry-csere';
+                textColor = 'text-gray-500 dark:text-gray-400';
+                sign = '⇄';
+                break;
+        }
 
         return `
         <div class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border-l-4 ${actionClass} flex items-center justify-between">
@@ -1395,8 +1451,67 @@ function renderPalletRecords() {
     }).join('');
 }
 
+function generatePalletReport() {
+    if (palletRecords.length === 0) {
+        showCustomAlert("Nincs raklapmozgás, amiből riportot lehetne készíteni.", "info");
+        return;
+    }
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const userName = document.getElementById('userNameInput').value || 'Név Nincs Megadva';
+        const sortedRecords = [...palletRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        doc.setFontSize(18); doc.setFont(undefined, 'bold'); doc.text('Raklapmozgás Riport', 105, 15, { align: 'center' });
+        doc.setFontSize(12); doc.text(userName, 105, 23, { align: 'center' });
+        doc.setFontSize(10); doc.text(`Generálva: ${new Date().toLocaleDateString('hu-HU')}`, 105, 31, { align: 'center' });
+
+        let yPos = 40;
+        const headers = ['Dátum', 'Helyszín', 'Művelet', 'Mennyiség'];
+        const colWidths = [30, 90, 30, 30];
+
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(10);
+        let xPos = 15;
+        headers.forEach((h, i) => {
+            doc.text(h, xPos, yPos);
+            xPos += colWidths[i];
+        });
+        yPos += 7;
+        doc.setLineWidth(0.5);
+        doc.line(15, yPos - 5, 195, yPos - 5);
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(9);
+
+        sortedRecords.forEach(p => {
+            xPos = 15;
+            let actionText = '';
+            switch(p.action) {
+                case 'felvett': actionText = 'Felvett'; break;
+                case 'leadott': actionText = 'Leadott'; break;
+                case 'csere': actionText = '1:1 Csere'; break;
+            }
+            const row = [p.date, p.location, actionText, `${p.quantity} db`];
+            row.forEach((cell, i) => {
+                doc.text(String(cell), xPos, yPos);
+                xPos += colWidths[i];
+            });
+            yPos += 6;
+            if (yPos > 280) {
+                doc.addPage();
+                yPos = 20;
+            }
+        });
+
+        doc.save(`Raklap_Riport-${userName.replace(/ /g, "_")}-${new Date().toISOString().split("T")[0]}.pdf`);
+    } catch (e) {
+        console.error("PDF generálási hiba:", e);
+        showCustomAlert("Hiba történt a PDF generálása közben: " + e.message, 'info');
+    }
+}
+
 // =======================================================
-// ===== TACHOGRÁF ELEMZŐ MODUL (v7.03) ==================
+// ===== TACHOGRÁF ELEMZŐ MODUL (v8.01) ==================
 // =======================================================
 
 function calculateRestDebt() {
@@ -1429,6 +1544,8 @@ function calculateWeeklyAllowance() {
     const remainingDrives = Math.max(0, 2 - extendedDrivesThisWeek);
     let reducedRestsInCycle = 0;
     const sortedRecords = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
+    const splitData = getSplitRestData();
+
     for (let i = sortedRecords.length - 1; i > 0; i--) {
         const currentRecord = sortedRecords[i];
         const previousRecord = sortedRecords[i-1];
@@ -1436,8 +1553,10 @@ function calculateWeeklyAllowance() {
         const currentStart = new Date(`${currentRecord.date}T${currentRecord.startTime}`);
         const restDurationHours = Math.round((currentStart - prevEnd) / 60000) / 60;
         if (restDurationHours >= 24) { break; }
-        const isSplitRest = getSplitRestData()[previousRecord.id] === true;
+        
+        const isSplitRest = splitData[previousRecord.id] === true;
         if (isSplitRest) continue;
+        
         const prevWorkDurationHours = previousRecord.workMinutes / 60;
         const isForcedReduced = prevWorkDurationHours > 13;
         if ((restDurationHours >= 9 && restDurationHours < 11) || isForcedReduced) {
