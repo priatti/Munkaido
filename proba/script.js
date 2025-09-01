@@ -428,35 +428,49 @@ function setLanguage(lang) {
     }
 }
 
+// CSERÉLD LE A RÉGI 'updateAllTexts' FUNKCIÓT ERRE AZ ÚJRA:
 function updateAllTexts() {
     const i18n = translations[currentLang];
 
     document.querySelectorAll('[data-translate-key]').forEach(el => {
         const key = el.dataset.translateKey;
         const translation = i18n[key];
+        
         if (translation !== undefined) {
-             const targetNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) || el;
-             if (el.placeholder !== undefined) el.placeholder = translation;
-             else if (el.title !== undefined) el.title = translation;
-             else targetNode.textContent = el.innerHTML.includes('▼') ? ` ${translation} ▼` : el.innerHTML.includes('📊') || el.innerHTML.includes('➕') || el.innerHTML.includes('📅') || el.innerHTML.includes('📦') ? ` ${translation}` : translation;
+            if (el.placeholder !== undefined) {
+                el.placeholder = translation;
+            } else if (el.title !== undefined && (el.tagName === 'BUTTON' || el.tagName === 'A')) {
+                el.title = translation;
+            } else {
+                // "Okos" csere: megkeresi a szöveget, de békén hagyja az ikonokat
+                let targetNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0);
+                
+                if (targetNode) {
+                    // Ha van szöveg, csak azt cseréli
+                    targetNode.textContent = translation;
+                } else if (el.tagName === 'SPAN' || el.tagName === 'P' || el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3') {
+                    // Ha nincs szöveg (pl. csak egy span), akkor beírja a fordítást
+                    el.textContent = translation;
+                }
+            }
         }
     });
 
     document.title = i18n.appTitle;
     updateLanguageButtonStyles();
     
-    // NYELVFÜGGŐ ELEMEK MEGJELENÍTÉSE/ELREJTÉSE
+    // NYELVFÜGGŐ ELEMEK MEGJELENÍTÉSE/ELREJTÉSE (most már itt van, így minden váltáskor lefut)
     const compensationSectionDe = document.getElementById('compensation-section-de');
     if(compensationSectionDe) {
         compensationSectionDe.style.display = currentLang === 'de' ? 'none' : 'block';
     }
 
-    renderLiveTabView();
-    if (!document.getElementById('content-list').classList.contains('hidden')) renderRecords();
-    if (!document.getElementById('content-summary').classList.contains('hidden')) renderSummary();
-    if (!document.getElementById('content-stats').classList.contains('hidden')) renderStats();
-    if (!document.getElementById('content-tachograph').classList.contains('hidden')) renderTachographAnalysis();
-    if (!document.getElementById('content-pallets').classList.contains('hidden')) renderPalletRecords();
+    // A nézetek frissítése, hogy az új nyelvi beállítások érvényesüljenek
+    if (document.getElementById('content-list').style.display !== 'none') renderRecords();
+    if (document.getElementById('content-summary').style.display !== 'none') renderSummary();
+    if (document.getElementById('content-stats').style.display !== 'none') renderStats();
+    if (document.getElementById('content-tachograph').style.display !== 'none') renderTachographAnalysis();
+    if (document.getElementById('content-pallets').style.display !== 'none') renderPalletRecords();
     updateDisplays();
 }
 
