@@ -6,6 +6,7 @@
 .stats-view-btn.active { background-color: #3b82f6; color: white; }
 .pallet-entry-felvett { border-left-color: #22c55e; }
 .pallet-entry-leadott { border-left-color: #ef4444; }
+.pallet-entry-csere { border-left-color: #6b7280; }
 .toggle-label:checked ~ .toggle-dot { transform: translateX(100%); }
 .toggle-label:checked ~ .toggle-bg { background-color: #22c55e; }
 /* Dark Mode Styles */
