@@ -309,7 +309,7 @@
                         <div>
                             <h3 class="font-semibold">Munkaidő PRO</h3>
                             <p class="text-sm text-gray-600" data-translate-key="settingsAboutCreator">Készítette: Princz Attila</p>
-                            <p class="text-xs text-gray-500 mt-1"><span data-translate-key="settingsVersion">Verzió:</span> 8.01</p>
+                            <p class="text-xs text-gray-500 mt-1"><span data-translate-key="settingsVersion">Verzió:</span> 8.02</p>
                         </div>
                     </div>
                 </div>
@@ -351,7 +351,11 @@
                             </select>
                         </div>
                     </div>
-                    <button onclick="savePalletEntry()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">+ <span data-translate-key="palletsSaveTransaction">Tranzakció mentése</span></button>
+                    <div id="palletLicensePlateContainer" class="hidden mt-3">
+                        <label class="block text-sm mb-1" data-translate-key="palletsLicensePlate">Rendszám</label>
+                        <input type="text" id="palletLicensePlate" class="w-full p-2 border rounded-md uppercase" data-translate-key="palletsLicensePlatePlaceholder" placeholder="Pl. ABC-123">
+                    </div>
+                    <button onclick="savePalletEntry()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg mt-3">+ <span data-translate-key="palletsSaveTransaction">Tranzakció mentése</span></button>
                 </div>
 
                 <div>
