@@ -85,7 +85,7 @@
                         <div><label class="block text-xs mb-1" data-translate-key="startTime">Kezdés ideje</label><input type="time" id="startTime" onblur="formatTimeInput(this)" class="w-full p-2 border rounded text-sm"></div>
                         <div><label class="block text-xs mb-1" data-translate-key="endTime">Befejezés ideje</label><input type="time" id="endTime" onblur="formatTimeInput(this)" class="w-full p-2 border rounded text-sm"></div>
                     </div>
-                    <div id="compensation-section">
+                    <div id="compensation-section-de">
                         <label class="block text-xs mb-1 text-yellow-700" data-translate-key="compensationLabel">Kompenzáció / Szünet (levonódik)</label>
                         <input type="text" id="compensationTime" onblur="formatTimeInput(this, true)" class="w-full p-2 border border-yellow-400 rounded text-sm" placeholder="óó:pp">
                     </div>
@@ -119,6 +119,17 @@
                     </div>
                     <div id="kmDisplay" class="mt-2 text-sm text-orange-700"></div>
                 </div>
+                
+                <label id="splitRestToggle-container" class="flex items-center justify-between cursor-pointer p-2 rounded-lg transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 mt-4">
+                    <span class="text-gray-700 dark:text-gray-300">
+                        Volt 3+ órás egybefüggő pihenő? (Osztott) <span class="toggle-checkmark hidden font-bold text-lg text-green-600">✓</span>
+                    </span>
+                    <div class="relative">
+                        <input type="checkbox" id="toggleSplitRest" class="sr-only toggle-label">
+                        <div class="block bg-gray-300 dark:bg-gray-600 w-14 h-8 rounded-full toggle-bg"></div>
+                        <div class="toggle-dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                    </div>
+                </label>
 
                 <button onclick="saveEntry()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] mt-4"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> <span data-translate-key="saveEntry">Bejegyzés Mentése</span></button>
             </div>
@@ -298,7 +309,7 @@
                         <div>
                             <h3 class="font-semibold">Munkaidő PRO</h3>
                             <p class="text-sm text-gray-600" data-translate-key="settingsAboutCreator">Készítette: Princz Attila</p>
-                            <p class="text-xs text-gray-500 mt-1"><span data-translate-key="settingsVersion">Verzió:</span> 7.03</p>
+                            <p class="text-xs text-gray-500 mt-1"><span data-translate-key="settingsVersion">Verzió:</span> 8.01</p>
                         </div>
                     </div>
                 </div>
@@ -336,6 +347,7 @@
                             <select id="palletAction" class="w-full p-2 border rounded-md bg-white">
                                 <option value="felvett" data-translate-key="palletsActionTaken">Felvett</option>
                                 <option value="leadott" data-translate-key="palletsActionGiven">Leadott</option>
+                                <option value="csere" data-translate-key="palletsActionExchange">1:1 Csere</option>
                             </select>
                         </div>
                     </div>
@@ -344,6 +356,9 @@
 
                 <div>
                     <h3 class="text-lg font-semibold mb-2" data-translate-key="palletsHistory">Előzmények</h3>
+                    <div class="mb-4">
+                        <button onclick="generatePalletReport()" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg">📋 <span data-translate-key="palletReportGenerate">Raklap riport generálása</span></button>
+                    </div>
                     <div id="palletRecordsContainer" class="space-y-2">
                     </div>
                 </div>
