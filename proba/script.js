@@ -1298,7 +1298,12 @@ function applyFeatureToggles() {
 
     document.getElementById('km-section').style.display = showKm ? 'block' : 'none';
     document.getElementById('drivetime-section').style.display = showDriveTime ? 'block' : 'none';
-    document.getElementById('compensation-section').style.display = showCompensation ? 'block' : 'none';
+    
+    // ITT VAN A JAVÍTÁS: 'compensation-section-de'-re cserélve
+    const compensationSection = document.getElementById('compensation-section-de');
+    if (compensationSection) {
+        compensationSection.style.display = showCompensation ? 'block' : 'none';
+    }
     
     const palletTab = document.getElementById('tab-pallets');
     if(showPallets) {
@@ -1308,7 +1313,6 @@ function applyFeatureToggles() {
         palletTab.classList.add('hidden');
         palletTab.style.display = 'none';
     }
-
 
     if (!showCompensation) {
         document.getElementById('compensationTime').value = '';
