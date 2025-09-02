@@ -48,6 +48,8 @@ function calculateWeeklyAllowance() {
 // --- Renderelő függvények ---
 
 function renderWeeklyAllowance() {
+    if (!window.translations) return;
+    
     const i18n = window.translations[state.currentLang];
     const liveContainer = document.getElementById('live-allowance-display');
     const tachoContainer = document.getElementById('tacho-allowance-display');
