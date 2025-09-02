@@ -43,8 +43,6 @@ export function renderLiveTabView() {
         startView.classList.add('hidden');
         progressView.classList.remove('hidden');
         document.getElementById('live-start-time').textContent = `${i18n.startedAt}: ${state.inProgressEntry.date} ${state.inProgressEntry.startTime}`;
-        
-        // ... a többi logika változatlan
     } else {
         progressView.classList.add('hidden');
         startView.classList.remove('hidden');
@@ -52,8 +50,8 @@ export function renderLiveTabView() {
     }
 }
 
-// ... a fájl többi része (startLiveShift, stb.) változatlan
+// ... a startLiveShift, addLiveCrossing, stb. függvények változatlanok
 
 export function initializeLiveView() {
-    // Ez a függvény felel az eseménykezelőkért, pl. startLiveShiftBtn.onclick
+    // Itt jönnek majd az eseménykezelők, ha szükségesek lennének
 }
