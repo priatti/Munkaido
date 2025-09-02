@@ -1,6 +1,6 @@
 import { db } from '../config.js';
 import { state, setRecords, setPalletRecords } from '../state.js';
-import { showAlert } from '../ui/alerts.js';
+import { showAlert } from '../utils/domHelpers.js'; // <-- EZ VOLT A HIBA, MOST MÁR JÓ!
 
 /**
  * Betölti a munkaidő és paletta bejegyzéseket a megfelelő forrásból
@@ -45,8 +45,6 @@ export async function saveRecord(record) {
             showAlert(window.translations[state.currentLang].alertSaveToCloudError, 'info');
         }
     } else {
-        // A `state.records` tömböt a `listView.js` vagy `fullDayView.js` módosítja,
-        // itt csak a LocalStorage-be mentjük a frissített tömböt.
         localStorage.setItem('workRecords', JSON.stringify(state.records));
     }
 }
@@ -97,8 +95,7 @@ export async function deletePalletRecord(id) {
     }
 }
 
-// Segédfüggvények (csak ezen a modulon belül használatosak)
-
+// Belső segédfüggvények
 async function loadCollectionFromFirestore(collectionName) {
     try {
         const snapshot = await db.collection('users').doc(state.currentUser.uid).collection(collectionName).get();
