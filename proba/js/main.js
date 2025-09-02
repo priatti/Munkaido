@@ -1,7 +1,8 @@
 // PWA Service Worker regisztrációja
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.service-worker.register('/service-worker.js')
+    // JAVÍTÁS: A "service-worker" itt "serviceWorker"-re lett cserélve
+    navigator.serviceWorker.register('/service-worker.js')
       .then(registration => console.log('ServiceWorker sikeresen regisztrálva:', registration.scope))
       .catch(err => console.log('ServiceWorker regisztráció sikertelen:', err));
   });
@@ -26,7 +27,6 @@ import { initializePalletsView } from './ui/palletsView.js';
 document.addEventListener('DOMContentLoaded', async () => {
   await initializei18n();
   
-  // A navigáció és az összes többi UI modul eseménykezelőjének beállítása
   initializeNavigation();
   initializeLiveView();
   initializeFullDayView();
