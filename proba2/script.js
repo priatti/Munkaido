@@ -1013,31 +1013,39 @@ function importData() {
 // ====== LAPFÜLEK ÉS NÉZETEK LOGIKÁJA ======
 
 function showTab(tabName, isUiRefreshOnly = false) {
+    // Tartalom panelek elrejtése/megjelenítése
     document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden'));
     document.getElementById(`content-${tabName}`).classList.remove('hidden');
 
+    // Aktív fül vizuális jelölése
     const allTabs = document.querySelectorAll('.tab');
     const mainTabs = ['live', 'full-day', 'list', 'pallets'];
     const dropdownButton = document.getElementById('dropdown-button');
     const dropdownMenu = document.getElementById('dropdown-menu');
     allTabs.forEach(t => t.classList.remove('tab-active'));
     dropdownButton.classList.remove('tab-active');
+    
+    const i18n = translations[currentLang];
 
     if (mainTabs.includes(tabName)) {
+        // Ha egy fő fül aktív, a dropdown gomb az alapértelmezett "Továbbiak" szöveget kapja
         document.getElementById(`tab-${tabName}`).classList.add('tab-active');
-        dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`;
+        dropdownButton.innerHTML = `<span data-translate-key="menuMore">${i18n.menuMore}</span> ▼`;
     } else {
+        // Ha egy dropdown menüpont aktív, annak a nevét mutatjuk
         dropdownButton.classList.add('tab-active');
         const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`);
         if (selectedTitleEl) {
-            const selectedTitle = selectedTitleEl.textContent;
-            dropdownButton.innerHTML = `${selectedTitle} ▼`;
+            const titleKey = selectedTitleEl.dataset.translateKey;
+            dropdownButton.innerHTML = `${i18n[titleKey]} ▼`;
         }
     }
     
     closeDropdown();
 
-    if (isUiRefreshOnly) return;
+    if (isUiRefreshOnly) {
+        return; // UI frissítéskor nem futtatjuk a logikát újra
+    }
 
     // Logika futtatása csak akkor, ha a felhasználó aktívan váltott fület
     switch(tabName) {
