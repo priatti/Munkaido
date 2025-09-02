@@ -2,7 +2,8 @@ import { auth } from '../config.js';
 import { state, setCurrentUser } from '../state.js';
 import { loadAllRecords } from './database.js';
 import { renderApp } from '../ui/navigation.js';
-import { showAlert } from '../ui/alerts.js';
+// JAVÍTÁS: A hivatkozás a helyes fájlra, a domHelpers.js-re mutat
+import { showAlert } from '../utils/domHelpers.js';
 
 /**
  * Frissíti a felhasználói felületet a bejelentkezési állapot alapján
@@ -38,7 +39,7 @@ export async function loginWithGoogle() {
     try {
         await auth.signInWithPopup(provider);
     } catch (error) {
-        const i18n = window.translations[state.currentLang]; // A betöltött fordítások elérése
+        const i18n = window.translations[state.currentLang] || window.translations['en'];
         let msg = i18n.alertLoginError;
         if (error.code === 'auth/popup-closed-by-user') msg = i18n.alertPopupClosed;
         else if (error.code === 'auth/popup-blocked') msg = i18n.alertPopupBlocked;
