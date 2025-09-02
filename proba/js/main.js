@@ -16,15 +16,12 @@ import { initializeAuthentication } from './services/auth.js';
 import { initializei18n } from './services/i18n.js';
 
 // ------ UI MODULOK INICIALIZÁLÓ FÜGGVÉNYEINEK IMPORTÁLÁSA ------
+// Ezek a függvények felelnek az adott modul eseménykezelőinek beállításáért
 import { initializeNavigation } from './ui/navigation.js';
-import { initializeLiveView } from './ui/liveView.js';
-import { initializeFullDayView } from './ui/fullDayView.js';
-import { initializeListView } from './ui/listView.js';
-import { initializeStatsView } from './ui/statsView.js';
-import { initializeReportView } from './ui/reportView.js';
 import { initializeSettings } from './ui/settingsView.js';
-import { initializeTachographView } from './ui/tachographView.js';
 import { initializePalletsView } from './ui/palletsView.js';
+// ... és a többi UI modul inicializálója, amiket később adunk hozzá
+
 
 // ------ ALKALMAZÁS INDÍTÁSA ------
 document.addEventListener('DOMContentLoaded', async () => {
@@ -35,14 +32,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   initializeNavigation();
 
   // 3. Az összes többi UI modul eseménykezelőjének beállítása
-  initializeLiveView();
-  initializeFullDayView();
-  initializeListView();
-  initializeStatsView();
-  initializeReportView();
   initializeSettings();
-  initializeTachographView();
   initializePalletsView();
+  // ... ide jönnek majd a további initialize hívások...
+
 
   // 4. Firebase authentikáció elindítása, ami betölti a felhasználói adatokat
   //    és elindítja az app első renderelését.
