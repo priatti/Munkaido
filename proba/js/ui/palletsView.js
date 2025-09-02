@@ -2,16 +2,12 @@ import { state } from '../state.js';
 import { savePalletRecord, deletePalletRecord } from '../services/database.js';
 import { showAlert } from '../utils/domHelpers.js';
 
-/**
- * Kiszámolja és frissíti a raklap egyenleg kijelzőjét.
- */
 function updatePalletBalance() {
-    const i18n = window.translations[state.currentLang];
+    if (!window.translations) return;
+    const i18n = window.translations;
     const balance = state.palletRecords
         .filter(p => p.action !== 'csere')
-        .reduce((acc, curr) => {
-            return curr.action === 'felvett' ? acc + curr.quantity : acc - curr.quantity;
-        }, 0);
+        .reduce((acc, curr) => curr.action === 'felvett' ? acc + curr.quantity : acc - curr.quantity, 0);
     
     const displayEl = document.getElementById('palletBalanceDisplay');
     if (!displayEl) return;
@@ -26,11 +22,9 @@ function updatePalletBalance() {
     `;
 }
 
-/**
- * Megjeleníti a rögzített paletta tranzakciók listáját.
- */
 export function renderPalletRecords() {
-    const i18n = window.translations[state.currentLang];
+    if (!window.translations) return;
+    const i18n = window.translations;
     const container = document.getElementById('palletRecordsContainer');
     if (!container) return;
     
@@ -59,17 +53,14 @@ export function renderPalletRecords() {
             </div>
             <div class="text-right">
                  <p class="font-bold text-lg">${sign}${p.quantity}</p>
-                 <button data-delete-pallet-id="${p.id}" class="text-xs text-gray-400 hover:text-red-500">🗑️</button>
+                 <button data-delete-pallet-id="${p.id}" class="delete-pallet-btn text-xs text-gray-400 hover:text-red-500">🗑️</button>
             </div>
         </div>`;
     }).join('');
 }
 
-/**
- * Elment egy új paletta tranzakciót.
- */
 async function savePalletEntry() {
-    const i18n = window.translations[state.currentLang];
+    const i18n = window.translations;
     const newEntry = {
         id: String(Date.now()),
         date: document.getElementById('palletDate').value,
@@ -88,18 +79,13 @@ async function savePalletEntry() {
     await savePalletRecord(newEntry);
     renderPalletRecords();
 
-    // Űrlap ürítése
     document.getElementById('palletLocation').value = '';
     document.getElementById('palletQuantity').value = '';
     showAlert(i18n.palletSaveSuccess, "success");
 }
 
-/**
- * Töröl egy paletta bejegyzést (UI oldali logika).
- * @param {string} id - A törlendő bejegyzés ID-ja.
- */
 export function deletePalletEntry_UI(id) {
-    const i18n = window.translations[state.currentLang];
+    const i18n = window.translations;
     showAlert(i18n.alertConfirmDelete, 'warning', async () => {
         state.palletRecords = state.palletRecords.filter(p => p.id !== id);
         await deletePalletRecord(id);
@@ -107,19 +93,18 @@ export function deletePalletEntry_UI(id) {
     });
 }
 
-/**
- * PDF riportot generál a paletta mozgásokról.
- */
 function generatePalletReport() {
-    // A PDF generálás logikája ide kerülne, a reportView.js-hez hasonlóan.
-    // A rövidség kedvéért most egy üzenettel jelezzük a működését.
-    showAlert("Raklap riport generálása folyamatban...", "info");
+    showAlert("Raklap riport generálása...", "info");
 }
 
-/**
- * A paletta nézet eseménykezelőinek inicializálása.
- */
 export function initializePalletsView() {
     document.getElementById('savePalletEntryBtn').addEventListener('click', savePalletEntry);
     document.getElementById('generatePalletReportBtn').addEventListener('click', generatePalletReport);
+    
+    document.getElementById('palletRecordsContainer').addEventListener('click', (event) => {
+        const deleteBtn = event.target.closest('.delete-pallet-btn');
+        if (deleteBtn) {
+            deletePalletEntry_UI(deleteBtn.dataset.deletePalletId);
+        }
+    });
 }
