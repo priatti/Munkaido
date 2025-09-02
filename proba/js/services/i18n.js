@@ -3,6 +3,22 @@ import { renderApp } from '../ui/navigation.js';
 
 let fallbackTranslations = {}; // Az angol, mint végső mentsvár
 
+/**
+ * ÚJ FUNKCIÓ: Frissíti a nyelvválasztó gombok stílusát.
+ */
+function updateLanguageButtonStyles() {
+    const selector = document.getElementById('languageSelector');
+    if (selector) {
+        const buttons = selector.querySelectorAll('.lang-btn');
+        buttons.forEach(btn => {
+            btn.classList.remove('bg-blue-100', 'dark:bg-blue-800', 'border-blue-500', 'font-bold');
+            if (state.currentLang === btn.dataset.lang) {
+                btn.classList.add('bg-blue-100', 'dark:bg-blue-800', 'border-blue-500', 'font-bold');
+            }
+        });
+    }
+}
+
 async function fetchTranslations(lang) {
     try {
         const response = await fetch(`js/data/locales/${lang}.json`);
@@ -37,6 +53,9 @@ export function updateAllTexts() {
             }
         }
     });
+
+    // BIZTOSÍTJA, HOGY A GOMBOK STÍLUSA IS FRISSÜLJÖN
+    updateLanguageButtonStyles();
 }
 
 export async function setLanguage(lang) {
@@ -44,7 +63,11 @@ export async function setLanguage(lang) {
     localStorage.setItem('language', lang);
     document.documentElement.lang = lang;
     await loadAndSetTranslations(lang);
+    
+    // A renderApp() újrarajzolja a dinamikus részeket,
+    // míg az updateAllTexts() a statikusakat
     renderApp();
+    updateAllTexts();
 }
 
 async function loadAndSetTranslations(lang) {
@@ -57,7 +80,6 @@ async function loadAndSetTranslations(lang) {
 
 export async function initializei18n() {
     fallbackTranslations = await fetchTranslations('en');
-    // JAVÍTÁS: A 'lang' változó 'state.currentLang'-ra lett cserélve
     await loadAndSetTranslations(state.currentLang); 
     updateAllTexts();
 }
