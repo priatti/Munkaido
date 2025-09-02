@@ -1364,3 +1364,339 @@ function renderRecords() {
 }
 
 // ====== A FÁJL VÉGE ======
+// ====== RAKLAP NÉZET ======
+
+function renderPalletRecords() {
+    const i18n = translations[currentLang];
+    const container = document.getElementById('palletRecordsContainer');
+    const balanceDisplay = document.getElementById('palletBalanceDisplay');
+    
+    let balance = 0;
+    const sorted = [...palletRecords].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    if (sorted.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-500 py-4">${i18n.palletsNoTransactions}</p>`;
+    } else {
+        container.innerHTML = sorted.map(r => {
+            let change = 0;
+            let actionText = '';
+            let borderColor = '';
+            if (r.action === 'felvett') {
+                change = r.quantity;
+                actionText = i18n.palletsActionTaken;
+                borderColor = 'pallet-entry-felvett';
+            } else if (r.action === 'leadott') {
+                change = -r.quantity;
+                actionText = i18n.palletsActionGiven;
+                borderColor = 'pallet-entry-leadott';
+            } else { // csere
+                actionText = i18n.palletsActionExchange;
+                borderColor = 'pallet-entry-csere';
+            }
+            balance += change;
+
+            return `<div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border-l-4 ${borderColor}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="font-bold">${new Date(r.date + 'T00:00:00').toLocaleDateString(i18n.locale)} - ${r.location}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">${actionText}: <span class="font-semibold">${r.quantity} db</span> ${r.licensePlate ? `(${r.licensePlate})` : ''}</p>
+                    </div>
+                    <div>
+                        <button onclick="deletePalletEntry('${r.id}')" class="text-red-500 p-1">🗑️</button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    balance = 0;
+    [...palletRecords].sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(r => {
+        if(r.action === 'felvett') balance += r.quantity;
+        if(r.action === 'leadott') balance -= r.quantity;
+    });
+
+    balanceDisplay.innerHTML = `<p class="text-sm font-semibold">${i18n.palletsBalance}</p><p class="text-2xl font-bold ${balance > 0 ? 'text-green-600' : (balance < 0 ? 'text-red-600' : '')}">${balance} db</p>`;
+}
+
+
+// ====== DROPDOWN ÉS UI VEZÉRLÉS ======
+
+function toggleDropdown() {
+    document.getElementById('dropdown-menu').classList.toggle('hidden');
+}
+
+function closeDropdown() {
+    document.getElementById('dropdown-menu').classList.add('hidden');
+}
+
+// ====== SEGÉDFÜGGVÉNYEK ======
+
+function formatTimeInput(input, allowMoreThan24Hours = false) {
+    let value = input.value.replace(/[^0-9]/g, '');
+    if (value.length === 0) return;
+
+    let hours, minutes;
+    if (value.length <= 2) {
+        hours = parseInt(value, 10);
+        minutes = 0;
+    } else {
+        hours = parseInt(value.slice(0, -2), 10);
+        minutes = parseInt(value.slice(-2), 10);
+    }
+    
+    if (minutes >= 60) {
+        hours += Math.floor(minutes / 60);
+        minutes %= 60;
+    }
+    
+    if (!allowMoreThan24Hours && hours >= 24) {
+        hours %= 24;
+    }
+    
+    input.value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function getDayRange(date, dayOffset = 0) {
+    const targetDate = new Date(date);
+    targetDate.setDate(targetDate.getDate() + dayOffset);
+    targetDate.setHours(0, 0, 0, 0);
+    const start = targetDate;
+    const end = new Date(targetDate);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+}
+
+function getWeekRange(date, weekOffset = 0) {
+    const targetDate = new Date(date);
+    targetDate.setDate(targetDate.getDate() + (weekOffset * 7));
+    const day = targetDate.getDay();
+    const diff = targetDate.getDate() - day + (day === 0 ? -6 : 1);
+    const start = new Date(targetDate.setDate(diff));
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+}
+
+function checkForAutoExport() {
+    const frequency = localStorage.getItem('autoExportFrequency') || 'never';
+    if (frequency === 'never') return;
+
+    const lastExport = new Date(localStorage.getItem('lastAutoExportDate') || 0);
+    const now = new Date();
+    let daysBetween = 0;
+    if (frequency === 'daily') daysBetween = 1;
+    else if (frequency === 'weekly') daysBetween = 7;
+    else if (frequency === 'monthly') daysBetween = 30;
+
+    const diffTime = Math.abs(now - lastExport);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays >= daysBetween) {
+        exportData();
+        localStorage.setItem('lastAutoExportDate', now.toISOString());
+    }
+}
+
+// ====== TÉMA VEZÉRLÉS ======
+function initTheme() {
+    const theme = localStorage.getItem('theme') || 'auto';
+    setTheme(theme);
+    document.getElementById('themeSelector').value = theme;
+}
+
+function setTheme(theme) {
+    localStorage.setItem('theme', theme);
+    if (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+    } else if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
+
+// ====== SPECIÁLIS FUNKCIÓK KAPCSOLÓI ======
+
+function initializeFeatureToggles() {
+    const toggles = [
+        { id: 'toggleKm', key: 'featureKmEnabled', section: 'km-section' },
+        { id: 'toggleDriveTime', key: 'featureDriveTimeEnabled', section: 'drivetime-section' },
+        { id: 'togglePallets', key: 'featurePalletsEnabled', tab: 'tab-pallets' },
+        { id: 'toggleCompensation', key: 'featureCompensationEnabled', section: 'compensation-section-de' }
+    ];
+    toggles.forEach(toggle => {
+        const el = document.getElementById(toggle.id);
+        if (el) {
+            const isEnabled = localStorage.getItem(toggle.key) !== 'false'; // Alapból bekapcsolva
+            el.checked = isEnabled;
+            updateToggleVisuals(el);
+            el.addEventListener('change', () => handleFeatureToggle(toggle));
+        }
+    });
+}
+
+function handleFeatureToggle(toggleConfig) {
+    const isEnabled = document.getElementById(toggleConfig.id).checked;
+    localStorage.setItem(toggleConfig.key, isEnabled);
+    applyFeatureToggles();
+}
+
+function updateToggleVisuals(checkbox) {
+    const checkmark = checkbox.closest('label').querySelector('.toggle-checkmark');
+    if (checkmark) checkmark.classList.toggle('hidden', !checkbox.checked);
+}
+
+function applyFeatureToggles() {
+     const toggles = [
+        { key: 'featureKmEnabled', section: 'km-section' },
+        { key: 'featureDriveTimeEnabled', section: 'drivetime-section' },
+        { key: 'featurePalletsEnabled', tab: 'tab-pallets' },
+        { key: 'featureCompensationEnabled', section: 'compensation-section-de' }
+    ];
+    toggles.forEach(toggle => {
+        const isEnabled = localStorage.getItem(toggle.key) !== 'false';
+        if (toggle.section) {
+            const sectionEl = document.getElementById(toggle.section);
+            if (sectionEl) sectionEl.style.display = isEnabled ? '' : 'none';
+        }
+        if (toggle.tab) {
+            const tabEl = document.getElementById(toggle.tab);
+            if (tabEl) tabEl.classList.toggle('hidden', !isEnabled);
+        }
+    });
+}
+
+// ====== AUTOMATIKUS KIEGÉSZÍTÉS (AUTOCOMPLETE) ======
+function updateUniqueLocations() {
+    const locations = new Set();
+    records.forEach(r => {
+        if (r.startLocation) locations.add(r.startLocation);
+        if (r.endLocation) locations.add(r.endLocation);
+    });
+    uniqueLocations = Array.from(locations);
+}
+
+function updateUniquePalletLocations() {
+    const locations = new Set();
+    palletRecords.forEach(r => {
+        if (r.location) locations.add(r.location);
+    });
+    uniquePalletLocations = Array.from(locations);
+}
+
+function initAllAutocomplete() {
+    initAutocomplete('liveStartLocation', uniqueLocations);
+    initAutocomplete('startLocation', uniqueLocations);
+    initAutocomplete('endLocation', uniqueLocations);
+    initAutocomplete('palletLocation', uniquePalletLocations);
+}
+
+function initAutocomplete(inputId, data) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    let currentFocus;
+    input.addEventListener("input", function(e) {
+        let a, b, i, val = this.value;
+        closeAllLists();
+        if (!val) { return false;}
+        currentFocus = -1;
+        a = document.createElement("DIV");
+        a.setAttribute("id", this.id + "autocomplete-list");
+        a.setAttribute("class", "autocomplete-list bg-white border border-gray-300 absolute z-20 w-full rounded-md shadow-lg");
+        this.parentNode.appendChild(a);
+        for (i = 0; i < data.length; i++) {
+            if (data[i].toUpperCase().includes(val.toUpperCase())) {
+                b = document.createElement("DIV");
+                b.innerHTML = "<strong>" + data[i].substr(0, val.length) + "</strong>";
+                b.innerHTML += data[i].substr(val.length);
+                b.innerHTML += "<input type='hidden' value='" + data[i] + "'>";
+                b.className = "autocomplete-item p-2 cursor-pointer hover:bg-gray-100";
+                b.addEventListener("click", function(e) {
+                    input.value = this.getElementsByTagName("input")[0].value;
+                    closeAllLists();
+                });
+                a.appendChild(b);
+            }
+        }
+    });
+
+    function closeAllLists(elmnt) {
+        var x = document.getElementsByClassName("autocomplete-list");
+        for (var i = 0; i < x.length; i++) {
+            if (elmnt != x[i] && elmnt != input) {
+                x[i].parentNode.removeChild(x[i]);
+            }
+        }
+    }
+    document.addEventListener("click", function (e) {
+        closeAllLists(e.target);
+    });
+}
+
+
+// ====== EGYEDI FELUGRÓ ABLAK (CUSTOM ALERT) ======
+
+function showCustomAlert(message, type = 'info', callback = null) {
+    const overlay = document.getElementById('custom-alert-overlay');
+    const box = document.getElementById('custom-alert-box');
+    const iconEl = document.getElementById('custom-alert-icon');
+    const messageEl = document.getElementById('custom-alert-message');
+    const buttonsEl = document.getElementById('custom-alert-buttons');
+    
+    alertCallback = callback;
+
+    messageEl.textContent = message;
+    
+    let iconHTML = '';
+    let iconBgClass = '';
+    if (type === 'success') {
+        iconHTML = `<svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+        iconBgClass = 'bg-green-100';
+    } else if (type === 'warning') {
+        iconHTML = `<svg class="w-10 h-10 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+        iconBgClass = 'bg-yellow-100';
+    } else { // info
+        iconHTML = `<svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        iconBgClass = 'bg-blue-100';
+    }
+    
+    iconEl.className = `w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center ${iconBgClass}`;
+    iconEl.innerHTML = iconHTML;
+
+    let buttonsHTML = '';
+    const i18n = translations[currentLang];
+    if (type === 'warning' && callback) {
+        buttonsHTML = `
+            <button onclick="if(alertCallback) alertCallback(); closeCustomAlert();" class="btn-primary px-6 py-2 rounded-lg">${i18n.ok}</button>
+            <button onclick="closeCustomAlert()" class="btn-secondary px-6 py-2 rounded-lg bg-gray-300 text-gray-800 hover:bg-gray-400">${i18n.cancel}</button>
+        `;
+    } else {
+        buttonsHTML = `<button onclick="closeCustomAlert()" class="btn-primary px-8 py-2 rounded-lg">${i18n.ok}</button>`;
+    }
+    buttonsEl.innerHTML = buttonsHTML;
+
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    setTimeout(() => {
+        overlay.classList.remove('opacity-0');
+        box.classList.remove('scale-95');
+    }, 10);
+}
+
+function closeCustomAlert() {
+    const overlay = document.getElementById('custom-alert-overlay');
+    const box = document.getElementById('custom-alert-box');
+    overlay.classList.add('opacity-0');
+    box.classList.add('scale-95');
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+        if (alertCallback && !overlay.classList.contains('flex')) { 
+            // ha OK gomb volt, a callback már lefutott
+        }
+        alertCallback = null;
+    }, 300);
+}
