@@ -107,7 +107,7 @@ async function loadCollectionFromFirestore(collectionName) {
     }
 }
 
-async function migrateLocalToFirestore(localData, collectionName) {
+export async function migrateLocalToFirestore(localData, collectionName) {
     const batch = db.batch();
     localData.forEach(record => {
         const docRef = db.collection('users').doc(state.currentUser.uid).collection(collectionName).doc(String(record.id));
