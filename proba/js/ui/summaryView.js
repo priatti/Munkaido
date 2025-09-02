@@ -6,7 +6,10 @@ import { formatDuration, getWeekRange, toISODate } from '../utils/helpers.js';
  * Legenerálja és megjeleníti az összesítő nézetet a különböző időszakokra.
  */
 export function renderSummary() {
-    const i18n = window.translations[state.currentLang];
+    // Védelmi sor + helyes fordítási objektum használata
+    if (!window.translations) return;
+    const i18n = window.translations;
+
     const container = document.getElementById('summaryContent');
     if (!container) return;
 
