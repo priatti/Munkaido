@@ -1,7 +1,7 @@
 // PWA Service Worker regisztrációja
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.service-worker.register('/service-worker.js')
       .then(registration => console.log('ServiceWorker sikeresen regisztrálva:', registration.scope))
       .catch(err => console.log('ServiceWorker regisztráció sikertelen:', err));
   });
@@ -13,10 +13,14 @@ import { initializei18n } from './services/i18n.js';
 
 // ------ UI MODULOK INICIALIZÁLÓ FÜGGVÉNYEINEK IMPORTÁLÁSA ------
 import { initializeNavigation } from './ui/navigation.js';
+import { initializeLiveView } from './ui/liveView.js';
+import { initializeFullDayView } from './ui/fullDayView.js';
 import { initializeListView } from './ui/listView.js';
-import { initializePalletsView } from './ui/palletsView.js';
+import { initializeStatsView } from './ui/statsView.js';
+import { initializeReportView } from './ui/reportView.js';
 import { initializeSettings } from './ui/settingsView.js';
-// ...és a többi, amit később adunk hozzá
+import { initializeTachographView } from './ui/tachographView.js';
+import { initializePalletsView } from './ui/palletsView.js';
 
 // ------ ALKALMAZÁS INDÍTÁSA ------
 document.addEventListener('DOMContentLoaded', async () => {
@@ -24,9 +28,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // A navigáció és az összes többi UI modul eseménykezelőjének beállítása
   initializeNavigation();
+  initializeLiveView();
+  initializeFullDayView();
   initializeListView();
-  initializePalletsView();
+  initializeStatsView();
+  initializeReportView();
   initializeSettings();
+  initializeTachographView();
+  initializePalletsView();
   
   initializeAuthentication();
 });
