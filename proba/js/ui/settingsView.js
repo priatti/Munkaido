@@ -148,7 +148,8 @@ export function initializeSettings() {
             btn.classList.add('bg-blue-100', 'dark:bg-blue-800', 'border-blue-500', 'font-bold');
             
             // Nyelv váltás
-            await setLanguage(btn.dataset.lang);
+            localStorage.setItem('language', btn.dataset.lang);
+window.location.reload(); // Teljes oldal újratöltés
             
             // EXTRA: Kényszerített frissítés
             setTimeout(() => {
