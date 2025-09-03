@@ -1,12 +1,9 @@
-// js/services/i18n.js - TELJES JAVÍTOTT VERZIÓ
+// js/services/i18n.js - VÉGSŐ VERZIÓ minden szöveggel
 import { state } from '../state.js';
 import { renderApp } from '../ui/navigation.js';
 
 let fallbackTranslations = {};
 
-/**
- * Frissíti a nyelvválasztó gombok stílusát.
- */
 function updateLanguageButtonStyles() {
     const selector = document.getElementById('languageSelector');
     if (selector) {
@@ -22,122 +19,111 @@ function updateLanguageButtonStyles() {
 
 async function fetchTranslations(lang) {
     try {
-        console.log(`🔍 Fordítási fájl betöltése: ${lang}.json`);
         const response = await fetch(`js/data/locales/${lang}.json`);
-        if (!response.ok) {
-            console.error(`❌ HTTP hiba ${response.status}: A ${lang}.json nem található.`);
-            throw new Error(`HTTP ${response.status}`);
-        }
-        const translations = await response.json();
-        console.log(`✅ ${lang} betöltve:`, Object.keys(translations).length, 'kulcs');
-        
-        // DEBUG: Kiírjuk az első 10 kulcsot
-        console.log('📋 Első fordítások:', Object.keys(translations).slice(0, 10).map(k => `${k}: ${translations[k]}`));
-        
-        return translations;
+        if (!response.ok) throw new Error(`A ${lang}.json nem található.`);
+        return await response.json();
     } catch (error) {
-        console.error(`❌ Hiba a ${lang}.json betöltésekor:`, error);
+        console.error(error);
         return {};
     }
 }
 
 export function updateAllTexts() {
     const currentTranslations = window.translations;
-    if (!currentTranslations || Object.keys(currentTranslations).length === 0) {
-        console.warn('⚠️ Nincs elérhető fordítás!');
-        return;
-    }
-
-    console.log('🔄 Szövegek frissítése kezdődik...', Object.keys(currentTranslations).length, 'fordítási kulcs elérhető');
+    if (!currentTranslations || Object.keys(currentTranslations).length === 0) return;
 
     // Dokumentum címének frissítése
     document.title = currentTranslations.appTitle || fallbackTranslations.appTitle || 'Munkaidő Pro';
+    
+    // FŐ CÍM frissítése a header-ben
+    const mainTitle = document.querySelector('h1[data-translate-key="appTitle"]');
+    if (mainTitle) {
+        mainTitle.textContent = currentTranslations.appTitle || 'Munkaidő Nyilvántartó Pro';
+    }
 
-    // KRITIKUS: Várjunk a DOM renderelésre, majd frissítsük a szövegeket
     setTimeout(() => {
         let updatedCount = 0;
-        let notFoundKeys = [];
         
-        // Minden data-translate-key attribútummal rendelkező elem megkeresése
-        const elementsToTranslate = document.querySelectorAll('[data-translate-key]');
-        console.log(`🎯 ${elementsToTranslate.length} fordítandó elem találva`);
-        
-        elementsToTranslate.forEach((el, index) => {
+        // Minden data-translate-key elem frissítése
+        document.querySelectorAll('[data-translate-key]').forEach((el) => {
             const key = el.dataset.translateKey;
             const translation = currentTranslations[key] || fallbackTranslations[key];
             
-            if (!translation) {
-                notFoundKeys.push(key);
-                console.warn(`🔑 Hiányzó fordítási kulcs: "${key}"`);
-                return;
-            }
+            if (!translation) return;
             
-            // Különböző elem típusok kezelése
             try {
                 if (el.placeholder !== undefined && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
                     el.placeholder = translation;
                 } else if (el.title !== undefined) {
                     el.title = translation;
                 } else {
-                    // Span elemek keresése (gomboknál gyakori)
                     const span = el.querySelector('span');
                     if (span) {
                         span.textContent = translation;
                     } else if (el.children.length === 0) {
-                        // Ha nincs gyerek elem, közvetlenül frissítjük
                         el.textContent = translation;
                     } else {
-                        // Komplex elemek esetén próbáljuk megtalálni a szöveges részt
+                        // Komplex elemek kezelése
                         const textNode = Array.from(el.childNodes).find(node => 
                             node.nodeType === 3 && node.textContent.trim().length > 0
                         );
                         if (textNode) {
                             textNode.textContent = translation;
                         } else {
-                            // Utolsó esély: innerHTML használata (óvatosan)
-                            const innerHTML = el.innerHTML;
-                            if (innerHTML.includes('>') && innerHTML.includes('<')) {
-                                // Ha van HTML tartalom, csak a span-okat cseréljük
-                                const spans = el.querySelectorAll('span');
-                                if (spans.length === 1) {
-                                    spans[0].textContent = translation;
-                                }
-                            } else {
-                                el.textContent = translation;
+                            const spans = el.querySelectorAll('span');
+                            if (spans.length === 1) {
+                                spans[0].textContent = translation;
                             }
                         }
                     }
                 }
                 updatedCount++;
-                
-                // DEBUG: Részletes logolás az első 5 elemről
-                if (index < 5) {
-                    console.log(`🔄 [${index}] "${key}" → "${translation}" (${el.tagName})`);
-                }
-                
             } catch (error) {
-                console.error(`❌ Hiba a(z) "${key}" kulcs frissítésekor:`, error);
+                console.error(`Hiba a "${key}" kulcs frissítésekor:`, error);
             }
         });
         
-        console.log(`✅ ${updatedCount} elem frissítve, ${notFoundKeys.length} kulcs hiányzik`);
-        
-        if (notFoundKeys.length > 0) {
-            console.warn('🔍 Hiányzó kulcsok:', notFoundKeys.slice(0, 10));
-        }
+        // EXTRA: Speciális elemek keresése és frissítése CSS szelektorokkal
+        updateSpecialElements(currentTranslations);
         
         updateLanguageButtonStyles();
-        
-        // EXTRA: Kényszerített újra-renderelés a navigációs elemekre
-        setTimeout(() => {
-            renderApp();
-        }, 100);
+        console.log(`✅ ${updatedCount} statikus elem frissítve`);
         
     }, 50);
 }
 
+/**
+ * Speciális, dinamikusan generált elemek frissítése
+ */
+function updateSpecialElements(translations) {
+    // "Munkanap folyamatban" szöveg keresése és cseréje
+    const progressElements = document.querySelectorAll('.font-bold');
+    progressElements.forEach(el => {
+        if (el.textContent.includes('folyamatban')) {
+            el.textContent = translations.workdayInProgress || 'Munkanap folyamatban';
+        }
+    });
+    
+    // Egyéb dinamikus szövegek
+    const elementsToUpdate = [
+        { selector: '.text-indigo-800', contains: 'Határátlépés', key: 'newBorderCrossing' },
+        { selector: '.bg-blue-100 .font-bold', contains: 'folyamatban', key: 'workdayInProgress' }
+    ];
+    
+    elementsToUpdate.forEach(item => {
+        const elements = document.querySelectorAll(item.selector);
+        elements.forEach(el => {
+            if (el.textContent.includes(item.contains)) {
+                el.textContent = translations[item.key] || el.textContent;
+            }
+        });
+    });
+    
+    console.log('🔄 Speciális elemek frissítve');
+}
+
 export async function setLanguage(lang) {
-    console.log(`🌐 Nyelv váltás kezdeményezve: ${state.currentLang} → ${lang}`);
+    console.log(`🌐 Nyelv váltás: ${state.currentLang} → ${lang}`);
     
     state.currentLang = lang;
     localStorage.setItem('language', lang);
@@ -145,65 +131,42 @@ export async function setLanguage(lang) {
     
     await loadAndSetTranslations(lang);
     
-    // TRIPLA BIZTOSÍTÁS: Több renderelési ciklus különböző késleltetéssel
-    console.log('🔄 DOM frissítések indítása...');
-    
+    // NÉGYSZERES BIZTOSÍTÁS különböző időzítésekkel
     renderApp();
     updateAllTexts();
     
     setTimeout(() => {
-        console.log('🔄 Második frissítési kör...');
         renderApp();
         updateAllTexts();
-    }, 150);
+    }, 100);
     
     setTimeout(() => {
-        console.log('🔄 Harmadik frissítési kör...');
         updateAllTexts();
-    }, 300);
+    }, 250);
     
     setTimeout(() => {
-        console.log('🔄 Végső frissítés...');
         updateAllTexts();
+        // EXTRA: Kényszerített frissítés az összes elemre
+        const event = new Event('languageChanged');
+        document.dispatchEvent(event);
     }, 500);
     
-    console.log(`✅ Nyelv sikeresen váltva: ${lang}`);
+    console.log(`✅ Nyelv váltás befejezve: ${lang}`);
 }
 
 async function loadAndSetTranslations(lang) {
-    console.log(`📚 Fordítások betöltése: ${lang}`);
-    
     if (lang === 'en') {
         window.translations = fallbackTranslations;
-        console.log('🇬🇧 Angol fordítások beállítva (fallback)');
     } else {
-        const translations = await fetchTranslations(lang);
-        if (Object.keys(translations).length > 0) {
-            window.translations = translations;
-            console.log(`🇩🇪 ${lang} fordítások sikeresen beállítva`);
-        } else {
-            console.warn(`⚠️ ${lang} fordítások betöltése sikertelen, angol használata`);
-            window.translations = fallbackTranslations;
-        }
+        window.translations = await fetchTranslations(lang);
     }
-    
-    // DEBUG: Kiírjuk néhány fontos kulcs értékét
-    const testKeys = ['appTitle', 'tabOverview', 'tabList', 'workdayInProgress', 'finishShift'];
-    console.log('🧪 Teszt kulcsok:', testKeys.map(k => `${k}: ${window.translations[k] || 'HIÁNYZIK'}`));
 }
 
 export async function initializei18n() {
-    console.log('🚀 i18n inicializálás kezdődik...');
-    
-    // Angol fordítások betöltése fallback-ként
     fallbackTranslations = await fetchTranslations('en');
-    console.log('🇬🇧 Fallback fordítások betöltve:', Object.keys(fallbackTranslations).length, 'kulcs');
-    
-    // Aktuális nyelv fordításainak betöltése
-    await loadAndSetTranslations(state.currentLang);
-    
-    // Kezdeti szövegek frissítése
+    await loadAndSetTranslations(state.currentLang); 
     updateAllTexts();
     
-    console.log('✅ i18n inicializálás befejezve');
+    // Nyelv változás eseményre figyelés
+    document.addEventListener('languageChanged', updateAllTexts);
 }
