@@ -1,3 +1,4 @@
+// js/ui/navigation.js - JAVÍTOTT VERZIÓ dinamikus fordításokkal
 import { state } from '../state.js';
 import { renderLiveTabView } from './liveView.js';
 import { renderRecords } from './listView.js';
@@ -12,26 +13,69 @@ import { closeDropdown } from '../utils/domHelpers.js';
 const TABS = ['live', 'full-day', 'list', 'pallets', 'summary', 'stats', 'tachograph', 'report', 'settings'];
 
 /**
+ * JAVÍTÁS: Frissíti a TAB szövegeket dinamikusan a jelenlegi nyelv alapján
+ */
+function updateTabTexts() {
+    const i18n = window.translations;
+    if (!i18n) return;
+    
+    // Fő fülszövegek frissítése
+    const tabTexts = {
+        'tab-live': i18n.tabOverview || 'Áttekintés',
+        'tab-full-day': i18n.tabFullDay || 'Teljes nap', 
+        'tab-list': i18n.tabList || 'Lista',
+        'tab-pallets': i18n.tabPallets || 'Raklapok'
+    };
+    
+    Object.keys(tabTexts).forEach(tabId => {
+        const tab = document.getElementById(tabId);
+        if (tab) {
+            const span = tab.querySelector('span');
+            if (span) {
+                span.textContent = tabTexts[tabId];
+            }
+        }
+    });
+    
+    // "Továbbiak" gomb frissítése
+    const dropdownBtn = document.getElementById('dropdown-button');
+    if (dropdownBtn) {
+        const span = dropdownBtn.querySelector('span');
+        if (span && span.textContent.includes('Továbbiak')) {
+            span.textContent = i18n.menuMore || 'Továbbiak';
+        }
+    }
+    
+    console.log('🔄 Navigációs fülszövegek frissítve');
+}
+
+/**
  * Megjelenít egy adott fület és elrejti a többit.
  * @param {string} tabIdToShow - A megjelenítendő fül ID-ja.
  */
 export function showTab(tabIdToShow) {
     const mainTabs = ['live', 'full-day', 'list', 'pallets'];
     const dropdownButton = document.getElementById('dropdown-button');
-    const i18n = window.translations; // JAVÍTÁS: Közvetlenül a betöltött nyelvi objektumot használjuk
+    const i18n = window.translations;
 
-    if (!i18n) return; // Védelmi sor, ha a fordítások még nem állnak rendelkezésre
+    if (!i18n) return;
 
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
     dropdownButton.classList.remove('tab-active');
 
     if (mainTabs.includes(tabIdToShow)) {
         document.getElementById(`tab-${tabIdToShow}`).classList.add('tab-active');
-        dropdownButton.querySelector('span').textContent = i18n.menuMore;
+        const dropdownSpan = dropdownButton.querySelector('span');
+        if (dropdownSpan) {
+            dropdownSpan.textContent = i18n.menuMore || 'Továbbiak';
+        }
     } else {
         dropdownButton.classList.add('tab-active');
         const key = `menu${tabIdToShow.charAt(0).toUpperCase() + tabIdToShow.slice(1)}`;
-        dropdownButton.querySelector('span').textContent = i18n[key];
+        const dropdownSpan = dropdownButton.querySelector('span');
+        if (dropdownSpan) {
+            dropdownSpan.textContent = i18n[key] || dropdownSpan.textContent;
+        }
     }
 
     TABS.forEach(tabId => {
@@ -59,10 +103,12 @@ export function showTab(tabIdToShow) {
  * A teljes alkalmazás újrarajzolása az aktuális állapot alapján.
  */
 export function renderApp() {
+    // JAVÍTÁS: Tab szövegek frissítése minden rendereléskor
+    updateTabTexts();
+    
     renderLiveTabView();
     renderRecords();
     renderPalletRecords();
-    // A többi nézet renderelése akkor történik, amikor a felhasználó odalép (`showTab`).
 }
 
 /**
