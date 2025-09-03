@@ -1,8 +1,12 @@
 // PWA Service Worker regisztrációja
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // JAVÍTVA: Relatív útvonal használata a proba mappában
-    navigator.serviceWorker.register('./service-worker.js')
+    // JAVÍTVA: Teljes útvonal használata GitHub Pages-hez
+    const swPath = window.location.pathname.includes('/proba/') 
+      ? '/your-repo-name/proba/service-worker.js'  // GitHub Pages
+      : './service-worker.js';  // Local
+      
+    navigator.serviceWorker.register(swPath)
       .then(registration => console.log('ServiceWorker sikeresen regisztrálva:', registration.scope))
       .catch(err => console.log('ServiceWorker regisztráció sikertelen:', err));
   });
