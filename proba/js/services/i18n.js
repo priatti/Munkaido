@@ -2,7 +2,7 @@
 import { state } from '../state.js';
 import { renderApp } from '../ui/navigation.js';
 
-let fallbackTranslations = {}; // Az angol, mint végső mentsvár
+let fallbackTranslations = {};
 
 /**
  * Frissíti a nyelvválasztó gombok stílusát.
@@ -22,109 +22,84 @@ function updateLanguageButtonStyles() {
 
 async function fetchTranslations(lang) {
     try {
-        console.log(`Fordítási fájl betöltése: ${lang}.json`);
         const response = await fetch(`js/data/locales/${lang}.json`);
-        if (!response.ok) {
-            console.error(`HTTP hiba ${response.status}: A ${lang}.json nem található.`);
-            throw new Error(`HTTP ${response.status}`);
-        }
-        const translations = await response.json();
-        console.log(`Sikeresen betöltve ${lang}:`, Object.keys(translations).length, 'kulcs');
-        return translations;
+        if (!response.ok) throw new Error(`A ${lang}.json nem található.`);
+        return await response.json();
     } catch (error) {
-        console.error(`Hiba a ${lang}.json betöltésekor:`, error);
+        console.error(error);
         return {};
     }
 }
 
 export function updateAllTexts() {
     const currentTranslations = window.translations;
-    if (!currentTranslations || Object.keys(currentTranslations).length === 0) {
-        console.warn('Nincs elérhető fordítás!');
-        return;
-    }
+    if (!currentTranslations || Object.keys(currentTranslations).length === 0) return;
 
-    console.log('Szövegek frissítése...', Object.keys(currentTranslations).length, 'fordítási kulcs');
+    document.title = currentTranslations.appTitle || fallbackTranslations.appTitle;
 
-    document.title = currentTranslations.appTitle || fallbackTranslations.appTitle || 'Munkaidő Pro';
-
-    let updatedCount = 0;
-    document.querySelectorAll('[data-translate-key]').forEach(el => {
-        const key = el.dataset.translateKey;
-        const translation = currentTranslations[key] || fallbackTranslations[key] || `[${key}]`;
-        
-        if (el.placeholder !== undefined && el.tagName === 'INPUT') {
-            el.placeholder = translation;
-        } else if (el.title !== undefined) {
-            el.title = translation;
-        } else {
-            const span = el.querySelector('span');
-            if (span) {
-                span.textContent = translation;
+    // KRITIKUS JAVÍTÁS: Várunk egy kicsit, hogy a DOM teljesen renderelődjön
+    setTimeout(() => {
+        document.querySelectorAll('[data-translate-key]').forEach(el => {
+            const key = el.dataset.translateKey;
+            const translation = currentTranslations[key] || fallbackTranslations[key] || `[${key}]`;
+            
+            if (el.placeholder !== undefined && el.tagName === 'INPUT') {
+                el.placeholder = translation;
+            } else if (el.title !== undefined) {
+                el.title = translation;
             } else {
-                el.textContent = translation;
+                const span = el.querySelector('span');
+                if (span) {
+                    span.textContent = translation;
+                } else {
+                    // JAVÍTÁS: Ne írjuk felül a teljes innerHTML-t, csak a textContent-et
+                    if (el.children.length === 0) {
+                        el.textContent = translation;
+                    } else {
+                        // Ha vannak gyerek elemek, csak a közvetlen szöveget cseréljük
+                        const textNodes = Array.from(el.childNodes).filter(node => node.nodeType === 3);
+                        if (textNodes.length > 0) {
+                            textNodes[0].textContent = translation;
+                        }
+                    }
+                }
             }
-        }
-        updatedCount++;
-    });
-
-    console.log(`${updatedCount} elem szövege frissítve.`);
-    updateLanguageButtonStyles();
+        });
+        
+        updateLanguageButtonStyles();
+        console.log('DOM szövegek frissítve');
+    }, 50);
 }
 
 export async function setLanguage(lang) {
-    console.log(`Nyelv váltás kezdeményezve: ${lang}`);
-    
     state.currentLang = lang;
     localStorage.setItem('language', lang);
     document.documentElement.lang = lang;
-    
     await loadAndSetTranslations(lang);
     
-    // DUPLA RENDERELÉS BIZTOSÍTÁSA
+    // DUPLA BIZTOSÍTÁS: Többszöri frissítés különböző időzítéssel
     renderApp();
     updateAllTexts();
     
-    // EXTRA: Késleltetett újra-renderelés esetleges aszinkron problémák elkerüléséhez
     setTimeout(() => {
         updateAllTexts();
     }, 100);
     
-    console.log(`Nyelv sikeresen váltva: ${lang}`);
+    setTimeout(() => {
+        updateAllTexts();
+    }, 300);
 }
 
 async function loadAndSetTranslations(lang) {
-    console.log(`Fordítások betöltése: ${lang}`);
-    
     if (lang === 'en') {
         window.translations = fallbackTranslations;
-        console.log('Angol fordítások beállítva (fallback)');
     } else {
-        const translations = await fetchTranslations(lang);
-        if (Object.keys(translations).length > 0) {
-            window.translations = translations;
-            console.log(`${lang} fordítások sikeresen beállítva`);
-        } else {
-            console.warn(`${lang} fordítások betöltése sikertelen, angol használata`);
-            window.translations = fallbackTranslations;
-        }
+        window.translations = await fetchTranslations(lang);
     }
-    
-    console.log('Aktuális fordítások:', window.translations ? Object.keys(window.translations).length : 0, 'kulcs');
 }
 
 export async function initializei18n() {
-    console.log('i18n inicializálás...');
-    
-    // Angol fordítások betöltése fallback-ként
     fallbackTranslations = await fetchTranslations('en');
-    console.log('Fallback fordítások betöltve:', Object.keys(fallbackTranslations).length, 'kulcs');
-    
-    // Aktuális nyelv fordításainak betöltése
-    await loadAndSetTranslations(state.currentLang);
-    
-    // Kezdeti szövegek frissítése
+    await loadAndSetTranslations(state.currentLang); 
     updateAllTexts();
-    
-    console.log('i18n inicializálás befejezve');
 }
