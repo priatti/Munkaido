@@ -1,3 +1,4 @@
+// js/ui/liveView.js - JAVÍTOTT VERZIÓ dinamikus fordításokkal
 import { state, setInProgressEntry } from '../state.js';
 import { showTab } from './navigation.js';
 import { showAlert } from '../utils/domHelpers.js';
@@ -25,10 +26,62 @@ function renderDashboard() {
 
     container.innerHTML = cards.map(card => `
         <div class="bg-${card.color}-50 dark:bg-${card.color}-900/50 border border-${card.color}-200 dark:border-${card.color}-800 rounded-lg p-3 text-center">
-            <p class="text-xs text-${card.color}-700 dark:text-${card.color}-200 font-semibold">${i18n[card.labelKey]}</p>
+            <p class="text-xs text-${card.color}-700 dark:text-${card.color}-200 font-semibold">${i18n[card.labelKey] || card.labelKey}</p>
             <p class="text-lg font-bold text-${card.color}-800 dark:text-${card.color}-100 mt-1">${card.value}</p>
         </div>
     `).join('');
+}
+
+/**
+ * JAVÍTÁS: Dinamikus szövegek frissítése a live view-ban
+ */
+function updateLiveViewTexts() {
+    if (!window.translations) return;
+    const i18n = window.translations;
+    
+    // "Munkanap folyamatban" szöveg frissítése
+    const progressTitle = document.querySelector('.bg-blue-100 p-4 .font-bold');
+    if (progressTitle && progressTitle.textContent.includes('folyamatban')) {
+        progressTitle.textContent = i18n.workdayInProgress || 'Munkanap folyamatban';
+    }
+    
+    // "Új Határátlépés" cím frissítése
+    const crossingTitle = document.querySelector('.font-semibold.text-indigo-800');
+    if (crossingTitle && crossingTitle.textContent.includes('Határátlépés')) {
+        crossingTitle.textContent = i18n.newBorderCrossing || 'Új Határátlépés';
+    }
+    
+    // Gombok szövegeinek frissítése
+    const finishBtn = document.getElementById('finalizeShiftBtn');
+    if (finishBtn) {
+        const span = finishBtn.querySelector('span');
+        if (span) {
+            span.textContent = i18n.finishShift || 'Műszak Befejezése';
+        }
+    }
+    
+    const discardBtn = document.getElementById('discardShiftBtn');
+    if (discardBtn) {
+        discardBtn.textContent = i18n.discardWorkday || 'Munkanap elvetése';
+    }
+    
+    const addCrossingBtn = document.getElementById('addLiveCrossingBtn');
+    if (addCrossingBtn) {
+        const span = addCrossingBtn.querySelector('span');
+        if (span) {
+            span.textContent = i18n.addBorderCrossing || 'Határátlépés hozzáadása';
+        }
+    }
+    
+    const startBtn = document.getElementById('startLiveShiftBtn');
+    if (startBtn) {
+        const span = startBtn.querySelector('span');
+        if (span) {
+            span.textContent = i18n.startWorkday || 'Munkanap indítás';
+        }
+    }
+    
+    console.log('🔄 Live view szövegek frissítve');
 }
 
 export function renderLiveTabView() {
@@ -42,7 +95,12 @@ export function renderLiveTabView() {
     if (state.inProgressEntry) {
         startView.classList.add('hidden');
         progressView.classList.remove('hidden');
-        document.getElementById('live-start-time').textContent = `${i18n.startedAt}: ${state.inProgressEntry.date} ${state.inProgressEntry.startTime}`;
+        
+        const startTimeEl = document.getElementById('live-start-time');
+        if (startTimeEl) {
+            startTimeEl.textContent = `${i18n.startedAt || 'Elkezdve'}: ${state.inProgressEntry.date} ${state.inProgressEntry.startTime}`;
+        }
+        
         updateLiveCrossings();
     } else {
         progressView.classList.add('hidden');
@@ -51,9 +109,17 @@ export function renderLiveTabView() {
         
         // Alapértelmezett értékek beállítása
         const now = new Date();
-        document.getElementById('liveStartDate').value = now.toISOString().split('T')[0];
-        document.getElementById('liveStartTime').value = now.toTimeString().slice(0, 5);
+        const dateInput = document.getElementById('liveStartDate');
+        const timeInput = document.getElementById('liveStartTime');
+        
+        if (dateInput) dateInput.value = now.toISOString().split('T')[0];
+        if (timeInput) timeInput.value = now.toTimeString().slice(0, 5);
     }
+    
+    // JAVÍTÁS: Szövegek frissítése minden rendereléskor
+    setTimeout(() => {
+        updateLiveViewTexts();
+    }, 50);
 }
 
 export function startLiveShift() {
@@ -70,13 +136,13 @@ export function startLiveShift() {
     };
     
     if (!entry.date || !entry.startTime) {
-        showAlert(i18n.alertMandatoryFields, 'info');
+        showAlert(i18n.alertMandatoryFields || 'A dátum és az idő megadása kötelező!', 'info');
         return;
     }
     
     setInProgressEntry(entry);
     renderLiveTabView();
-    showAlert('Munkanap sikeresen elindítva!', 'success');
+    showAlert(i18n.startWorkday || 'Munkanap sikeresen elindítva!', 'success');
 }
 
 export function addLiveCrossing() {
@@ -88,7 +154,7 @@ export function addLiveCrossing() {
     const time = document.getElementById('liveCrossTime').value;
     
     if (!from || !to || !time) {
-        showAlert(i18n.alertFillAllFields, 'info');
+        showAlert(i18n.alertFillAllFields || 'Kérlek tölts ki minden mezőt!', 'info');
         return;
     }
     
@@ -155,7 +221,7 @@ export function discardLiveShift() {
         return;
     }
     
-    showAlert(i18n.alertConfirmDelete, 'warning', () => {
+    showAlert(i18n.alertConfirmDelete || 'Biztosan törölni szeretnéd?', 'warning', () => {
         setInProgressEntry(null);
         renderLiveTabView();
         showAlert('Munkanap elvetve.', 'info');
