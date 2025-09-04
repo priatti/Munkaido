@@ -3254,3 +3254,388 @@ async function deleteRecord(id) {
 }
 
 // Folytatás következik...
+                function renderRecords() { 
+    const i18n = translations[currentLang]; 
+    const container = document.getElementById('recordsContent'); 
+    if (!container) return; 
+    
+    container.innerHTML = records.length === 0 ? `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>` : getSortedRecords().map(r => { 
+        const d = new Date(r.date); 
+        const day = d.getUTCDay(); 
+        const weekendClass = (day === 6 || day === 0) ? 'bg-red-50' : ''; 
+        const isOvernight = new Date(`1970-01-01T${r.endTime}`) < new Date(`1970-01-01T${r.startTime}`); 
+        const endDate = new Date(r.date + 'T00:00:00'); 
+        let startDate = new Date(r.date + 'T00:00:00'); 
+        if (isOvernight) { 
+            startDate.setDate(startDate.getDate() - 1); 
+        } 
+        const formatShortDate = (dt) => dt.toLocaleDateString('hu-HU', { month: '2-digit', day: '2-digit' }); 
+        
+        return `<div class="bg-gray-50 rounded-lg p-3 mb-3 text-sm ${weekendClass}"><div class="flex items-center justify-between mb-2"><div class="font-semibold">${isOvernight?`${startDate.toLocaleDateString("hu-HU")} - ${endDate.toLocaleDateString("hu-HU")}`:endDate.toLocaleDateString("hu-HU")}</div><div><button onclick="editRecord('${r.id}')" class="text-blue-500 p-1">✏️</button><button onclick="deleteRecord('${r.id}')" class="text-red-500 p-1">🗑️</button></div></div><div class="space-y-1"><div class="flex justify-between"><span>${i18n.entryDeparture}:</span><span>${isOvernight?formatShortDate(startDate):""} ${r.startTime} (${r.startLocation||"N/A"})</span></div><div class="flex justify-between"><span>${i18n.entryArrival}:</span><span>${formatShortDate(endDate)} ${r.endTime} (${r.endLocation||"N/A"})</span></div><div class="flex justify-between border-t pt-1 mt-1"><span>${i18n.entryWorkTime}:</span><span class="font-bold">${formatDuration(r.workMinutes)}</span></div>${r.compensationMinutes > 0 ? `<div class="flex justify-between text-yellow-700 text-xs"><span>&nbsp;&nbsp;└ ${i18n.entryCompensation}:</span><span>-${formatDuration(r.compensationMinutes)}</span></div>` : ''}<div class="flex justify-between"><span>${i18n.entryNightTime}:</span><span class="text-purple-600">${formatDuration(r.nightWorkMinutes||0)}</span></div><div class="flex justify-between"><span>${i18n.entryDriveTime}:</span><span class="text-blue-700">${formatDuration(r.driveMinutes)}</span></div><div class="flex justify-between"><span>${i18n.entryDistance}:</span><span>${r.kmDriven} km</span></div>${(r.crossings&&r.crossings.length>0)?`<div class="border-t pt-2 mt-2"><p class="font-semibold text-xs text-indigo-700">${i18n.entryCrossingsLabel}:</p><div class="text-xs text-gray-600 pl-2">${r.crossings.map(c=>`<span>${c.from} - ${c.to} (${c.time})</span>`).join("<br>")}</div></div>`:""}</div></div>`; 
+    }).join(''); 
+}
+
+function renderSummary() {
+    const i18n = translations[currentLang];
+    const container = document.getElementById('summaryContent');
+    if (!container) return;
+    const today = new Date();
+    const summaries = [
+        { title: i18n.summaryToday, data: calculateSummaryForDate(new Date()) }, 
+        { title: i18n.summaryYesterday, data: calculateSummaryForDate(new Date(new Date().setDate(today.getDate() - 1))) }, 
+        { title: i18n.summaryThisWeek, data: calculateSummaryForDateRange(getWeekRange(new Date())) }, 
+        { title: i18n.summaryLastWeek, data: calculateSummaryForDateRange(getWeekRange(new Date(), -1)) }, 
+        { title: i18n.summaryThisMonth, data: calculateSummaryForMonth(new Date()) }, 
+        { title: i18n.summaryLastMonth, data: calculateSummaryForMonth(new Date(new Date().setMonth(today.getMonth() - 1))) }
+    ];
+    
+    container.innerHTML = summaries.map(s => `<div class="bg-blue-50 rounded-lg p-3"><h3 class="font-semibold mb-2">${s.title} ${s.data.days > 0 ? `(${s.data.days} ${i18n.summaryDays})` : ""}</h3>${s.data.days > 0 ? `<div class="grid grid-cols-2 gap-2 text-center text-sm"><div><div class="font-bold text-green-600">${formatDuration(s.data.workMinutes)}</div><div class="text-xs">${i18n.summaryWork}</div></div><div><div class="font-bold text-purple-600">${formatDuration(s.data.nightWorkMinutes)}</div><div class="text-xs">${i18n.summaryNight}</div></div><div><div class="font-bold text-blue-700">${formatDuration(s.data.driveMinutes)}</div><div class="text-xs">${i18n.summaryDrive}</div></div><div><div class="font-bold text-orange-600">${s.data.kmDriven} km</div><div class="text-xs">${i18n.summaryDistance}</div></div></div>` : `<p class="text-center text-xs text-gray-500">${i18n.summaryNoData}</p>`}</div>`).join('');
+}
+
+function navigateStats(direction) { 
+    if (statsView === 'daily') statsDate.setMonth(statsDate.getMonth() + direction); 
+    else if (statsView === 'monthly') statsDate.setFullYear(statsDate.getFullYear() + direction); 
+    else if (statsView === 'yearly') return; 
+    renderStats(); 
+}
+
+function renderStats() {
+    const i18n = translations[currentLang];
+    const periodDisplay = document.getElementById('stats-period-display');
+    document.querySelectorAll('.stats-view-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`stats-view-${statsView}`).classList.add('active');
+    
+    let data;
+    if (statsView === 'daily') {
+        periodDisplay.textContent = `${statsDate.getFullYear()}. ${statsDate.toLocaleString(currentLang, { month: 'long' })}`;
+        data = getDailyData(statsDate);
+    } else if (statsView === 'monthly') {
+        periodDisplay.textContent = `${statsDate.getFullYear()}`;
+        data = getMonthlyData(statsDate);
+    } else { // yearly
+        data = getYearlyData();
+        periodDisplay.textContent = data.labels.length > 0 ? `${data.labels[0]} - ${data.labels[data.labels.length - 1]}` : i18n.summaryNoData;
+    }
+    
+    const noDataEl = document.getElementById('stats-no-data');
+    const chartsContainer = document.getElementById('stats-charts-container');
+    const hasData = data.datasets.work.some(d => d > 0) || data.datasets.km.some(d => d > 0);
+    
+    const totals = {
+        work: data.datasets.work.reduce((a, b) => a + b, 0) * 60,
+        drive: data.datasets.drive.reduce((a, b) => a + b, 0) * 60,
+        night: data.datasets.night.reduce((a, b) => a + b, 0) * 60,
+        km: data.datasets.km.reduce((a, b) => a + b, 0)
+    };
+
+    const workTotalEl = document.getElementById('workTimeTotal');
+    const driveTotalEl = document.getElementById('driveTimeTotal');
+    const nightTotalEl = document.getElementById('nightTimeTotal');
+    const kmTotalEl = document.getElementById('kmTotal');
+    
+    workTotalEl.className = 'text-sm font-bold text-green-600';
+    driveTotalEl.className = 'text-sm font-bold text-blue-600';
+    nightTotalEl.className = 'text-sm font-bold text-purple-600';
+    kmTotalEl.className = 'text-sm font-bold text-orange-600';
+    
+    if (!hasData) {
+        noDataEl.classList.remove('hidden');
+        chartsContainer.classList.add('hidden');
+        workTotalEl.textContent = ''; driveTotalEl.textContent = ''; nightTotalEl.textContent = ''; kmTotalEl.textContent = '';
+    } else {
+        noDataEl.classList.add('hidden');
+        chartsContainer.classList.remove('hidden');
+
+        workTotalEl.textContent = formatDuration(totals.work);
+        driveTotalEl.textContent = formatDuration(totals.drive);
+        nightTotalEl.textContent = formatDuration(totals.night);
+        kmTotalEl.textContent = `${Math.round(totals.km)} km`;
+
+        workTimeChart = createOrUpdateBarChart(workTimeChart, 'workTimeChart', data.labels, data.datasets.work, i18n.statsWorkTime, '#22c55e', (value) => `${value.toFixed(1)} h`);
+        driveTimeChart = createOrUpdateBarChart(driveTimeChart, 'driveTimeChart', data.labels, data.datasets.drive, i18n.statsDriveTime, '#3b82f6', (value) => `${value.toFixed(1)} h`);
+        nightTimeChart = createOrUpdateBarChart(nightTimeChart, 'nightTimeChart', data.labels, data.datasets.night, i18n.statsNightTime, '#8b5cf6', (value) => `${value.toFixed(1)} h`);
+        kmChart = createOrUpdateBarChart(kmChart, 'kmChart', data.labels, data.datasets.km, i18n.statsKmDriven, '#f97316', (value) => `${Math.round(value)} km`);
+    }
+}
+
+function getDailyData(date) { 
+    const year = date.getFullYear(); 
+    const month = date.getMonth(); 
+    const daysInMonth = new Date(year, month + 1, 0).getDate(); 
+    const labels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1)); 
+    const datasets = { work: Array(daysInMonth).fill(0), drive: Array(daysInMonth).fill(0), night: Array(daysInMonth).fill(0), km: Array(daysInMonth).fill(0) }; 
+    
+    records.filter(r => r.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).forEach(r => { 
+        const dayIndex = new Date(r.date + 'T00:00:00').getDate() - 1; 
+        datasets.work[dayIndex] += r.workMinutes / 60; 
+        datasets.drive[dayIndex] += r.driveMinutes / 60; 
+        datasets.night[dayIndex] += r.nightWorkMinutes / 60; 
+        datasets.km[dayIndex] += r.kmDriven; 
+    }); 
+    
+    return { labels, datasets }; 
+}
+
+function getYearlyData() { 
+    if (records.length === 0) return { labels: [], datasets: { work: [], drive: [], night: [], km: [] } }; 
+    const yearData = {}; 
+    
+    records.forEach(r => { 
+        const year = r.date.substring(0, 4); 
+        if (!yearData[year]) yearData[year] = { work: 0, drive: 0, night: 0, km: 0 }; 
+        yearData[year].work += r.workMinutes / 60; 
+        yearData[year].drive += r.driveMinutes / 60; 
+        yearData[year].night += r.nightWorkMinutes / 60; 
+        yearData[year].km += r.kmDriven; 
+    }); 
+    
+    const labels = Object.keys(yearData).sort(); 
+    const datasets = { work: [], drive: [], night: [], km: [] }; 
+    
+    labels.forEach(year => { 
+        datasets.work.push(yearData[year].work); 
+        datasets.drive.push(yearData[year].drive); 
+        datasets.night.push(yearData[year].night); 
+        datasets.km.push(yearData[year].km); 
+    }); 
+    
+    return { labels, datasets }; 
+}
+
+function createOrUpdateBarChart(chartInstance, canvasId, labels, data, labelText, color, tooltipCallback) { 
+    const ctx = document.getElementById(canvasId).getContext('2d'); 
+    if (chartInstance) { 
+        chartInstance.destroy(); 
+    } 
+    return new Chart(ctx, { 
+        type: 'bar', 
+        data: { 
+            labels: labels, 
+            datasets: [{ 
+                label: labelText, 
+                data: data, 
+                backgroundColor: color, 
+                borderRadius: 4 
+            }] 
+        }, 
+        options: { 
+            plugins: { 
+                legend: { display: false }, 
+                tooltip: { 
+                    callbacks: { 
+                        label: function(context) { 
+                            return tooltipCallback(context.parsed.y); 
+                        } 
+                    } 
+                } 
+            }, 
+            scales: { 
+                y: { 
+                    beginAtZero: true 
+                } 
+            } 
+        } 
+    }); 
+}
+
+const toISODate = d => d.toISOString().split('T')[0];
+function calculateSummary(filterFn) { 
+    return (records || []).filter(filterFn).reduce((acc, r) => ({ 
+        workMinutes: acc.workMinutes + (r.workMinutes || 0), 
+        nightWorkMinutes: acc.nightWorkMinutes + (r.nightWorkMinutes || 0), 
+        driveMinutes: acc.driveMinutes + (r.driveMinutes || 0), 
+        kmDriven: acc.kmDriven + (r.kmDriven || 0), 
+        days: acc.days + 1 
+    }), { workMinutes: 0, nightWorkMinutes: 0, driveMinutes: 0, kmDriven: 0, days: 0 }); 
+}
+
+function calculateSummaryForDate(date) { 
+    const dateStr = toISODate(date); 
+    return calculateSummary(r => r.date === dateStr); 
+}
+
+function calculateSummaryForDateRange({ start, end }) { 
+    const startStr = toISODate(start); 
+    const endStr = toISODate(end); 
+    return calculateSummary(r => r.date >= startStr && r.date <= endStr); 
+}
+
+function calculateSummaryForMonth(date) { 
+    const monthStr = date.toISOString().slice(0, 7); 
+    return calculateSummary(r => r.date.startsWith(monthStr)); 
+}
+
+function getWeekRange(date, offset = 0) { 
+    const d = new Date(date); 
+    d.setDate(d.getDate() + (offset * 7)); 
+    const day = d.getDay(); 
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); 
+    const start = new Date(d.setDate(diff)); 
+    const end = new Date(start); 
+    end.setDate(start.getDate() + 6); 
+    return { start, end }; 
+}
+
+let currentMonthlyData = null;
+
+function initMonthlyReport() { 
+    document.getElementById('monthSelector').value = new Date().toISOString().slice(0, 7); 
+    document.getElementById('monthlyReportContent').innerHTML = ''; 
+    document.getElementById('pdfExportBtn').classList.add('hidden'); 
+    document.getElementById('pdfShareBtn').classList.add('hidden');
+}
+
+function generateMonthlyReport() { 
+    const i18n = translations[currentLang];
+    const userName = document.getElementById('userNameInput').value.trim();
+    if (!userName) {
+        showCustomAlert(i18n.alertReportNameMissing, 'info');
+        showTab('settings');
+        return;
+    }
+
+    const selectedMonth = document.getElementById("monthSelector").value; 
+    const monthRecords = records.filter(record => record.date.startsWith(selectedMonth)); 
+    monthRecords.sort((a, b) => new Date(a.date) - new Date(b.date)); 
+    currentMonthlyData = { month: selectedMonth, records: monthRecords };
+    document.getElementById('monthlyReportContent').innerHTML = `<div class="bg-white p-4 text-xs">${i18n.reportPrepared}</div>`;
+    document.getElementById('pdfExportBtn').classList.remove('hidden');
+    if (navigator.share) {
+        document.getElementById('pdfShareBtn').classList.remove('hidden');
+    }
+}
+
+const germanMonths = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const germanFullDays = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+
+function formatAsHoursAndMinutes(minutes) { 
+    const h = Math.floor(minutes / 60), m = minutes % 60; 
+    return `${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}` 
+}
+
+function renderTachographAnalysis() {
+    const i18n = translations[currentLang];
+    const container = document.getElementById('tachograph-list');
+    if (!container) return;
+    
+    const sortedRecords = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
+    if (sortedRecords.length < 1) { 
+        container.innerHTML = `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>`; 
+        return; 
+    }
+
+    const splitRestData = getSplitRestData();
+    const weeklyRestData = getWeeklyRestData();
+    let analysisResults = [];
+    let reducedDailyRestCounter = 0;
+    let extendedDrivingInWeekCounter = {};
+
+    for (let i = 0; i < sortedRecords.length; i++) {
+        const currentRecord = sortedRecords[i];
+        const previousRecord = i > 0 ? sortedRecords[i-1] : null;
+        let restAnalysis = { text: 'Első rögzített nap', colorClass: 'bg-gray-200 text-gray-800', duration: 0 };
+        
+        if (previousRecord) {
+            const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
+            const currentStart = new Date(`${currentRecord.date}T${currentRecord.startTime}`);
+            const restDurationMinutes = Math.round((currentStart - prevEnd) / 60000);
+            restAnalysis.duration = restDurationMinutes;
+            const restDurationHours = restDurationMinutes / 60;
+            const isSplitRest = splitRestData[previousRecord.id] === true || previousRecord.isSplitRest;
+            const isMarkedAsWeekly = weeklyRestData[currentRecord.id] === true;
+            const prevWorkDurationHours = previousRecord.workMinutes / 60;
+
+            if (restDurationHours >= 24) {
+                reducedDailyRestCounter = 0;
+                if (isMarkedAsWeekly) {
+                    if (restDurationHours >= 45) {
+                        restAnalysis = { text: `${i18n.tachoRegularWeeklyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-700 text-white' };
+                    } else {
+                        restAnalysis = { text: `${i18n.tachoReducedWeeklyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-700 text-white' };
+                    }
+                } else {
+                     restAnalysis = { text: `${i18n.tachoLongRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-gray-300 text-gray-800' };
+                }
+            } else if (restDurationHours < 9) {
+                restAnalysis = { text: `${i18n.tachoIrregularRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-red-500 text-white' };
+            } else if (isSplitRest) {
+                restAnalysis = { text: `${i18n.tachoSplitRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-200 text-green-800' };
+            } else if (restDurationHours >= 11 && prevWorkDurationHours <= 13) {
+                restAnalysis = { text: `${i18n.tachoRegularDailyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-500 text-white' };
+            } else {
+                reducedDailyRestCounter++;
+                const isForcedReduced = prevWorkDurationHours > 13;
+                const reason = isForcedReduced ? ` ${i18n.tachoReason13h}` : '';
+                let colorClass, countText;
+                switch(reducedDailyRestCounter) {
+                    case 1: colorClass = 'bg-yellow-200 text-yellow-800'; countText = '1.'; break;
+                    case 2: colorClass = 'bg-yellow-400 text-black'; countText = '2.'; break;
+                    case 3: colorClass = 'bg-orange-400 text-black'; countText = '3.'; break;
+                    default: colorClass = 'bg-red-500 text-white'; countText = `${reducedDailyRestCounter}.`; break;
+                }
+                restAnalysis = { text: `${countText} ${i18n.tachoReducedDailyRest}${reason} (${formatDuration(restDurationMinutes)})`, colorClass: colorClass };
+            }
+        }
+
+        let driveAnalysis;
+        const driveHours = currentRecord.driveMinutes / 60;
+        if (driveHours > 10) {
+            driveAnalysis = { text: `${i18n.tachoIrregularDrive} (${formatDuration(currentRecord.driveMinutes)})`, colorClass: 'bg-red-500 text-white' };
+        } else if (driveHours > 9) {
+            const weekId = getWeekIdentifier(new Date(currentRecord.date));
+            extendedDrivingInWeekCounter[weekId] = (extendedDrivingInWeekCounter[weekId] || 0) + 1;
+            const countInWeek = extendedDrivingInWeekCounter[weekId];
+            driveAnalysis = { text: `${countInWeek}. ${countInWeek > 2 ? '(szabálytalan) ' : ''}${i18n.tachoIncreasedDrive} (${formatDuration(currentRecord.driveMinutes)})`, colorClass: countInWeek > 2 ? 'bg-red-500 text-white' : 'bg-blue-400 text-white' };
+        } else {
+            driveAnalysis = { text: `${i18n.tachoNormalDrive} (${formatDuration(currentRecord.driveMinutes)})`, colorClass: 'bg-gray-300 text-gray-800' };
+        }
+        
+        analysisResults.push({ 
+            record: currentRecord, 
+            rest: restAnalysis, 
+            drive: driveAnalysis, 
+            isSplit: splitRestData[currentRecord.id] === true || currentRecord.isSplitRest, 
+            isWeekly: weeklyRestData[currentRecord.id] === true 
+        });
+    }
+
+    container.innerHTML = analysisResults.reverse().map(res => {
+        const d = new Date(res.record.date + 'T00:00:00');
+        const dateString = d.toLocaleDateString(currentLang, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+        const isSplitActiveClass = res.isSplit ? 'bg-green-200 dark:bg-green-800 font-semibold' : 'hover:bg-gray-200 dark:hover:bg-gray-700';
+        const checkmark = res.isSplit ? '<span class="font-bold text-lg">✓</span>' : '';
+        
+        let weeklyRestCheckboxHTML = '';
+        if (res.rest.duration >= (24 * 60)) {
+            weeklyRestCheckboxHTML = `
+                <label for="weekly-${res.record.id}" class="flex items-center gap-2 cursor-pointer text-xs p-1 rounded-md ${res.isWeekly ? 'bg-green-200 dark:bg-green-800' : 'bg-gray-200 dark:bg-gray-600'}">
+                   <input type="checkbox" id="weekly-${res.record.id}" onchange="handleTachographToggle(this, '${res.record.id}', 'weekly')" ${res.isWeekly ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                   <span class="text-gray-700 dark:text-gray-200">${i18n.tachoWasWeeklyRest}</span>
+                </label>`;
+        }
+
+        return `
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-l-4 ${res.rest.colorClass.replace('bg-', 'border-').replace(/ text-\w+-?\d*/g, '')}">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <p class="font-bold text-base text-gray-800 dark:text-gray-100">${dateString}</p>
+                    ${weeklyRestCheckboxHTML}
+                </div>
+                <label for="split-${res.record.id}" class="flex items-center gap-2 cursor-pointer p-2 rounded-lg transition-colors ${isSplitActiveClass}">
+                   <input type="checkbox" id="split-${res.record.id}" onchange="handleTachographToggle(this, '${res.record.id}', 'split')" ${res.isSplit ? 'checked' : ''} class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                   <span class="text-sm text-gray-700 dark:text-gray-200">${i18n.tachoSplitRest} ${checkmark}</span>
+                </label>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div class="p-2 rounded ${res.rest.colorClass}">
+                    <p class="font-semibold">${i18n.tachoRestBeforeShift}</p>
+                    <p>${res.rest.text}</p>
+                </div>
+                <div class="p-2 rounded ${res.drive.colorClass}">
+                    <p class="font-semibold">${i18n.tachoDailyDriveTime}</p>
+                    <p>${res.drive.text}</p>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
