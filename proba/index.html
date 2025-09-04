@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="hu">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title data-translate-key="appTitle">Munkaidő Nyilvántartó Pro</title>
 
+  <!-- PWA -->
   <meta name="theme-color" content="#0f3b4a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -15,18 +15,21 @@
   <link rel="icon" href="icons/icon-192.png" sizes="192x192" />
 
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Firebase (marad, ahogy eddig) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore-compat.js"></script>
 </head>
-
 <body class="bg-gray-100">
-  <!-- Splash / Kezdőkép (betöltéskor látszik csak) -->
+
+  <!-- Splash / Kezdőkép: csak betöltéskor látszik -->
   <div id="splash-screen" aria-label="Betöltés">
-    <img src="splash.png" alt="Munkaidő – kezdőkép">
+    <img src="splash.png" alt="Munkaidő – kezdőkép" />
     <div class="verzio">Verzió 9.11</div>
   </div>
 
+  <!-- APP TARTALOM (áttekintés oldal – NINCS helykitöltő) -->
   <div id="authSection" class="container">
     <h1 class="app-title" data-translate-key="appTitle">Munkaidő Nyilvántartó Pro</h1>
 
@@ -41,7 +44,7 @@
       <span id="userEmailDisplay" class="user-email"></span>
     </div>
 
-    <div id="appContent" class="app-content" style="display: none;">
+    <div id="appContent" class="app-content" style="display:none;">
       <div class="toolbar">
         <button id="startDayBtn" class="btn btn-start" data-translate-key="startDay">Munkanap indítása</button>
         <button id="endDayBtn" class="btn btn-stop" data-translate-key="endDay" disabled>Munkanap lezárása</button>
@@ -125,7 +128,9 @@
             <span data-translate-key="import">Import</span>
           </label>
         </div>
-        <div class="small" id="versionInfo"><span data-translate-key="settingsVersion">Verzió:</span> 9.11</div>
+        <div class="small" id="versionInfo">
+          <span data-translate-key="settingsVersion">Verzió:</span> 9.11
+        </div>
       </div>
 
       <div id="recordsList" class="card">
@@ -135,7 +140,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
-
 </html> 
