@@ -1,10 +1,12 @@
 // Egyszerű app-shell cache PWA-hoz – v9.11
-// A cache név bump-olva, hogy biztos frissüljön.
-const CACHE_NAME = 'munkaido-v9.11.1';
+// Cache bump a biztos frissítéshez:
+const CACHE_NAME = 'munkaido-v9.11.4';
 
+// A SW a /Munkaido/proba/ mappából szolgál,
+// ezért relatív (./) hivatkozásokkal vesszük fel a shellt.
 const APP_SHELL = [
   './',
-  './index.htm',                 // <- ha index.html a neve, ezt is írd át!
+  './index.html',
   './style.css',
   './script.js',
   './manifest.webmanifest',
@@ -32,25 +34,23 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Hálózati stratégia: cache-first, majd hálózat, offline HTML fallback
+// Cache-first; offline HTML fallback
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
-
       return fetch(req).then((res) => {
-        // Csak GET és saját origin
+        // csak saját origin GET-et cache-eljünk
         const url = new URL(req.url);
         if (url.origin === self.location.origin && req.method === 'GET') {
-          const resClone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
         }
         return res;
       }).catch(() => {
-        // Offline fallback HTML kérésekre
         if (req.headers.get('accept')?.includes('text/html')) {
-          return caches.match('./index.htm');
+          return caches.match('./index.html');
         }
       });
     })
