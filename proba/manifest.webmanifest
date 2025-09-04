@@ -1,0 +1,15 @@
+{
+  "name": "Munkaidő",
+  "short_name": "Munkaidő",
+  "description": "Munkaidő- és vezetési idő nyilvántartó – Egy kamionos, aki appot készít.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f7fb",
+  "theme_color": "#0f3b4a",
+  "lang": "hu",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
