@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Munkaidő</title>
+
+  <!-- PWA: alapszínek és meta -->
+  <meta name="theme-color" content="#0f3b4a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Munkaidő" />
+
+  <!-- PWA: ikonok és manifest -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="shortcut icon" href="icons/icon-192.png" />
+
+  <!-- Stílus -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Splash / Kezdőkép -->
+  <div id="splash-screen" aria-label="Betöltés">
+    <img src="splash.png" alt="Munkaidő – kezdőkép" />
+    <div class="verzio">Verzió 9.11</div>
+  </div>
+
+  <!-- Fejléc -->
+  <header class="app-header">
+    <h1>MUNKAIDŐ</h1>
+    <p class="slogan">🚛💻 Egy kamionos, aki appot készít</p>
+  </header>
+
+  <!-- Tartalom: ide jön az appod UI-ja -->
+  <main class="app-main">
+    <section class="phone-card">
+      <h2 class="sr-only">Munkanap</h2>
+      <div class="time-ring">
+        <div class="time-value">8:30</div>
+        <div class="time-label">hours</div>
+      </div>
+      <div class="row">
+        <div>
+          <div class="cap">Start</div>
+          <div class="time">08:00</div>
+        </div>
+        <div class="vsep" aria-hidden="true"></div>
+        <div>
+          <div class="cap">End</div>
+          <div class="time">16:30</div>
+        </div>
+      </div>
+      <button id="btnStart" class="btn-primary">START</button>
+    </section>
+
+    <section class="info">
+      <p><strong>Verzió:</strong> 9.11</p>
+    </section>
+  </main>
+
+  <!-- Szkriptek -->
+  <script src="script.js" defer></script>
+</body>
+</html>
