@@ -5,59 +5,37 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Munkaidő</title>
 
-  <!-- PWA meta -->
+  <!-- PWA -->
   <meta name="theme-color" content="#0f3b4a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Munkaidő" />
-
-  <!-- Manifest + ikonok -->
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="icons/icon-192.png" sizes="192x192" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" />
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Splash / Kezdőkép -->
+  <!-- Splash / Kezdőkép: csak betöltéskor látszik -->
   <div id="splash-screen" aria-label="Betöltés">
     <img src="splash.png" alt="Munkaidő – kezdőkép" />
     <div class="verzio">Verzió 9.11</div>
   </div>
 
-  <!-- Fejléc -->
+  <!-- --- INNENTŐL A SAJÁT APPOD --- -->
   <header class="app-header">
     <h1>MUNKAIDŐ</h1>
     <p class="slogan">🚛💻 Egy kamionos, aki appot készít</p>
   </header>
 
-  <!-- Tartalom -->
   <main class="app-main">
-    <section class="phone-card" aria-label="Munkanap">
-      <div class="time-ring">
-        <div class="time-value">8:30</div>
-        <div class="time-label">hours</div>
-      </div>
-
-      <div class="row">
-        <div>
-          <div class="cap">Start</div>
-          <div class="time">08:00</div>
-        </div>
-        <div class="vsep" aria-hidden="true"></div>
-        <div>
-          <div class="cap">End</div>
-          <div class="time">16:30</div>
-        </div>
-      </div>
-
-      <button id="btnStart" class="btn-primary">START</button>
-    </section>
-
-    <section class="info">
-      <p><strong>Verzió:</strong> 9.11</p>
+    <!-- Itt az áttekintés/alkalmazás saját tartalma -->
+    <section class="placeholder">
+      <p>Az alkalmazás betöltött. Ide kerül a saját UI (áttekintés oldalad).</p>
     </section>
   </main>
+  <!-- --- SAJÁT APP VÉGE --- -->
 
   <script src="script.js" defer></script>
 </body>
