@@ -1,5 +1,12 @@
-/* Firebase init – a saját értékeiddel */
-const firebaseConfig = { /* ... a te configod ... */ };
+/* --- Firebase init --- */
+const firebaseConfig = {
+  apiKey: "AIzaSyDGgG3y0ppl4639bzjzKA7Yq8BmSkhR-LU",
+  authDomain: "munkaido-3cc44.firebaseapp.com",
+  projectId: "munkaido-3cc44",
+  storageBucket: "munkaido-3cc44.appspot.com",
+  messagingSenderId: "706081294435",
+  appId: "1:706081294435:web:c8ae57cbe45477de415056"
+};
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
@@ -8,10 +15,75 @@ let currentUser = null;
 let currentLang = localStorage.getItem('lang') || 'hu';
 let records = [];
 
-/* Fordítások – a te jelenlegi translations blokkod (változatlan) */
-const translations = { /* ... hu/de ... */ };
+/* --- Fordítások --- */
+const translations = {
+  hu: {
+    appTitle: "Munkaidő Nyilvántartó Pro",
+    loginWithGoogle: "Bejelentkezés Google-lel",
+    logout: "Kijelentkezés",
+    startDay: "Munkanap indítása",
+    endDay: "Munkanap lezárása",
+    odometerStart: "Km-óra induláskor",
+    odometerEnd: "Km-óra érkezéskor",
+    drivingStart: "Vezetési idő a nap elején",
+    drivingEnd: "Vezetési idő a nap végén",
+    calcDriving: "Számol",
+    summary: "Áttekintés",
+    startTime: "Kezdés",
+    endTime: "Vége",
+    totalDriving: "Vezetési idő",
+    start: "START",
+    stop: "STOP",
+    dataTitle: "Adatok",
+    export: "Export",
+    import: "Import",
+    copy: "Másol",
+    history: "Előzmények",
+    settingsVersion: "Verzió:",
+    autoExport: "Automatikus mentés",
+    never: "Soha",
+    daily: "Naponta",
+    weekly: "Hetente",
+    alertChooseFile: "Válassz ki egy JSON fájlt!",
+    alertConfirmImport: "Biztosan beimportálod? A meglévő adatok felülíródnak.",
+    alertImportSuccess: "Sikeres import.",
+    alertImportError: "Import hiba"
+  },
+  de: {
+    appTitle: "Arbeitszeiterfassung Pro",
+    loginWithGoogle: "Mit Google anmelden",
+    logout: "Abmelden",
+    startDay: "Arbeitstag starten",
+    endDay: "Arbeitstag beenden",
+    odometerStart: "Kilometerstand (Start)",
+    odometerEnd: "Kilometerstand (Ende)",
+    drivingStart: "Fahrzeit (Tagesbeginn)",
+    drivingEnd: "Fahrzeit (Tagesende)",
+    calcDriving: "Berechnen",
+    summary: "Übersicht",
+    startTime: "Start",
+    endTime: "Ende",
+    totalDriving: "Fahrzeit",
+    start: "START",
+    stop: "STOPP",
+    dataTitle: "Daten",
+    export: "Export",
+    import: "Import",
+    copy: "Kopieren",
+    history: "Verlauf",
+    settingsVersion: "Version:",
+    autoExport: "Automatische Sicherung",
+    never: "Nie",
+    daily: "Täglich",
+    weekly: "Wöchentlich",
+    alertChooseFile: "Wähle eine JSON-Datei!",
+    alertConfirmImport: "Wirklich importieren? Bestehende Daten werden überschrieben.",
+    alertImportSuccess: "Import erfolgreich.",
+    alertImportError: "Importfehler"
+  }
+};
 
-/* UI szövegek frissítése */
+/* --- UI szövegek frissítése --- */
 function updateAllTexts(){
   const dict = translations[currentLang];
   document.querySelectorAll('[data-translate-key]').forEach(el=>{
@@ -22,14 +94,14 @@ function updateAllTexts(){
   document.title = translations[currentLang].appTitle;
 }
 
-/* Riasztás */
+/* --- Riasztás --- */
 function showCustomAlert(msg,type='info'){
   const wrap = document.getElementById('alertContainer'); if(!wrap) return;
   const el=document.createElement('div'); el.className=`alert ${type}`; el.textContent=msg;
   wrap.appendChild(el); setTimeout(()=>el.remove(),3000);
 }
 
-/* ====== JAVÍTOTT SZINTAXIS: importData() ====== */
+/* ====== SZINTAXIS FIX: importData() ====== */
 function importData() {
   const i18n = translations[currentLang];
   const fileInput = document.getElementById('importFile');
@@ -62,26 +134,27 @@ function importData() {
   reader.readAsText(fileInput.files[0]);
 }
 
-/* --- a többi eredeti logikád: renderApp(), start/stop, firestore sync stb. --- */
-
-/* Nyelvváltó, export, import bekötések */
+/* --- DOM Ready --- */
 document.addEventListener('DOMContentLoaded', ()=>{
   updateAllTexts();
+
   const langSel=document.getElementById('languageSelector');
   if (langSel){ langSel.value=currentLang; langSel.addEventListener('change',e=>{
     currentLang=e.target.value; localStorage.setItem('lang',currentLang); updateAllTexts();
   });}
+
   const expBtn=document.getElementById('exportBtn');
   if (expBtn) expBtn.addEventListener('click', ()=>{
     const blob=new Blob([JSON.stringify(records,null,2)],{type:'application/json'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
     a.download='munkaido-export.json'; a.click(); URL.revokeObjectURL(a.href);
   });
+
   const fileInput=document.getElementById('importFile');
   if (fileInput) fileInput.addEventListener('change', importData);
 });
 
-/* Auth állapot */
+/* --- Auth állapot figyelés --- */
 auth.onAuthStateChanged(async (user)=>{
   currentUser=user||null;
   const content=document.getElementById('appContent');
@@ -94,17 +167,18 @@ auth.onAuthStateChanged(async (user)=>{
     if (logoutBtn) logoutBtn.style.display='';
     if (loginBtn) loginBtn.style.display='none';
     if (emailLbl) emailLbl.textContent=user.email||'';
-    // ide jöhet a Firestore betöltés, majd:
-    // window.appReady();  // ha kész a kezdőnézet
+    // ide jöhet a Firestore betöltés
+    window.appReady(); // splash elrejtése
   } else {
     if (content) content.style.display='none';
     if (logoutBtn) logoutBtn.style.display='none';
     if (loginBtn) loginBtn.style.display='';
     if (emailLbl) emailLbl.textContent='';
+    window.appReady(); // splash elrejtése akkor is
   }
 });
 
-/* PWA – SW regisztráció (ha használod) */
+/* --- PWA SW regisztráció --- */
 if ('serviceWorker' in navigator){
   window.addEventListener('load', async ()=>{
     try{
@@ -114,10 +188,10 @@ if ('serviceWorker' in navigator){
   });
 }
 
-/* ---- Splash kezelése ---- */
+/* --- Splash kezelése --- */
 (function(){
   const hide=()=>{ const s=document.getElementById('splash-screen');
     if(s && !s.classList.contains('hide')) s.classList.add('hide'); };
   window.addEventListener('load', ()=>setTimeout(hide,300));
-  window.appReady = hide; // hívd meg, amikor az áttekintés kirajzolódott
+  window.appReady = hide;
 })();
