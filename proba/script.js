@@ -1559,7 +1559,7 @@ function renderPalletRecords() {
         return `
         <div class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border-l-4 ${borderColorClass} flex items-center justify-between">
             <div>
-                <p class="font-semibold text-gray-800 dark:text-gray-100">${p.location}</p>
+                <p class="font-semibold dropdown-item-title">${p.location}</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">${p.date}</p>
                 ${detailsHTML}
             </div>
