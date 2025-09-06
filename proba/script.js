@@ -177,6 +177,7 @@ const translations = {
         palletsLocationPlaceholder: "Város, cég...",
         palletsLicensePlate: "Rendszám (opcionális)",
         palletsLicensePlatePlaceholder: "Pl. ABC-123",
+        palletsLicensePlateLabel: "Rendszám",
         palletsSaveTransaction: "Tranzakció mentése",
         palletsHistory: "Előzmények",
         palletsNoTransactions: "Még nincsenek paletta tranzakciók rögzítve.",
@@ -185,9 +186,15 @@ const translations = {
         palletsTypeLabel: "Típus / Megjegyzés",
         palletsTypePlaceholder: "Pl. EUR, DD, CHEP...",
         pallets1to1Button: "1:1",
+        palletReportHeaderDate: "Dátum",
+        palletReportHeaderLocation: "Helyszín",
         palletReportHeaderGiven: "Leadott",
         palletReportHeaderTaken: "Felvett",
         palletReportHeaderType: "Típus",
+        palletReportHeaderPlate: "Rendszám",
+        palletReportHeaderBalance: "Egyenleg",
+        palletReportFileName: "Raklap_Riport",
+        palletReportTitle: "Raklapmozgás Riport",
         // Üzenetek
         alertLoginError: "Bejelentkezési hiba történt.",
         alertPopupClosed: "A bejelentkezési ablakot bezárta.",
@@ -404,6 +411,7 @@ const translations = {
         palletsLocationPlaceholder: "Stadt, Firma...",
         palletsLicensePlate: "Kennzeichen (optional)",
         palletsLicensePlatePlaceholder: "Z.B. S-AB123",
+        palletsLicensePlateLabel: "Kennzeichen",
         palletsSaveTransaction: "Transaktion speichern",
         palletsHistory: "Verlauf",
         palletsNoTransactions: "Noch keine Palettentransaktionen erfasst.",
@@ -412,9 +420,15 @@ const translations = {
         palletsTypeLabel: "Typ / Kommentar",
         palletsTypePlaceholder: "Z.B. EUR, DD, CHEP...",
         pallets1to1Button: "1:1",
+        palletReportHeaderDate: "Datum",
+        palletReportHeaderLocation: "Ort",
         palletReportHeaderGiven: "Abgegeben",
         palletReportHeaderTaken: "Aufgenommen",
         palletReportHeaderType: "Typ",
+        palletReportHeaderPlate: "Kennzeichen",
+        palletReportHeaderBalance: "Saldo",
+        palletReportFileName: "Paletten_Bericht",
+        palletReportTitle: "Palettenbewegungsbericht",
         // Meldungen
         alertLoginError: "Anmeldefehler aufgetreten.",
         alertPopupClosed: "Das Anmeldefenster wurde geschlossen.",
@@ -1539,7 +1553,7 @@ function renderPalletRecords() {
 
         const detailsHTML = [
             p.type ? `<p class="text-xs text-gray-500 mt-1">${p.type}</p>` : '',
-            p.licensePlate ? `<p class="text-xs text-gray-400 mt-1">${i18n.palletsLicensePlate}: ${p.licensePlate}</p>` : ''
+            p.licensePlate ? `<p class="text-xs text-gray-400 mt-1">${i18n.palletsLicensePlateLabel}: ${p.licensePlate}</p>` : ''
         ].filter(Boolean).join('');
 
         return `
@@ -1583,7 +1597,7 @@ function generatePalletReport() {
         doc.setFontSize(10); doc.text(`${i18n.palletsBalance} ${currentBalance} db`, 105, 31, { align: 'center' });
 
         let yPos = 40;
-        const headers = [i18n.palletReportHeaderDate, i18n.palletReportHeaderLocation, i18n.palletReportHeaderGiven, i18n.palletReportHeaderTaken, i18n.palletReportHeaderType, i18n.palletsLicensePlate, i18n.palletReportHeaderBalance];
+        const headers = [i18n.palletReportHeaderDate, i18n.palletReportHeaderLocation, i18n.palletReportHeaderGiven, i18n.palletReportHeaderTaken, i18n.palletReportHeaderType, i18n.palletReportHeaderPlate, i18n.palletReportHeaderBalance];
         const colWidths = [25, 55, 18, 18, 22, 22, 20];
 
         doc.setFont('Helvetica', 'bold');
