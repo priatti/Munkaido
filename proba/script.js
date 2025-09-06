@@ -514,16 +514,6 @@ function updateAllTexts() {
     if(compensationToggle && compensationToggle.parentElement && compensationToggle.parentElement.parentElement) {
         compensationToggle.parentElement.parentElement.style.display = currentLang === 'de' ? 'none' : 'flex';
     }
-
-    // DINAMIKUS NÉZETEK FRISSÍTÉSE AZ ÚJ NYELVVEL
-    renderDashboard();
-    renderWeeklyAllowance();
-    if (document.getElementById('content-list').style.display !== 'none') renderRecords();
-    if (document.getElementById('content-summary').style.display !== 'none') renderSummary();
-    if (document.getElementById('content-stats').style.display !== 'none') renderStats();
-    if (document.getElementById('content-tachograph').style.display !== 'none') renderTachographAnalysis();
-    if (document.getElementById('content-pallets').style.display !== 'none') renderPalletRecords();
-    updateDisplays();
 }
 
 function updateLanguageButtonStyles() {
@@ -683,13 +673,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function renderApp() {
     applyFeatureToggles();
     renderWeeklyAllowance();
-    renderRecords();
-    renderSummary();
+    // A dinamikus renderelő függvények már a showTab-ban hívódnak, innen kivehetjük őket,
+    // kivéve azokat, amiknek az induláskor is meg kell jelenniük.
     renderLiveTabView();
     updateUniqueLocations();
-    renderPalletRecords(); 
     updateUniquePalletLocations();
     initAllAutocomplete();
+    // Az elsődleges nézet (live) renderelése után frissítjük a szövegeket.
+    updateAllTexts();
 }
 
 const isoToVehicleCode = { 'at': 'A', 'de': 'D', 'hu': 'H', 'sk': 'SK', 'si': 'SLO', 'it': 'I', 'pl': 'PL', 'cz': 'CZ', 'ro': 'RO', 'ch': 'CH', 'fr': 'F', 'nl': 'NL', 'be': 'B', 'lu': 'L', 'es': 'E', 'gb': 'UK' };
@@ -754,7 +745,6 @@ async function saveEntry() {
             }
             editingId = null;
             showTab('list');
-            renderApp();
         });
     };
 
@@ -769,7 +759,19 @@ function showTab(tabName) {
         document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
     }
-    const allTabs = document.querySelectorAll('.tab'); const mainTabs = ['live', 'full-day', 'list', 'pallets']; const dropdownButton = document.getElementById('dropdown-button'); const dropdownMenu = document.getElementById('dropdown-menu'); allTabs.forEach(t => t.classList.remove('tab-active')); dropdownButton.classList.remove('tab-active'); if (mainTabs.includes(tabName)) { document.getElementById(`tab-${tabName}`).classList.add('tab-active'); dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`; } else { dropdownButton.classList.add('tab-active'); const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`); if(selectedTitleEl) { const selectedTitle = selectedTitleEl.innerText; dropdownButton.innerHTML = `${selectedTitle} ▼`; } } document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); document.getElementById(`content-${tabName}`).classList.remove('hidden'); closeDropdown(); if (tabName === 'list') renderRecords(); if (tabName === 'summary') renderSummary(); if (tabName === 'stats') { statsDate = new Date(); renderStats(); } if (tabName === 'report') initMonthlyReport(); if (tabName === 'tachograph') renderTachographAnalysis(); if (tabName === 'pallets') renderPalletRecords(); }
+    const allTabs = document.querySelectorAll('.tab'); const mainTabs = ['live', 'full-day', 'list', 'pallets']; const dropdownButton = document.getElementById('dropdown-button'); const dropdownMenu = document.getElementById('dropdown-menu'); allTabs.forEach(t => t.classList.remove('tab-active')); dropdownButton.classList.remove('tab-active'); if (mainTabs.includes(tabName)) { document.getElementById(`tab-${tabName}`).classList.add('tab-active'); dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`; } else { dropdownButton.classList.add('tab-active'); const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`); if(selectedTitleEl) { const selectedTitle = selectedTitleEl.innerText; dropdownButton.innerHTML = `${selectedTitle} ▼`; } } document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); document.getElementById(`content-${tabName}`).classList.remove('hidden'); closeDropdown(); 
+    
+    // A tartalom generálása után futtatjuk a renderelőket
+    if (tabName === 'list') renderRecords(); 
+    if (tabName === 'summary') renderSummary(); 
+    if (tabName === 'stats') { statsDate = new Date(); renderStats(); } 
+    if (tabName === 'report') initMonthlyReport(); 
+    if (tabName === 'tachograph') renderTachographAnalysis(); 
+    if (tabName === 'pallets') renderPalletRecords(); 
+    
+    // Minden fülváltás után lefordítjuk az újonnan megjelent elemeket is
+    updateAllTexts();
+}
 function renderDashboard() {
     const i18n = translations[currentLang];
     const container = document.getElementById('dashboard-cards');
@@ -835,7 +837,7 @@ function renderLiveTabView() {
     }
 }
 function startLiveShift() { inProgressEntry = { date: document.getElementById('liveStartDate').value, startTime: document.getElementById('liveStartTime').value, startLocation: document.getElementById('liveStartLocation').value.trim(), weeklyDriveStartStr: document.getElementById('liveWeeklyDriveStart').value.trim(), kmStart: parseFloat(document.getElementById('liveStartKm').value) || 0, crossings: [] }; if (!inProgressEntry.date || !inProgressEntry.startTime) { showCustomAlert(translations[currentLang].alertMandatoryFields, "info"); return; } localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); renderLiveTabView(); updateAllTexts(); }
-function addLiveCrossing() { const from = document.getElementById('liveCrossFrom').value.trim().toUpperCase(); const to = document.getElementById('liveCrossTo').value.trim().toUpperCase(); const time = document.getElementById('liveCrossTime').value; if (!from || !to || !time) { showCustomAlert(translations[currentLang].alertFillAllFields, "info"); return; } inProgressEntry.crossings.push({ from, to, time }); localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); renderLiveTabView(); }
+function addLiveCrossing() { const from = document.getElementById('liveCrossFrom').value.trim().toUpperCase(); const to = document.getElementById('liveCrossTo').value.trim().toUpperCase(); const time = document.getElementById('liveCrossTime').value; if (!from || !to || !time) { showCustomAlert(translations[currentLang].alertFillAllFields, "info"); return; } inProgressEntry.crossings.push({ from, to, time }); localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); renderLiveTabView(); updateAllTexts(); }
 function finalizeShift() { showTab('full-day'); document.getElementById('date').value = new Date().toISOString().split('T')[0]; Object.keys(inProgressEntry).forEach(key => { const el = document.getElementById(key.replace('Str', '')); if (el) el.value = inProgressEntry[key]; }); (inProgressEntry.crossings || []).forEach(c => addCrossingRow(c.from, c.to, c.time)); document.getElementById('endTime').focus(); }
 function discardShift() { if (confirm(translations[currentLang].alertConfirmDelete)) { localStorage.removeItem('inProgressEntry'); inProgressEntry = null; renderLiveTabView(); updateAllTexts(); } }
 function getSortedRecords() { return [...(records || [])].sort((a, b) => new Date(`${b.date||"1970-01-01"}T${b.startTime||"00:00"}`) - new Date(`${a.date||"1970-01-01"}T${a.startTime||"00:00"}`)); }
@@ -892,7 +894,7 @@ function editRecord(id) {
     (record.crossings || []).forEach(c => addCrossingRow(c.from, c.to, c.time));
     updateDisplays();
 }
-async function deleteRecord(id) { if (confirm(translations[currentLang].alertConfirmDelete)) { const splitData = getSplitRestData(); delete splitData[id]; saveSplitRestData(splitData); const weeklyData = getWeeklyRestData(); delete weeklyData[id]; saveWeeklyRestData(weeklyData); await deleteRecordFromStorage(id); records = records.filter(r => r.id !== String(id)); if(!currentUser) { localStorage.setItem('workRecords', JSON.stringify(records)); } renderApp(); } }
+async function deleteRecord(id) { if (confirm(translations[currentLang].alertConfirmDelete)) { const splitData = getSplitRestData(); delete splitData[id]; saveSplitRestData(splitData); const weeklyData = getWeeklyRestData(); delete weeklyData[id]; saveWeeklyRestData(weeklyData); await deleteRecordFromStorage(id); records = records.filter(r => r.id !== String(id)); if(!currentUser) { localStorage.setItem('workRecords', JSON.stringify(records)); } renderApp(); updateAllTexts(); } }
 function renderRecords() { const i18n = translations[currentLang]; const container = document.getElementById('recordsContent'); if (!container) return; const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU'; container.innerHTML = records.length === 0 ? `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>` : getSortedRecords().map(r => { const d = new Date(r.date); const day = d.getUTCDay(); const weekendClass = (day === 6 || day === 0) ? 'bg-red-50' : ''; const isOvernight = new Date(`1970-01-01T${r.endTime}`) < new Date(`1970-01-01T${r.startTime}`); const endDate = new Date(r.date + 'T00:00:00'); let startDate = new Date(r.date + 'T00:00:00'); if (isOvernight) { startDate.setDate(startDate.getDate() - 1); } const formatShortDate = (dt) => dt.toLocaleDateString(locale, { month: '2-digit', day: '2-digit' }); return `<div class="bg-gray-50 rounded-lg p-3 mb-3 text-sm ${weekendClass}"><div class="flex items-center justify-between mb-2"><div class="font-semibold">${isOvernight?`${startDate.toLocaleDateString(locale)} - ${endDate.toLocaleDateString(locale)}`:endDate.toLocaleDateString(locale)}</div><div><button onclick="editRecord('${r.id}')" class="text-blue-500 p-1">✏️</button><button onclick="deleteRecord('${r.id}')" class="text-red-500 p-1">🗑️</button></div></div><div class="space-y-1"><div class="flex justify-between"><span>${i18n.entryDeparture}:</span><span>${isOvernight?formatShortDate(startDate):""} ${r.startTime} (${r.startLocation||"N/A"})</span></div><div class="flex justify-between"><span>${i18n.entryArrival}:</span><span>${formatShortDate(endDate)} ${r.endTime} (${r.endLocation||"N/A"})</span></div><div class="flex justify-between border-t pt-1 mt-1"><span>${i18n.entryWorkTime}:</span><span class="font-bold">${formatDuration(r.workMinutes)}</span></div>${r.compensationMinutes > 0 ? `<div class="flex justify-between text-yellow-700 text-xs"><span>&nbsp;&nbsp;└ ${i18n.entryCompensation}:</span><span>-${formatDuration(r.compensationMinutes)}</span></div>` : ''}<div class="flex justify-between"><span>${i18n.entryNightTime}:</span><span class="text-purple-600">${formatDuration(r.nightWorkMinutes||0)}</span></div><div class="flex justify-between"><span>${i18n.entryDriveTime}:</span><span class="text-blue-700">${formatDuration(r.driveMinutes)}</span></div><div class="flex justify-between"><span>${i18n.entryDistance}:</span><span>${r.kmDriven} km</span></div>${(r.crossings&&r.crossings.length>0)?`<div class="border-t pt-2 mt-2"><p class="font-semibold text-xs text-indigo-700">${i18n.entryCrossingsLabel}:</p><div class="text-xs text-gray-600 pl-2">${r.crossings.map(c=>`<span>${c.from} - ${c.to} (${c.time})</span>`).join("<br>")}</div></div>`:""}</div></div>`; }).join(''); }
 function renderSummary() {
     const i18n = translations[currentLang];
