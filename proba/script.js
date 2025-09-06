@@ -149,6 +149,7 @@ const translations = {
         settingsImportDesc: "Tölts vissza egy korábban lementett adatfájlt. Figyelem: ez felülírja a jelenlegi adatokat!",
         settingsUploadData: "Adatok visszatöltése",
         settingsAboutCreator: "Készítette: Princz Attila",
+        slogan: "Egy kamionos, aki appot készít.",
         settingsVersion: "Verzió:",
         // Tachográf
         tachoTitle: "Tachográf Elemzés",
@@ -174,25 +175,19 @@ const translations = {
         palletsBalance: "Aktuális egyenleg:",
         palletsNewTransaction: "Új tranzakció",
         palletsLocationPlaceholder: "Város, cég...",
-        palletsQuantity: "Mennyiség",
-        palletsQuantityPlaceholder: "Darabszám",
-        palletsAction: "Művelet",
-        palletsActionTaken: "Felvett",
-        palletsActionGiven: "Leadott",
-        palletsActionExchange: "1:1 Csere",
         palletsLicensePlate: "Rendszám (opcionális)",
         palletsLicensePlatePlaceholder: "Pl. ABC-123",
         palletsSaveTransaction: "Tranzakció mentése",
         palletsHistory: "Előzmények",
         palletsNoTransactions: "Még nincsenek paletta tranzakciók rögzítve.",
-        palletReportTitle: 'Raklapmozgás Riport',
-        palletReportFileName: 'Raklap_Riport',
-        palletReportHeaderDate: 'Dátum',
-        palletReportHeaderLocation: 'Helyszín',
-        palletReportHeaderAction: 'Művelet',
-        palletReportHeaderQuantity: 'Mennyiség',
-        palletReportHeaderPlate: 'Rendszám',
-        palletReportHeaderBalance: 'Egyenleg',
+        palletsGivenLabel: "Leadott 🚛➡️",
+        palletsTakenLabel: "Felvett 🚛⬅️",
+        palletsTypeLabel: "Típus / Megjegyzés",
+        palletsTypePlaceholder: "Pl. EUR, DD, CHEP...",
+        pallets1to1Button: "1:1",
+        palletReportHeaderGiven: "Leadott",
+        palletReportHeaderTaken: "Felvett",
+        palletReportHeaderType: "Típus",
         // Üzenetek
         alertLoginError: "Bejelentkezési hiba történt.",
         alertPopupClosed: "A bejelentkezési ablakot bezárta.",
@@ -217,7 +212,7 @@ const translations = {
         alertGenerateReportFirst: "Először generálj riportot a megosztáshoz!",
         alertReportNameMissing: "A riport generálásához kérlek, add meg a nevedet a Beállítások menüben!",
         palletSaveSuccess: "Tranzakció mentve!",
-        palletInvalidData: "Kérlek tölts ki minden mezőt (a mennyiségnek pozitívnak kell lennie)!",
+        palletInvalidData: "Kérlek add meg a helyszínt és legalább az egyik mennyiséget!",
         alertNoPalletData: "Nincs raklapmozgás, amiből riportot lehetne készíteni.",
         autoBackupOn: "Automatikus mentés bekapcsolva!",
         autoBackupOff: "Automatikus mentés kikapcsolva.",
@@ -381,6 +376,7 @@ const translations = {
         settingsImportDesc: "Laden Sie eine zuvor gespeicherte Datendatei. Achtung: Dies überschreibt die aktuellen Daten!",
         settingsUploadData: "Daten wiederherstellen",
         settingsAboutCreator: "Erstellt von: Princz Attila",
+        slogan: "Ein LKW-Fahrer, der eine App macht.",
         settingsVersion: "Version:",
         // Tachograph
         tachoTitle: "Tachographen-Analyse",
@@ -406,25 +402,19 @@ const translations = {
         palletsBalance: "Aktueller Saldo:",
         palletsNewTransaction: "Neue Transaktion",
         palletsLocationPlaceholder: "Stadt, Firma...",
-        palletsQuantity: "Menge",
-        palletsQuantityPlaceholder: "Stückzahl",
-        palletsAction: "Vorgang",
-        palletsActionTaken: "Aufgenommen",
-        palletsActionGiven: "Abgegeben",
-        palletsActionExchange: "1:1 Tausch",
         palletsLicensePlate: "Kennzeichen (optional)",
         palletsLicensePlatePlaceholder: "Z.B. S-AB123",
         palletsSaveTransaction: "Transaktion speichern",
         palletsHistory: "Verlauf",
         palletsNoTransactions: "Noch keine Palettentransaktionen erfasst.",
-        palletReportTitle: 'Palettenbewegungsbericht',
-        palletReportFileName: 'Paletten_Bericht',
-        palletReportHeaderDate: 'Datum',
-        palletReportHeaderLocation: 'Ort',
-        palletReportHeaderAction: 'Vorgang',
-        palletReportHeaderQuantity: 'Menge',
-        palletReportHeaderPlate: 'Kennzeichen',
-        palletReportHeaderBalance: 'Saldo',
+        palletsGivenLabel: "Abgegeben 🚛➡️",
+        palletsTakenLabel: "Aufgenommen 🚛⬅️",
+        palletsTypeLabel: "Typ / Kommentar",
+        palletsTypePlaceholder: "Z.B. EUR, DD, CHEP...",
+        pallets1to1Button: "1:1",
+        palletReportHeaderGiven: "Abgegeben",
+        palletReportHeaderTaken: "Aufgenommen",
+        palletReportHeaderType: "Typ",
         // Meldungen
         alertLoginError: "Anmeldefehler aufgetreten.",
         alertPopupClosed: "Das Anmeldefenster wurde geschlossen.",
@@ -449,7 +439,7 @@ const translations = {
         alertGenerateReportFirst: "Erstellen Sie zuerst einen Bericht, um ihn zu teilen!",
         alertReportNameMissing: "Um einen Bericht zu erstellen, geben Sie bitte Ihren Namen im Einstellungsmenü ein!",
         palletSaveSuccess: "Transaktion gespeichert!",
-        palletInvalidData: "Bitte alle Felder ausfüllen (Menge muss positiv sein)!",
+        palletInvalidData: "Bitte geben Sie den Ort und mindestens eine Menge an!",
         alertNoPalletData: "Keine Palettenbewegungen für einen Bericht vorhanden.",
         autoBackupOn: "Automatische Sicherung aktiviert!",
         autoBackupOff: "Automatische Sicherung deaktiviert.",
@@ -490,7 +480,6 @@ function updateAllTexts() {
             } else if (el.title && (el.tagName === 'BUTTON' || el.tagName === 'A')) {
                 el.title = translation;
             } else {
-                // Egyszerűsített, direktebb logika:
                 el.textContent = translation;
             }
         }
@@ -616,7 +605,7 @@ function updateAuthUI(user) { if (user) { loggedInView.classList.remove('hidden'
 async function saveRecord(record) { if (editingId) { records = records.map(r => r.id === editingId ? record : r); } else { records.push(record); } if (currentUser) { try { await db.collection('users').doc(currentUser.uid).collection('records').doc(String(record.id)).set(record); } catch (error) { console.error("Error saving to Firestore:", error); showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info'); } } else { localStorage.setItem('workRecords', JSON.stringify(records)); } }
 async function deleteRecordFromStorage(id) { if (currentUser) { try { await db.collection('users').doc(currentUser.uid).collection('records').doc(String(id)).delete(); } catch (error) { console.error("Error deleting from Firestore:", error); showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info'); } } }
 // =======================================================
-// ===== ALKALMAZÁS LOGIKA (v8.03) =======================
+// ===== ALKALMAZÁS LOGIKA (v8.05) =======================
 // =======================================================
 
 let records = []; 
@@ -645,6 +634,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dropdownContainer && !dropdownContainer.contains(event.target)) { closeDropdown(); }
         if (!event.target.closest('.autocomplete-list')) { hideAutocomplete(); }
     });
+    
+    const pallet1to1Btn = document.getElementById('pallet-1to1-btn');
+    if (pallet1to1Btn) {
+        pallet1to1Btn.addEventListener('click', () => {
+            const givenInput = document.getElementById('palletGiven');
+            const takenInput = document.getElementById('palletTaken');
+            if (givenInput.value) {
+                takenInput.value = givenInput.value;
+            } else if (takenInput.value) {
+                givenInput.value = takenInput.value;
+            }
+        });
+    }
+
     document.getElementById('autoExportSelector').addEventListener('change', (e) => {
         const i18n = translations[currentLang];
         localStorage.setItem('autoExportFrequency', e.target.value);
@@ -747,6 +750,7 @@ function showTab(tabName) {
     if(tabName === 'pallets') {
         document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
+        document.getElementById('palletType').value = localStorage.getItem('lastPalletType') || '';
     }
     const allTabs = document.querySelectorAll('.tab'); const mainTabs = ['live', 'full-day', 'list', 'pallets']; const dropdownButton = document.getElementById('dropdown-button'); const dropdownMenu = document.getElementById('dropdown-menu'); allTabs.forEach(t => t.classList.remove('tab-active')); dropdownButton.classList.remove('tab-active'); if (mainTabs.includes(tabName)) { document.getElementById(`tab-${tabName}`).classList.add('tab-active'); dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`; } else { dropdownButton.classList.add('tab-active'); const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`); if(selectedTitleEl) { const selectedTitle = selectedTitleEl.textContent; dropdownButton.innerHTML = `${selectedTitle} ▼`; } } document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); document.getElementById(`content-${tabName}`).classList.remove('hidden'); closeDropdown(); 
     
@@ -1329,7 +1333,7 @@ function checkForAutoExport() {
 }
 
 // =======================================================
-// ===== SPECIÁLIS FUNKCIÓK KEZELÉSE (v8.03) =============
+// ===== SPECIÁLIS FUNKCIÓK KEZELÉSE (v8.05) =============
 // =======================================================
 
 const featureToggles = ['toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleCompensation'];
@@ -1403,7 +1407,7 @@ function applyFeatureToggles() {
 }
 
 // =======================================================
-// ===== PALETTA NYILVÁNTARTÓ MODUL (v8.03) ==============
+// ===== PALETTA NYILVÁNTARTÓ MODUL (v8.05) ==============
 // =======================================================
 
 let uniquePalletLocations = [];
@@ -1427,14 +1431,16 @@ async function savePalletData() {
 }
 
 async function savePalletEntry() {
+    const i18n = translations[currentLang];
     const date = document.getElementById('palletDate').value;
     const location = document.getElementById('palletLocation').value.trim();
-    const quantity = parseInt(document.getElementById('palletQuantity').value, 10);
-    const action = document.getElementById('palletAction').value;
+    const palletsGiven = parseInt(document.getElementById('palletGiven').value, 10) || 0;
+    const palletsTaken = parseInt(document.getElementById('palletTaken').value, 10) || 0;
+    const palletType = document.getElementById('palletType').value.trim();
     const licensePlate = document.getElementById('palletLicensePlate').value.trim().toUpperCase();
 
-    if (!date || !location || !quantity || quantity <= 0) {
-        showCustomAlert(translations[currentLang].palletInvalidData, "info");
+    if (!date || !location || (palletsGiven === 0 && palletsTaken === 0)) {
+        showCustomAlert(i18n.palletInvalidData, "info");
         return;
     }
 
@@ -1442,14 +1448,14 @@ async function savePalletEntry() {
         id: String(Date.now()),
         date,
         location,
-        quantity,
-        action,
-        licensePlate: licensePlate
+        palletsGiven,
+        palletsTaken,
+        type: palletType,
+        licensePlate
     };
 
-    if (licensePlate) {
-        localStorage.setItem('lastPalletLicensePlate', licensePlate);
-    }
+    if (licensePlate) localStorage.setItem('lastPalletLicensePlate', licensePlate);
+    if (palletType) localStorage.setItem('lastPalletType', palletType);
 
     palletRecords.push(newEntry);
     await savePalletData();
@@ -1457,10 +1463,13 @@ async function savePalletEntry() {
     updateUniquePalletLocations();
 
     document.getElementById('palletLocation').value = '';
-    document.getElementById('palletQuantity').value = '';
+    document.getElementById('palletGiven').value = '';
+    document.getElementById('palletTaken').value = '';
+    document.getElementById('palletType').value = localStorage.getItem('lastPalletType') || '';
     document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
-    showCustomAlert(translations[currentLang].palletSaveSuccess, "success");
+    showCustomAlert(i18n.palletSaveSuccess, "success");
 }
+
 
 async function deletePalletEntry(id) {
     if (confirm(translations[currentLang].alertConfirmDelete)) {
@@ -1475,11 +1484,9 @@ async function deletePalletEntry(id) {
 
 function updatePalletBalance() {
     const i18n = translations[currentLang];
-    const balance = palletRecords
-        .filter(p => p.action !== 'csere')
-        .reduce((acc, curr) => {
-            return curr.action === 'felvett' ? acc + curr.quantity : acc - curr.quantity;
-        }, 0);
+    const balance = palletRecords.reduce((acc, curr) => {
+        return acc + (curr.palletsTaken || 0) - (curr.palletsGiven || 0);
+    }, 0);
     
     const displayEl = document.getElementById('palletBalanceDisplay');
     let colorClass = 'text-gray-700 dark:text-gray-200';
@@ -1505,53 +1512,53 @@ function renderPalletRecords() {
     }
 
     const sortedRecords = [...palletRecords].sort((a, b) => {
-    const dateComparison = new Date(b.date) - new Date(a.date);
-    if (dateComparison !== 0) {
-        return dateComparison;
-    }
-    // Ha a dátumok azonosak, rendezés az ID (időbélyeg) alapján, csökkenő sorrendben
-    return Number(b.id) - Number(a.id);
-});
+        const dateComparison = new Date(b.date) - new Date(a.date);
+        if (dateComparison !== 0) return dateComparison;
+        return Number(b.id) - Number(a.id);
+    });
 
     container.innerHTML = sortedRecords.map(p => {
-        let actionClass, textColor, sign;
-        switch (p.action) {
-            case 'felvett':
-                actionClass = 'pallet-entry-felvett';
-                textColor = 'text-green-700 dark:text-green-300';
-                sign = '+';
-                break;
-            case 'leadott':
-                actionClass = 'pallet-entry-leadott';
-                textColor = 'text-red-700 dark:text-red-300';
-                sign = '-';
-                break;
-            case 'csere':
-                actionClass = 'pallet-entry-csere';
-                textColor = 'text-gray-500 dark:text-gray-400';
-                sign = '⇄';
-                break;
-        }
+        const taken = p.palletsTaken || 0;
+        const given = p.palletsGiven || 0;
+        const diff = taken - given;
         
-        const licensePlateHTML = p.licensePlate
-            ? `<p class="text-xs text-gray-400 mt-1">${i18n.palletsLicensePlate}: ${p.licensePlate}</p>`
-            : '';
+        let colorClass, borderColorClass, quantityText;
+        if (diff > 0) {
+            borderColorClass = 'border-green-500';
+            colorClass = 'text-green-700 dark:text-green-300';
+            quantityText = `+${diff}`;
+        } else if (diff < 0) {
+            borderColorClass = 'border-red-500';
+            colorClass = 'text-red-700 dark:text-red-300';
+            quantityText = `${diff}`;
+        } else {
+            borderColorClass = 'border-gray-400';
+            colorClass = 'text-gray-500 dark:text-gray-400';
+            quantityText = `⇄ ${taken}`;
+        }
+
+        const detailsHTML = [
+            p.type ? `<p class="text-xs text-gray-500 mt-1">${p.type}</p>` : '',
+            p.licensePlate ? `<p class="text-xs text-gray-400 mt-1">${i18n.palletsLicensePlate}: ${p.licensePlate}</p>` : ''
+        ].filter(Boolean).join('');
 
         return `
-        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border-l-4 ${actionClass} flex items-center justify-between">
+        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border-l-4 ${borderColorClass} flex items-center justify-between">
             <div>
                 <p class="font-semibold text-gray-800 dark:text-gray-100">${p.location}</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">${p.date}</p>
-                ${licensePlateHTML}
+                ${detailsHTML}
             </div>
             <div class="text-right">
-                 <p class="font-bold text-lg ${textColor}">${sign}${p.quantity} db</p>
-                 <button onclick="deletePalletEntry('${p.id}')" class="text-xs text-gray-400 hover:text-red-500">🗑️ <span data-translate-key="delete">${i18n.delete}</span></button>
+                 <p class="font-bold text-lg ${colorClass}">${quantityText} db</p>
+                 <p class="text-xs text-gray-400">(+${taken} / -${given})</p>
+                 <button onclick="deletePalletEntry('${p.id}')" class="text-xs text-gray-400 hover:text-red-500 mt-1">🗑️ <span data-translate-key="delete">${i18n.delete}</span></button>
             </div>
         </div>
         `;
     }).join('');
 }
+
 
 function generatePalletReport() {
     const i18n = translations[currentLang];
@@ -1567,8 +1574,7 @@ function generatePalletReport() {
 
         let currentBalance = 0;
         const balanceAfterEach = sortedRecords.map(p => {
-            if (p.action === 'felvett') currentBalance += p.quantity;
-            if (p.action === 'leadott') currentBalance -= p.quantity;
+            currentBalance += (p.palletsTaken || 0) - (p.palletsGiven || 0);
             return currentBalance;
         });
 
@@ -1577,8 +1583,8 @@ function generatePalletReport() {
         doc.setFontSize(10); doc.text(`${i18n.palletsBalance} ${currentBalance} db`, 105, 31, { align: 'center' });
 
         let yPos = 40;
-        const headers = [i18n.palletReportHeaderDate, i18n.palletReportHeaderLocation, i18n.palletReportHeaderAction, i18n.palletReportHeaderQuantity, i18n.palletReportHeaderPlate, i18n.palletReportHeaderBalance];
-        const colWidths = [25, 65, 25, 20, 30, 20];
+        const headers = [i18n.palletReportHeaderDate, i18n.palletReportHeaderLocation, i18n.palletReportHeaderGiven, i18n.palletReportHeaderTaken, i18n.palletReportHeaderType, i18n.palletsLicensePlate, i18n.palletReportHeaderBalance];
+        const colWidths = [25, 55, 18, 18, 22, 22, 20];
 
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(10);
@@ -1595,13 +1601,7 @@ function generatePalletReport() {
 
         sortedRecords.forEach((p, index) => {
             xPos = 15;
-            let actionText = '';
-            switch(p.action) {
-                case 'felvett': actionText = i18n.palletsActionTaken; break;
-                case 'leadott': actionText = i18n.palletsActionGiven; break;
-                case 'csere': actionText = i18n.palletsActionExchange; break;
-            }
-            const row = [p.date, p.location, actionText, `${p.quantity} db`, p.licensePlate || '-', `${balanceAfterEach[index]} db`];
+            const row = [p.date, p.location, p.palletsGiven || '0', p.palletsTaken || '0', p.type || '-', p.licensePlate || '-', `${balanceAfterEach[index]} db`];
             row.forEach((cell, i) => {
                 doc.text(String(cell), xPos, yPos);
                 xPos += colWidths[i];
@@ -1621,7 +1621,7 @@ function generatePalletReport() {
 }
 
 // =======================================================
-// ===== TACHOGRÁF ELEMZŐ MODUL (v8.03) ==================
+// ===== TACHOGRÁF ELEMZŐ MODUL (v8.05) ==================
 // =======================================================
 
 function calculateRestDebt() {
