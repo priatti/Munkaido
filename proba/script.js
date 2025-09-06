@@ -913,12 +913,13 @@ function renderSummary() {
 function navigateStats(direction) { if (statsView === 'daily') statsDate.setMonth(statsDate.getMonth() + direction); else if (statsView === 'monthly') statsDate.setFullYear(statsDate.getFullYear() + direction); else if (statsView === 'yearly') return; renderStats(); }
 function renderStats() {
     const i18n = translations[currentLang];
+    const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU';
     const periodDisplay = document.getElementById('stats-period-display');
     document.querySelectorAll('.stats-view-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`stats-view-${statsView}`).classList.add('active');
     let data;
     if (statsView === 'daily') {
-        periodDisplay.textContent = `${statsDate.getFullYear()}. ${statsDate.toLocaleString(currentLang, { month: 'long' })}`;
+        periodDisplay.textContent = `${statsDate.getFullYear()}. ${statsDate.toLocaleString(locale, { month: 'long' })}`;
         data = getDailyData(statsDate);
     } else if (statsView === 'monthly') {
         periodDisplay.textContent = `${statsDate.getFullYear()}`;
