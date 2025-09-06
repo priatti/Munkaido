@@ -1504,7 +1504,14 @@ function renderPalletRecords() {
         return;
     }
 
-    const sortedRecords = [...palletRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sortedRecords = [...palletRecords].sort((a, b) => {
+    const dateComparison = new Date(b.date) - new Date(a.date);
+    if (dateComparison !== 0) {
+        return dateComparison;
+    }
+    // Ha a dátumok azonosak, rendezés az ID (időbélyeg) alapján, csökkenő sorrendben
+    return Number(b.id) - Number(a.id);
+});
 
     container.innerHTML = sortedRecords.map(p => {
         let actionClass, textColor, sign;
