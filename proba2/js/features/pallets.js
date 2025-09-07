@@ -80,7 +80,7 @@ export async function deletePalletEntry(id) {
             renderPalletRecords();
         } catch (error) {
              showCustomAlert(i18n.alertSaveToCloudError, 'info');
-             palletRecords.push(entryToDelete); // Hiba esetén visszatesszük az elemet
+             palletRecords.push(entryToDelete);
         }
     }
 }
