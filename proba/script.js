@@ -12,6 +12,7 @@ const translations = {
         // Fülek és menü
         tabOverview: "Áttekintés",
         tabFullDay: "Teljes nap",
+        tabStart: "Indítás",
         tabList: "Lista",
         tabPallets: "Raklapok",
         menuMore: "Továbbiak",
@@ -246,6 +247,7 @@ const translations = {
         // Tabs und Menü
         tabOverview: "Übersicht",
         tabFullDay: "Ganzer Tag",
+        tabStart: "Start",
         tabList: "Liste",
         tabPallets: "Paletten",
         menuMore: "Mehr",
@@ -766,7 +768,26 @@ function showTab(tabName) {
         document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
         document.getElementById('palletType').value = localStorage.getItem('lastPalletType') || '';
     }
-    const allTabs = document.querySelectorAll('.tab'); const mainTabs = ['live', 'full-day', 'list', 'pallets']; const dropdownButton = document.getElementById('dropdown-button'); const dropdownMenu = document.getElementById('dropdown-menu'); allTabs.forEach(t => t.classList.remove('tab-active')); dropdownButton.classList.remove('tab-active'); if (mainTabs.includes(tabName)) { document.getElementById(`tab-${tabName}`).classList.add('tab-active'); dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`; } else { dropdownButton.classList.add('tab-active'); const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`); if(selectedTitleEl) { const selectedTitle = selectedTitleEl.textContent; dropdownButton.innerHTML = `${selectedTitle} ▼`; } } document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); document.getElementById(`content-${tabName}`).classList.remove('hidden'); closeDropdown(); 
+    const allTabs = document.querySelectorAll('.tab'); 
+    const mainTabs = ['live', 'full-day', 'start', 'list', 'pallets']; 
+    const dropdownButton = document.getElementById('dropdown-button'); 
+    const dropdownMenu = document.getElementById('dropdown-menu'); 
+    allTabs.forEach(t => t.classList.remove('tab-active')); 
+    dropdownButton.classList.remove('tab-active'); 
+    if (mainTabs.includes(tabName)) { 
+        document.getElementById(`tab-${tabName}`).classList.add('tab-active'); 
+        dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`; 
+    } else { 
+        dropdownButton.classList.add('tab-active'); 
+        const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`); 
+        if(selectedTitleEl) { 
+            const selectedTitle = selectedTitleEl.textContent; 
+            dropdownButton.innerHTML = `${selectedTitle} ▼`; 
+        } 
+    } 
+    document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); 
+    document.getElementById(`content-${tabName}`).classList.remove('hidden'); 
+    closeDropdown(); 
     
     if (tabName === 'list') renderRecords(); 
     if (tabName === 'summary') renderSummary(); 
@@ -802,12 +823,53 @@ function renderDashboard() {
 function renderLiveTabView() {
     const i18n = translations[currentLang];
     inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
+    
     const startView = document.getElementById('live-start-view');
     const progressView = document.getElementById('live-progress-view');
+    const startTabButton = document.getElementById('tab-start');
+    const summaryContainer = document.getElementById('live-start-summary');
+
     if (inProgressEntry) {
         startView.classList.add('hidden');
         progressView.classList.remove('hidden');
+        startTabButton.disabled = true;
+        startTabButton.classList.add('opacity-50', 'cursor-not-allowed');
+
         document.getElementById('live-start-time').textContent = `${i18n.startedAt}: ${inProgressEntry.date} ${inProgressEntry.startTime}`;
+        
+        let summaryHTML = '';
+        const hasDriveData = localStorage.getItem('toggleDriveTime') === 'true' && inProgressEntry.weeklyDriveStartStr;
+        const hasKmData = localStorage.getItem('toggleKm') === 'true' && inProgressEntry.kmStart > 0;
+        const hasLocationData = inProgressEntry.startLocation && inProgressEntry.startLocation.trim() !== '';
+
+        if (hasDriveData || hasKmData || hasLocationData) {
+            summaryHTML += `<div class="p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg space-y-2">
+                                <h3 class="font-semibold text-gray-800 dark:text-gray-100">Műszak adatai</h3>
+                                <div class="space-y-1 text-sm">`;
+
+            if (hasLocationData) {
+                summaryHTML += `<div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1">
+                                    <span class="text-gray-500 dark:text-gray-400">Kezdő hely:</span>
+                                    <span class="font-semibold">${inProgressEntry.startLocation}</span>
+                                </div>`;
+            }
+            if (hasDriveData) {
+                summaryHTML += `<div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1">
+                                    <span class="text-gray-500 dark:text-gray-400">Kezdő vezetés:</span>
+                                    <span class="font-semibold">${inProgressEntry.weeklyDriveStartStr}</span>
+                                </div>`;
+            }
+            if (hasKmData) {
+                summaryHTML += `<div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1">
+                                    <span class="text-gray-500 dark:text-gray-400">Kezdő km:</span>
+                                    <span class="font-semibold">${inProgressEntry.kmStart} km</span>
+                                </div>`;
+            }
+
+            summaryHTML += `</div></div>`;
+        }
+        summaryContainer.innerHTML = summaryHTML;
+        
         const liveCrossList = document.getElementById('live-crossings-list');
         const liveCrossFrom = document.getElementById('liveCrossFrom');
         if (inProgressEntry.crossings && inProgressEntry.crossings.length > 0) {
@@ -834,14 +896,20 @@ function renderLiveTabView() {
         }
         document.getElementById('liveCrossTo').value = '';
         document.getElementById('liveCrossTime').value = new Date().toTimeString().slice(0, 5);
+
     } else {
         progressView.classList.add('hidden');
         startView.classList.remove('hidden');
+        startTabButton.disabled = false;
+        startTabButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        summaryContainer.innerHTML = '';
+
+        renderEarliestStart();
         renderDashboard();
         loadLastValues(true);
     }
 }
-function startLiveShift() { inProgressEntry = { date: document.getElementById('liveStartDate').value, startTime: document.getElementById('liveStartTime').value, startLocation: document.getElementById('liveStartLocation').value.trim(), weeklyDriveStartStr: document.getElementById('liveWeeklyDriveStart').value.trim(), kmStart: parseFloat(document.getElementById('liveStartKm').value) || 0, crossings: [] }; if (!inProgressEntry.date || !inProgressEntry.startTime) { showCustomAlert(translations[currentLang].alertMandatoryFields, "info"); return; } localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); renderLiveTabView(); updateAllTexts(); }
+function startLiveShift() { inProgressEntry = { date: document.getElementById('liveStartDate').value, startTime: document.getElementById('liveStartTime').value, startLocation: document.getElementById('liveStartLocation').value.trim(), weeklyDriveStartStr: document.getElementById('liveWeeklyDriveStart').value.trim(), kmStart: parseFloat(document.getElementById('liveStartKm').value) || 0, crossings: [] }; if (!inProgressEntry.date || !inProgressEntry.startTime) { showCustomAlert(translations[currentLang].alertMandatoryFields, "info"); return; } localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); showTab('live'); updateAllTexts(); }
 function addLiveCrossing() { const from = document.getElementById('liveCrossFrom').value.trim().toUpperCase(); const to = document.getElementById('liveCrossTo').value.trim().toUpperCase(); const time = document.getElementById('liveCrossTime').value; if (!from || !to || !time) { showCustomAlert(translations[currentLang].alertFillAllFields, "info"); return; } inProgressEntry.crossings.push({ from, to, time }); localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); renderLiveTabView(); updateAllTexts(); }
 function finalizeShift() { showTab('full-day'); document.getElementById('date').value = new Date().toISOString().split('T')[0]; Object.keys(inProgressEntry).forEach(key => { const el = document.getElementById(key.replace('Str', '')); if (el) el.value = inProgressEntry[key]; }); (inProgressEntry.crossings || []).forEach(c => addCrossingRow(c.from, c.to, c.time)); document.getElementById('endTime').focus(); }
 function discardShift() { if (confirm(translations[currentLang].alertConfirmDelete)) { localStorage.removeItem('inProgressEntry'); inProgressEntry = null; renderLiveTabView(); updateAllTexts(); } }
@@ -1573,6 +1641,51 @@ function renderPalletRecords() {
     }).join('');
 }
 
+function renderEarliestStart() {
+    const container = document.getElementById('earliest-start-display');
+    if (!container) return;
+
+    const lastRecord = getLatestRecord();
+    if (!lastRecord || !lastRecord.date || !lastRecord.endTime) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const allowance = calculateWeeklyAllowance();
+    const endDate = new Date(`${lastRecord.date}T${lastRecord.endTime}`);
+
+    const startTime11h = new Date(endDate.getTime());
+    startTime11h.setHours(startTime11h.getHours() + 11);
+
+    let htmlContent = '';
+
+    if (allowance.remainingRests > 0) {
+        const startTime9h = new Date(endDate.getTime());
+        startTime9h.setHours(startTime9h.getHours() + 9);
+        
+        htmlContent = `
+        <div class="bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3 space-y-2">
+            <h3 class="font-semibold text-indigo-800 dark:text-indigo-200 text-base">Legkorábbi indulás</h3>
+            <p class="text-sm text-gray-700 dark:text-gray-200">
+                <strong>9 órás pihenővel</strong> (csökkentett): <span class="font-bold text-lg text-indigo-600 dark:text-indigo-300">${formatDateTime(startTime9h)}</span>
+            </p>
+            <p class="text-sm text-gray-700 dark:text-gray-200">
+                <strong>11 órás pihenővel</strong> (rendes): <span class="font-bold text-lg">${formatDateTime(startTime11h)}</span>
+            </p>
+        </div>`;
+    } else {
+        htmlContent = `
+        <div class="bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+             <h3 class="font-semibold text-yellow-800 dark:text-yellow-200 text-base">Legkorábbi indulás</h3>
+             <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">Nincs több csökkentett pihenőd.</p>
+             <p class="text-sm text-gray-700 dark:text-gray-200 mt-2">
+                <strong>11 órás pihenővel</strong> (rendes): <span class="font-bold text-lg">${formatDateTime(startTime11h)}</span>
+             </p>
+        </div>`;
+    }
+
+    container.innerHTML = htmlContent;
+}
 
 function generatePalletReport() {
     const i18n = translations[currentLang];
@@ -1638,7 +1751,6 @@ function generatePalletReport() {
 // ===== TACHOGRÁF ELEMZŐ MODUL (v8.05) ==================
 // =======================================================
 
-// ÚJ: Ikon generáló segédfüggvények
 function createAvailableIcon(number) {
     return `
     <svg width="45" height="45" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -1709,7 +1821,6 @@ function calculateWeeklyAllowance() {
     return { remainingDrives, remainingRests };
 }
 
-// MÓDOSÍTOTT: Teljesen újratervezett függvény az új ikonokkal
 function renderWeeklyAllowance() {
     const i18n = translations[currentLang];
     const liveContainer = document.getElementById('live-allowance-display');
@@ -1719,13 +1830,11 @@ function renderWeeklyAllowance() {
     const allowance = calculateWeeklyAllowance();
     const debtMinutes = calculateRestDebt();
 
-    // Ikonok generálása a 10 órás vezetésekhez (összesen 2)
     let driveIcons = '';
     for (let i = 0; i < 2; i++) {
         driveIcons += (i < allowance.remainingDrives) ? createAvailableIcon(10) : createUsedIcon(10);
     }
 
-    // Ikonok generálása a 9 órás pihenőkhöz (összesen 3)
     let restIcons = '';
     for (let i = 0; i < 3; i++) {
         restIcons += (i < allowance.remainingRests) ? createAvailableIcon(9) : createUsedIcon(9);
@@ -1750,7 +1859,6 @@ function renderWeeklyAllowance() {
         ${debtHTML}
     </div>`;
     
-    // Kisebb verzió készítése az áttekintés (live) fülhöz
     const liveHTML = html.replace(/width="45"/g, 'width="35"').replace(/height="45"/g, 'height="35"');
 
     liveContainer.innerHTML = liveHTML;
@@ -1893,4 +2001,11 @@ function renderTachographAnalysis() {
             </div>
         </div>`;
     }).join('');
+}
+
+function formatDateTime(date) {
+    if (!date) return '';
+    const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU';
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+    return date.toLocaleString(locale, options);
 }
