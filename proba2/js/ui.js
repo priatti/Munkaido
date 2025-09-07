@@ -1,10 +1,55 @@
 // js/ui.js
 
 import { translations, currentLang } from './main.js';
+import { renderRecords } from './features/records.js';
+import { renderSummary } from './features/summary.js';
+import { renderStats } from './features/stats.js';
+import { initMonthlyReport } from './features/report.js';
+import { renderTachographAnalysis } from './features/tachograph.js';
+import { renderPalletRecords } from './features/pallets.js';
 
-//======================================================================
-// ===== NYELVI ÉS TÉMA FUNKCIÓK ========================================
-//======================================================================
+
+export function showTab(tabName) { 
+    if(tabName === 'pallets') {
+        document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
+        document.getElementById('palletType').value = localStorage.getItem('lastPalletType') || '';
+    }
+    const allTabs = document.querySelectorAll('.tab'); 
+    const mainTabs = ['live', 'full-day', 'list', 'pallets']; 
+    const dropdownButton = document.getElementById('dropdown-button'); 
+    const dropdownMenu = document.getElementById('dropdown-menu'); 
+    
+    allTabs.forEach(t => t.classList.remove('tab-active')); 
+    dropdownButton.classList.remove('tab-active'); 
+    
+    if (mainTabs.includes(tabName)) { 
+        document.getElementById(`tab-${tabName}`).classList.add('tab-active'); 
+        const moreMenuText = translations[currentLang]?.menuMore || 'More';
+        dropdownButton.innerHTML = `<span>${moreMenuText}</span> ▼`; 
+    } else { 
+        dropdownButton.classList.add('tab-active'); 
+        const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="window.app.showTab('${tabName}')"] .dropdown-item-title`); 
+        if(selectedTitleEl) { 
+            const selectedTitle = selectedTitleEl.textContent; 
+            dropdownButton.innerHTML = `${selectedTitle} ▼`; 
+        } 
+    } 
+    
+    document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); 
+    document.getElementById(`content-${tabName}`).classList.remove('hidden'); 
+    closeDropdown(); 
+    
+    // Tartalom-specifikus renderelők hívása
+    if (tabName === 'list') renderRecords(); 
+    if (tabName === 'summary') renderSummary(); 
+    if (tabName === 'stats') renderStats(); 
+    if (tabName === 'report') initMonthlyReport(); 
+    if (tabName === 'tachograph') renderTachographAnalysis(); 
+    if (tabName === 'pallets') renderPalletRecords(); 
+    
+    updateAllTexts();
+}
 
 export function setLanguage(lang) {
     if (['hu', 'de'].includes(lang)) {
@@ -87,10 +132,6 @@ export function initTheme() {
     }); 
 }
 
-//======================================================================
-// ===== ÁLTALÁNOS UI KEZELÉS ===========================================
-//======================================================================
-
 export function toggleDropdown() { 
     document.getElementById('dropdown-menu').classList.toggle('hidden'); 
 }
@@ -115,15 +156,15 @@ export function showCustomAlert(message, type, callback) {
     if (type === 'warning') { 
         iconContainer.classList.add('bg-yellow-100'); 
         iconContainer.innerHTML = warningIcon; 
-        buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button><button onclick="window.hideCustomAlert(true)" class="py-2 px-6 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.save}</button>`; 
+        buttonsContainer.innerHTML = `<button onclick="window.app.hideCustomAlert(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button><button onclick="window.app.hideCustomAlert(true)" class="py-2 px-6 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.save}</button>`; 
     } else if (type === 'info') { 
         iconContainer.classList.add('bg-yellow-100'); 
         iconContainer.innerHTML = warningIcon; 
-        buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(true)" class="py-2 w-2/3 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.ok}</button>`; 
+        buttonsContainer.innerHTML = `<button onclick="window.app.hideCustomAlert(true)" class="py-2 w-2/3 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.ok}</button>`; 
     } else if (type === 'success') { 
         iconContainer.classList.add('bg-green-100', 'success-icon'); 
         iconContainer.innerHTML = `<svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path class="checkmark-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`; 
-        buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(true)" class="py-2 w-2/3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600">${i18n.ok}</button>`; 
+        buttonsContainer.innerHTML = `<button onclick="window.app.hideCustomAlert(true)" class="py-2 w-2/3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600">${i18n.ok}</button>`; 
     } 
     overlay.classList.remove('hidden'); 
     overlay.classList.add('flex'); 
