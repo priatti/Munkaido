@@ -14,6 +14,7 @@ const translations = {
         tabFullDay: "Teljes nap",
         tabStart: "Indítás",
         tabList: "Lista",
+        menuListDesc: "Mentett munkanapok",
         tabPallets: "Raklapok",
         menuMore: "Továbbiak",
         menuSummary: "Összesítő",
@@ -249,6 +250,7 @@ const translations = {
         tabFullDay: "Ganzer Tag",
         tabStart: "Start",
         tabList: "Liste",
+        menuListDesc: "Gespeicherte Arbeitstage",
         tabPallets: "Paletten",
         menuMore: "Mehr",
         menuSummary: "Zusammenfassung",
@@ -621,7 +623,7 @@ function updateAuthUI(user) { if (user) { loggedInView.classList.remove('hidden'
 async function saveRecord(record) { if (editingId) { records = records.map(r => r.id === editingId ? record : r); } else { records.push(record); } if (currentUser) { try { await db.collection('users').doc(currentUser.uid).collection('records').doc(String(record.id)).set(record); } catch (error) { console.error("Error saving to Firestore:", error); showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info'); } } else { localStorage.setItem('workRecords', JSON.stringify(records)); } }
 async function deleteRecordFromStorage(id) { if (currentUser) { try { await db.collection('users').doc(currentUser.uid).collection('records').doc(String(id)).delete(); } catch (error) { console.error("Error deleting from Firestore:", error); showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info'); } } }
 // =======================================================
-// ===== ALKALMAZÁS LOGIKA (v8.05) =======================
+// ===== ALKALMAZÁS LOGIKA ===============================
 // =======================================================
 
 let records = []; 
@@ -683,8 +685,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function renderApp() {
     applyFeatureToggles();
-    renderWeeklyAllowance();
     renderLiveTabView();
+    renderStartTab();
     updateUniqueLocations();
     updateUniquePalletLocations();
     initAllAutocomplete();
@@ -769,13 +771,14 @@ function showTab(tabName) {
         document.getElementById('palletType').value = localStorage.getItem('lastPalletType') || '';
     }
     const allTabs = document.querySelectorAll('.tab'); 
-    const mainTabs = ['live', 'full-day', 'start', 'list', 'pallets']; 
+    const mainTabs = ['live', 'start', 'full-day', 'pallets']; 
     const dropdownButton = document.getElementById('dropdown-button'); 
     const dropdownMenu = document.getElementById('dropdown-menu'); 
     allTabs.forEach(t => t.classList.remove('tab-active')); 
     dropdownButton.classList.remove('tab-active'); 
     if (mainTabs.includes(tabName)) { 
-        document.getElementById(`tab-${tabName}`).classList.add('tab-active'); 
+        const tabButton = document.getElementById(`tab-${tabName}`);
+        if(tabButton) tabButton.classList.add('tab-active'); 
         dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`; 
     } else { 
         dropdownButton.classList.add('tab-active'); 
@@ -789,6 +792,7 @@ function showTab(tabName) {
     document.getElementById(`content-${tabName}`).classList.remove('hidden'); 
     closeDropdown(); 
     
+    if (tabName === 'start') renderStartTab();
     if (tabName === 'list') renderRecords(); 
     if (tabName === 'summary') renderSummary(); 
     if (tabName === 'stats') { statsDate = new Date(); renderStats(); } 
@@ -798,9 +802,11 @@ function showTab(tabName) {
     
     updateAllTexts();
 }
+
 function renderDashboard() {
     const i18n = translations[currentLang];
     const container = document.getElementById('dashboard-cards');
+    if (!container) return;
     const now = new Date();
     const thisWeek = calculateSummaryForDateRange(getWeekRange(now));
     const lastWeek = calculateSummaryForDateRange(getWeekRange(now, -1));
@@ -820,20 +826,24 @@ function renderDashboard() {
         </div>
     `).join('');
 }
+
 function renderLiveTabView() {
+    renderWeeklyAllowance();
+    renderEarliestStart();
+    renderDashboard();
+}
+
+function renderStartTab() {
     const i18n = translations[currentLang];
     inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
     
-    const startView = document.getElementById('live-start-view');
+    const startForm = document.getElementById('start-new-day-form');
     const progressView = document.getElementById('live-progress-view');
-    const startTabButton = document.getElementById('tab-start');
     const summaryContainer = document.getElementById('live-start-summary');
 
     if (inProgressEntry) {
-        startView.classList.add('hidden');
+        startForm.classList.add('hidden');
         progressView.classList.remove('hidden');
-        startTabButton.disabled = true;
-        startTabButton.classList.add('opacity-50', 'cursor-not-allowed');
 
         document.getElementById('live-start-time').textContent = `${i18n.startedAt}: ${inProgressEntry.date} ${inProgressEntry.startTime}`;
         
@@ -899,20 +909,41 @@ function renderLiveTabView() {
 
     } else {
         progressView.classList.add('hidden');
-        startView.classList.remove('hidden');
-        startTabButton.disabled = false;
-        startTabButton.classList.remove('opacity-50', 'cursor-not-allowed');
-        summaryContainer.innerHTML = '';
-
-        renderEarliestStart();
-        renderDashboard();
+        startForm.classList.remove('hidden');
+        summaryContainer.innerHTML = ''; 
         loadLastValues(true);
     }
 }
-function startLiveShift() { inProgressEntry = { date: document.getElementById('liveStartDate').value, startTime: document.getElementById('liveStartTime').value, startLocation: document.getElementById('liveStartLocation').value.trim(), weeklyDriveStartStr: document.getElementById('liveWeeklyDriveStart').value.trim(), kmStart: parseFloat(document.getElementById('liveStartKm').value) || 0, crossings: [] }; if (!inProgressEntry.date || !inProgressEntry.startTime) { showCustomAlert(translations[currentLang].alertMandatoryFields, "info"); return; } localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); showTab('live'); updateAllTexts(); }
-function addLiveCrossing() { const from = document.getElementById('liveCrossFrom').value.trim().toUpperCase(); const to = document.getElementById('liveCrossTo').value.trim().toUpperCase(); const time = document.getElementById('liveCrossTime').value; if (!from || !to || !time) { showCustomAlert(translations[currentLang].alertFillAllFields, "info"); return; } inProgressEntry.crossings.push({ from, to, time }); localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); renderLiveTabView(); updateAllTexts(); }
+
+function startLiveShift() { 
+    inProgressEntry = { 
+        date: document.getElementById('liveStartDate').value, 
+        startTime: document.getElementById('liveStartTime').value, 
+        startLocation: document.getElementById('liveStartLocation').value.trim(), 
+        weeklyDriveStartStr: document.getElementById('liveWeeklyDriveStart').value.trim(), 
+        kmStart: parseFloat(document.getElementById('liveStartKm').value) || 0, 
+        crossings: [] 
+    }; 
+    if (!inProgressEntry.date || !inProgressEntry.startTime) { 
+        showCustomAlert(translations[currentLang].alertMandatoryFields, "info"); 
+        return; 
+    } 
+    localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); 
+    renderStartTab();
+    updateAllTexts(); 
+}
+
+function addLiveCrossing() { const from = document.getElementById('liveCrossFrom').value.trim().toUpperCase(); const to = document.getElementById('liveCrossTo').value.trim().toUpperCase(); const time = document.getElementById('liveCrossTime').value; if (!from || !to || !time) { showCustomAlert(translations[currentLang].alertFillAllFields, "info"); return; } inProgressEntry.crossings.push({ from, to, time }); localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); renderStartTab(); updateAllTexts(); }
 function finalizeShift() { showTab('full-day'); document.getElementById('date').value = new Date().toISOString().split('T')[0]; Object.keys(inProgressEntry).forEach(key => { const el = document.getElementById(key.replace('Str', '')); if (el) el.value = inProgressEntry[key]; }); (inProgressEntry.crossings || []).forEach(c => addCrossingRow(c.from, c.to, c.time)); document.getElementById('endTime').focus(); }
-function discardShift() { if (confirm(translations[currentLang].alertConfirmDelete)) { localStorage.removeItem('inProgressEntry'); inProgressEntry = null; renderLiveTabView(); updateAllTexts(); } }
+
+function discardShift() { 
+    if (confirm(translations[currentLang].alertConfirmDelete)) { 
+        localStorage.removeItem('inProgressEntry'); 
+        inProgressEntry = null; 
+        renderStartTab();
+        updateAllTexts(); 
+    } 
+}
 function getSortedRecords() { return [...(records || [])].sort((a, b) => new Date(`${b.date||"1970-01-01"}T${b.startTime||"00:00"}`) - new Date(`${a.date||"1970-01-01"}T${a.startTime||"00:00"}`)); }
 function getLatestRecord() { if (!records || records.length === 0) return null; return getSortedRecords()[0]; }
 function showFullFormView() { resetEntryForm(); loadLastValues(); }
@@ -1641,51 +1672,6 @@ function renderPalletRecords() {
     }).join('');
 }
 
-function renderEarliestStart() {
-    const container = document.getElementById('earliest-start-display');
-    if (!container) return;
-
-    const lastRecord = getLatestRecord();
-    if (!lastRecord || !lastRecord.date || !lastRecord.endTime) {
-        container.innerHTML = '';
-        return;
-    }
-
-    const allowance = calculateWeeklyAllowance();
-    const endDate = new Date(`${lastRecord.date}T${lastRecord.endTime}`);
-
-    const startTime11h = new Date(endDate.getTime());
-    startTime11h.setHours(startTime11h.getHours() + 11);
-
-    let htmlContent = '';
-
-    if (allowance.remainingRests > 0) {
-        const startTime9h = new Date(endDate.getTime());
-        startTime9h.setHours(startTime9h.getHours() + 9);
-        
-        htmlContent = `
-        <div class="bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3 space-y-2">
-            <h3 class="font-semibold text-indigo-800 dark:text-indigo-200 text-base">Legkorábbi indulás</h3>
-            <p class="text-sm text-gray-700 dark:text-gray-200">
-                <strong>9 órás pihenővel</strong> (csökkentett): <span class="font-bold text-lg text-indigo-600 dark:text-indigo-300">${formatDateTime(startTime9h)}</span>
-            </p>
-            <p class="text-sm text-gray-700 dark:text-gray-200">
-                <strong>11 órás pihenővel</strong> (rendes): <span class="font-bold text-lg">${formatDateTime(startTime11h)}</span>
-            </p>
-        </div>`;
-    } else {
-        htmlContent = `
-        <div class="bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-             <h3 class="font-semibold text-yellow-800 dark:text-yellow-200 text-base">Legkorábbi indulás</h3>
-             <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">Nincs több csökkentett pihenőd.</p>
-             <p class="text-sm text-gray-700 dark:text-gray-200 mt-2">
-                <strong>11 órás pihenővel</strong> (rendes): <span class="font-bold text-lg">${formatDateTime(startTime11h)}</span>
-             </p>
-        </div>`;
-    }
-
-    container.innerHTML = htmlContent;
-}
 
 function generatePalletReport() {
     const i18n = translations[currentLang];
@@ -1865,6 +1851,51 @@ function renderWeeklyAllowance() {
     tachoContainer.innerHTML = html;
 }
 
+function renderEarliestStart() {
+    const container = document.getElementById('earliest-start-display');
+    if (!container) return;
+
+    const lastRecord = getLatestRecord();
+    if (!lastRecord || !lastRecord.date || !lastRecord.endTime) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const allowance = calculateWeeklyAllowance();
+    const endDate = new Date(`${lastRecord.date}T${lastRecord.endTime}`);
+
+    const startTime11h = new Date(endDate.getTime());
+    startTime11h.setHours(startTime11h.getHours() + 11);
+
+    let htmlContent = '';
+
+    if (allowance.remainingRests > 0) {
+        const startTime9h = new Date(endDate.getTime());
+        startTime9h.setHours(startTime9h.getHours() + 9);
+        
+        htmlContent = `
+        <div class="bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3 space-y-2">
+            <h3 class="font-semibold text-indigo-800 dark:text-indigo-200 text-base">Legkorábbi indulás</h3>
+            <p class="text-sm text-gray-700 dark:text-gray-200">
+                <strong>9 órás pihenővel</strong> (csökkentett): <span class="font-bold text-lg text-indigo-600 dark:text-indigo-300">${formatDateTime(startTime9h)}</span>
+            </p>
+            <p class="text-sm text-gray-700 dark:text-gray-200">
+                <strong>11 órás pihenővel</strong> (rendes): <span class="font-bold text-lg">${formatDateTime(startTime11h)}</span>
+            </p>
+        </div>`;
+    } else {
+        htmlContent = `
+        <div class="bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+             <h3 class="font-semibold text-yellow-800 dark:text-yellow-200 text-base">Legkorábbi indulás</h3>
+             <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">Nincs több csökkentett pihenőd.</p>
+             <p class="text-sm text-gray-700 dark:text-gray-200 mt-2">
+                <strong>11 órás pihenővel</strong> (rendes): <span class="font-bold text-lg">${formatDateTime(startTime11h)}</span>
+             </p>
+        </div>`;
+    }
+
+    container.innerHTML = htmlContent;
+}
 
 function getWeekIdentifier(d) {
     const date = new Date(d.valueOf());
