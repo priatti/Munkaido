@@ -15,7 +15,8 @@ const translations = {
         tabStart: "Indítás",
         tabList: "Lista",
         menuListDesc: "Mentett munkanapok",
-        tabPallets: "Raklapok",
+        tabPallets: "Raklap",
+        menuPalletsDesc: "Raklap egyenleg kezelése",
         menuMore: "Továbbiak",
         menuSummary: "Összesítő",
         menuSummaryDesc: "Napi, heti és havi adatok",
@@ -236,7 +237,7 @@ const translations = {
         shareErrorCannotShare: 'Ezt a fájlt nem lehet megosztani.'
     },
     de: {
-        // Allgemein
+        // Általános
         appTitle: "Arbeitszeitnachweis Pro",
         delete: "Löschen",
         ok: "Okay",
@@ -251,7 +252,8 @@ const translations = {
         tabStart: "Start",
         tabList: "Liste",
         menuListDesc: "Gespeicherte Arbeitstage",
-        tabPallets: "Paletten",
+        tabPallets: "Palette",
+        menuPalletsDesc: "Palettenbilanz verwalten",
         menuMore: "Mehr",
         menuSummary: "Zusammenfassung",
         menuSummaryDesc: "Tägliche, wöchentliche, monatliche Daten",
@@ -771,7 +773,7 @@ function showTab(tabName) {
         document.getElementById('palletType').value = localStorage.getItem('lastPalletType') || '';
     }
     const allTabs = document.querySelectorAll('.tab'); 
-    const mainTabs = ['live', 'start', 'full-day', 'pallets']; 
+    const mainTabs = ['live', 'start', 'full-day']; 
     const dropdownButton = document.getElementById('dropdown-button'); 
     const dropdownMenu = document.getElementById('dropdown-menu'); 
     allTabs.forEach(t => t.classList.remove('tab-active')); 
@@ -998,7 +1000,7 @@ function editRecord(id) {
     (record.crossings || []).forEach(c => addCrossingRow(c.from, c.to, c.time));
     updateDisplays();
 }
-async function deleteRecord(id) { if (confirm(translations[currentLang].alertConfirmDelete)) { const splitData = getSplitRestData(); delete splitData[id]; saveSplitRestData(splitData); const weeklyData = getWeeklyRestData(); delete weeklyData[id]; saveWeeklyRestData(weeklyData); await deleteRecordFromStorage(id); records = records.filter(r => r.id !== String(id)); if(!currentUser) { localStorage.setItem('workRecords', JSON.stringify(records)); } showTab('list'); } }
+async function deleteRecord(id) { if (confirm(translations[currentLang].alertConfirmDelete)) { const splitData = getSplitRestData(); delete splitData[id]; saveSplitRestData(splitData); const weeklyData = getWeeklyRestData(); delete weeklyData[id]; saveWeeklyRestData(weeklyData); await deleteRecordFromStorage(id); records = records.filter(r => r.id !== String(id)); if(!currentUser) { localStorage.setItem('workRecords', JSON.stringify(records)); } renderApp(); showTab(document.querySelector('.tab-active').id.replace('tab-','')); } }
 function renderRecords() { const i18n = translations[currentLang]; const container = document.getElementById('recordsContent'); if (!container) return; const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU'; container.innerHTML = records.length === 0 ? `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>` : getSortedRecords().map(r => { const d = new Date(r.date); const day = d.getUTCDay(); const weekendClass = (day === 6 || day === 0) ? 'bg-red-50' : ''; const isOvernight = new Date(`1970-01-01T${r.endTime}`) < new Date(`1970-01-01T${r.startTime}`); const endDate = new Date(r.date + 'T00:00:00'); let startDate = new Date(r.date + 'T00:00:00'); if (isOvernight) { startDate.setDate(startDate.getDate() - 1); } const formatShortDate = (dt) => dt.toLocaleDateString(locale, { month: '2-digit', day: '2-digit' }); return `<div class="bg-gray-50 rounded-lg p-3 mb-3 text-sm ${weekendClass}"><div class="flex items-center justify-between mb-2"><div class="font-semibold">${isOvernight?`${startDate.toLocaleDateString(locale)} - ${endDate.toLocaleDateString(locale)}`:endDate.toLocaleDateString(locale)}</div><div><button onclick="editRecord('${r.id}')" class="text-blue-500 p-1">✏️</button><button onclick="deleteRecord('${r.id}')" class="text-red-500 p-1">🗑️</button></div></div><div class="space-y-1"><div class="flex justify-between"><span>${i18n.entryDeparture}:</span><span>${isOvernight?formatShortDate(startDate):""} ${r.startTime} (${r.startLocation||"N/A"})</span></div><div class="flex justify-between"><span>${i18n.entryArrival}:</span><span>${formatShortDate(endDate)} ${r.endTime} (${r.endLocation||"N/A"})</span></div><div class="flex justify-between border-t pt-1 mt-1"><span>${i18n.entryWorkTime}:</span><span class="font-bold">${formatDuration(r.workMinutes)}</span></div>${r.compensationMinutes > 0 ? `<div class="flex justify-between text-yellow-700 text-xs"><span>&nbsp;&nbsp;└ ${i18n.entryCompensation}:</span><span>-${formatDuration(r.compensationMinutes)}</span></div>` : ''}<div class="flex justify-between"><span>${i18n.entryNightTime}:</span><span class="text-purple-600">${formatDuration(r.nightWorkMinutes||0)}</span></div><div class="flex justify-between"><span>${i18n.entryDriveTime}:</span><span class="text-blue-700">${formatDuration(r.driveMinutes)}</span></div><div class="flex justify-between"><span>${i18n.entryDistance}:</span><span>${r.kmDriven} km</span></div>${(r.crossings&&r.crossings.length>0)?`<div class="border-t pt-2 mt-2"><p class="font-semibold text-xs text-indigo-700">${i18n.entryCrossingsLabel}:</p><div class="text-xs text-gray-600 pl-2">${r.crossings.map(c=>`<span>${c.from} - ${c.to} (${c.time})</span>`).join("<br>")}</div></div>`:""}</div></div>`; }).join(''); }
 function renderSummary() {
     const i18n = translations[currentLang];
@@ -1501,20 +1503,17 @@ function applyFeatureToggles() {
         compensationSection.style.display = showCompensation ? 'block' : 'none';
     }
     
-    const palletTab = document.getElementById('tab-pallets');
-    if(showPallets) {
-        palletTab.classList.remove('hidden');
-        palletTab.style.display = 'flex';
-    } else {
-        palletTab.classList.add('hidden');
-        palletTab.style.display = 'none';
+    const palletMenuItem = document.getElementById('menu-item-pallets');
+    if(palletMenuItem) {
+        palletMenuItem.style.display = showPallets ? 'flex' : 'none';
     }
 
     if (!showCompensation) {
         document.getElementById('compensationTime').value = '';
     }
 
-    if (!showPallets && document.getElementById('tab-pallets').classList.contains('tab-active')) {
+    const activePalletContent = document.getElementById('content-pallets');
+    if (!showPallets && activePalletContent && !activePalletContent.classList.contains('hidden')) {
         showTab('live');
     }
 }
@@ -1671,7 +1670,6 @@ function renderPalletRecords() {
         `;
     }).join('');
 }
-
 
 function generatePalletReport() {
     const i18n = translations[currentLang];
