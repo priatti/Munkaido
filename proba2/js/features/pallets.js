@@ -62,6 +62,7 @@ export async function savePalletEntry() {
     }
 }
 
+
 export async function deletePalletEntry(id) {
     const i18n = translations[currentLang];
     if (confirm(i18n.alertConfirmDelete)) {
@@ -156,12 +157,13 @@ export function renderPalletRecords() {
             <div class="text-right">
                  <p class="font-bold text-lg ${colorClass}">${quantityText} db</p>
                  <p class="text-xs text-gray-400">(+${taken} / -${given})</p>
-                 <button onclick="deletePalletEntry('${p.id}')" class="text-xs text-gray-400 hover:text-red-500 mt-1">🗑️ <span data-translate-key="delete">${i18n.delete}</span></button>
+                 <button onclick="window.app.deletePalletEntry('${p.id}')" class="text-xs text-gray-400 hover:text-red-500 mt-1">🗑️ <span data-translate-key="delete">${i18n.delete}</span></button>
             </div>
         </div>
         `;
     }).join('');
 }
+
 
 export function generatePalletReport() {
     const i18n = translations[currentLang];
@@ -221,4 +223,4 @@ export function generatePalletReport() {
         console.error("PDF generation error:", e);
         showCustomAlert(i18n.errorPdfGeneration + " " + e.message, 'info');
     }
-}
+} 
