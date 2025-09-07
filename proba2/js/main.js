@@ -3,15 +3,14 @@
 // ====== MODULOK IMPORTÁLÁSA ======
 import { translations as huTranslations } from './lang/hu.js';
 import { translations as deTranslations } from './lang/de.js';
-import { auth, db, loadDataFromFirestore, migrateLocalToFirestore } from './firebase.js';
+import { auth, loadDataFromFirestore, migrateLocalToFirestore } from './firebase.js';
 import * as ui from './ui.js';
 import * as pallets from './features/pallets.js';
 import * as tacho from './features/tachograph.js';
-// Még nem létező, de a jövőben szükséges modulok importja
-//import * as report from './features/report.js';
-//import * as stats from './features/stats.js';
-//import * as summary from './features/summary.js';
-//import * as recordsModule from './features/records.js';
+import * as report from './features/report.js';
+import * as stats from './features/stats.js';
+import * as summary from './features/summary.js';
+import * as recordsModule from './features/records.js';
 
 // ====== GLOBÁLIS ÁLLAPOT (STATE) ======
 export let currentUser = null;
@@ -21,26 +20,50 @@ export const translations = { ...huTranslations.hu, ...deTranslations.de };
 export let currentLang = localStorage.getItem('language') || (navigator.language.startsWith('de') ? 'de' : 'hu');
 export const i18n = translations[currentLang];
 
+
 // ====== GLOBÁLIS FUNKCIÓK A HTML SZÁMÁRA ======
+// Ez a `window.app` objektum teszi a funkciókat elérhetővé az `onclick` események számára.
 window.app = {
-    ...ui,
-    ...pallets,
-    ...tacho,
-    //...report,
-    //...stats,
-    //...summary,
-    //...recordsModule
+    // UI
+    setLanguage: ui.setLanguage,
+    toggleDropdown: ui.toggleDropdown,
+    setTheme: ui.setTheme,
+    hideCustomAlert: ui.hideCustomAlert,
+    showTab: (tabName) => {
+        // A showTab mostantól a main.js felelőssége, mert neki kell tudnia,
+        // melyik renderelő függvényt hívja meg.
+        document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`content-${tabName}`).classList.remove('hidden');
+        ui.closeDropdown();
+
+        // Tartalom-specifikus renderelők hívása a megfelelő adatokkal
+        if (tabName === 'list') recordsModule.renderRecords(i18n, currentLang, records);
+        if (tabName === 'summary') summary.renderSummary(i18n, currentLang, records);
+        if (tabName === 'stats') stats.renderStats(i18n, currentLang, records);
+        if (tabName === 'report') report.initMonthlyReport();
+        if (tabName === 'tachograph') tacho.renderTachographAnalysis(i18n, currentLang, records);
+        if (tabName === 'pallets') pallets.renderPalletRecords(i18n, palletRecords);
+        
+        ui.updateAllTexts(i18n, currentLang);
+    },
+    // Pallets
+    savePalletEntry: () => pallets.savePalletEntry(i18n, currentUser, palletRecords),
+    deletePalletEntry: (id) => pallets.deletePalletEntry(i18n, currentUser, palletRecords, id),
+    generatePalletReport: () => pallets.generatePalletReport(i18n, palletRecords),
+    // Tachograph
+    handleTachographToggle: (checkbox, recordId, type) => tacho.handleTachographToggle(i18n, currentLang, records, checkbox, recordId, type),
+    // ... és a többi funkció, amit a HTML-ből hívunk ...
 };
-// Néhány funkciónak át kell adni az i18n objektumot, mert most már paraméterként kérik
-window.app.showCustomAlert = (message, type, callback) => ui.showCustomAlert(i18n, message, type, callback);
-window.hideCustomAlert = ui.hideCustomAlert;
 
 
 // ====== ALKALMAZÁS INDÍTÁSA ======
 document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.lang = currentLang;
     ui.initTheme();
-    // A többi event listener ide jöhet a jövőben
+    
+    // Event listenerek
+    document.getElementById('stats-prev').onclick = () => stats.navigateStats(-1, i18n, currentLang, records);
+    document.getElementById('stats-next').onclick = () => stats.navigateStats(1, i18n, currentLang, records);
 });
 
 auth.onAuthStateChanged(async user => {
@@ -72,18 +95,11 @@ auth.onAuthStateChanged(async user => {
 
 
 function renderApp() {
-    // A showTab mostantól nem létezik az ui modulban,
-    // mert a teljes UI vezérlés a main.js-ben történik.
-    // Létrehozunk egy egyszerűsített showTab-ot itt.
-    
-    const tabName = 'live'; // Kezdő fül
-    document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); 
-    document.getElementById(`content-${tabName}`).classList.remove('hidden'); 
+    ui.updateAllTexts(i18n, currentLang);
     
     // Kezdeti állapot renderelése
-    tacho.renderWeeklyAllowance();
-    pallets.updateUniquePalletLocations();
-    // ... egyéb induláskori renderelők ...
-
-    ui.updateAllTexts(i18n, currentLang);
+    window.app.showTab('live');
+    
+    tacho.renderWeeklyAllowance(i18n, currentLang, records);
+    pallets.updateUniquePalletLocations(palletRecords);
 }
