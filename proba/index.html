@@ -17,11 +17,11 @@
             <button onclick="showTab('live')" id="tab-live" class="tab tab-active">📊 <span data-translate-key="tabOverview">Áttekintés</span></button>
             <button onclick="showTab('start')" id="tab-start" class="tab">🚀 <span data-translate-key="tabStart">Indítás</span></button>
             <button onclick="showTab('full-day')" id="tab-full-day" class="tab">➕ <span data-translate-key="tabFullDay">Teljes nap</span></button>
-            <button onclick="showTab('pallets')" id="tab-pallets" class="tab hidden">📦 <span data-translate-key="tabPallets">Raklapok</span></button>
             <div id="dropdown-container" class="relative flex-1">
                 <button onclick="toggleDropdown()" id="dropdown-button" class="tab w-full"><span data-translate-key="menuMore">Továbbiak</span> ▼</button>
                 <div id="dropdown-menu" class="dropdown-content hidden">
                     <button onclick="showTab('list')" class="dropdown-item"><span class="dropdown-item-icon">📅</span><div><p class="dropdown-item-title" data-translate-key="tabList">Lista</p><p class="dropdown-item-desc" data-translate-key="menuListDesc">Mentett munkanapok</p></div></button>
+                    <button onclick="showTab('pallets')" id="menu-item-pallets" class="dropdown-item"><span class="dropdown-item-icon">📦</span><div><p class="dropdown-item-title" data-translate-key="tabPallets">Raklap</p><p class="dropdown-item-desc" data-translate-key="menuPalletsDesc">Raklap egyenleg kezelése</p></div></button>
                     <button onclick="showTab('summary')" class="dropdown-item"><span class="dropdown-item-icon">📊</span><div><p class="dropdown-item-title" data-translate-key="menuSummary">Összesítő</p><p class="dropdown-item-desc" data-translate-key="menuSummaryDesc">Napi, heti és havi adatok</p></div></button>
                     <button onclick="showTab('stats')" class="dropdown-item"><span class="dropdown-item-icon">📈</span><div><p class="dropdown-item-title" data-translate-key="menuStats">Statisztika</p><p class="dropdown-item-desc" data-translate-key="menuStatsDesc">Részletes, lapozható diagramok</p></div></button>
                     <button onclick="showTab('tachograph')" class="dropdown-item"><span class="dropdown-item-icon">⏱️</span><div><p class="dropdown-item-title" data-translate-key="menuTachograph">Tachográf</p><p class="dropdown-item-desc" data-translate-key="menuTachographDesc">Vezetési és pihenőidő elemzés</p></div></button>
