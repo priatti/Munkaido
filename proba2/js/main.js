@@ -1,58 +1,49 @@
 // js/main.js
 
 // ====== MODULOK IMPORTÁLÁSA ======
-import { hu } from './lang/hu.js';
-import { de } from './lang/de.js';
-import { auth, db, loadDataFromFirestore, migrateLocalToFirestore, saveDataToFirestore, deleteDataFromFirestore } from './firebase.js';
-import { setLanguage, updateAllTexts, initTheme, setTheme, showTab, toggleDropdown, closeDropdown, showCustomAlert, hideCustomAlert, updateToggleVisuals } from './ui.js';
-import { renderPalletRecords, savePalletEntry, deletePalletEntry, generatePalletReport, updateUniquePalletLocations } from './features/pallets.js';
-import { renderTachographAnalysis, renderWeeklyAllowance, handleTachographToggle } from './features/tachograph.js';
-import { renderStats, navigateStats } from './features/stats.js';
-import { renderSummary } from './features/summary.js';
-import { initMonthlyReport, generateMonthlyReport, exportToPDF, sharePDF } from './features/report.js';
+import { translations as huTranslations } from './lang/hu.js';
+import { translations as deTranslations } from './lang/de.js';
+import { auth, db, loadDataFromFirestore, migrateLocalToFirestore } from './firebase.js';
+import * as ui from './ui.js';
+import * as pallets from './features/pallets.js';
+import * as tacho from './features/tachograph.js';
+import * as report from './features/report.js';
+import * as stats from './features/stats.js';
+import * as summary from './features/summary.js';
 
 // ====== GLOBÁLIS ÁLLAPOT (STATE) ======
-// Ezeket a változókat exportáljuk, hogy a többi modul is elérje őket.
 export let currentUser = null;
 export let records = [];
 export let palletRecords = [];
-export const translations = { ...hu, ...de };
+export const translations = { ...huTranslations, ...deTranslations };
 export let currentLang = localStorage.getItem('language') || (navigator.language.startsWith('de') ? 'de' : 'hu');
 
 // ====== GLOBÁLIS FUNKCIÓK A HTML SZÁMÁRA ======
-// A modulok miatt a HTML onclick eseményei nem érik el a funkciókat.
-// Itt tesszük őket globálisan elérhetővé a window objektumon keresztül.
-window.showTab = showTab;
-window.setLanguage = setLanguage;
-window.toggleDropdown = toggleDropdown;
-window.hideCustomAlert = hideCustomAlert;
-window.setTheme = setTheme;
-// ... (minden más onclick=""-ben használt funkció)
-// Például a `pallets.js`-ből importáltakat is:
-window.savePalletEntry = savePalletEntry;
-window.deletePalletEntry = deletePalletEntry;
-window.generatePalletReport = generatePalletReport;
-// És így tovább az összes többivel. Létrehozunk egy központi objektumot a jobb átláthatóságért.
 window.app = {
-    // UI
-    showTab, setLanguage, toggleDropdown, hideCustomAlert, setTheme,
-    // Pallets
-    savePalletEntry, deletePalletEntry, generatePalletReport,
-    // Tachograph
-    handleTachographToggle,
-    // Report
-    initMonthlyReport, generateMonthlyReport, exportToPDF, sharePDF,
-    // Stats
-    navigateStats,
-    // ... és a többi, ha szükséges ...
+    ...ui,
+    ...pallets,
+    ...tacho,
+    ...report,
+    ...stats,
+    ...summary
+    // Itt gyűjtünk össze minden funkciót, amit a HTML-ből el akarunk érni
 };
+// A hideCustomAlert-et külön is kitesszük, mert a felugró ablakból közvetlenül hívódik
+window.hideCustomAlert = ui.hideCustomAlert;
+
 
 // ====== ALKALMAZÁS INDÍTÁSA ======
 
 document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.lang = currentLang;
-    initTheme();
-    // A DOMContentLoaded-ben lévő egyéb event listenerek ide jönnek
+    ui.initTheme();
+    
+    // Ide jönnek a többi, induláskor szükséges event listenerek
+    document.getElementById('stats-view-daily').onclick = () => { stats.renderStats('daily'); };
+    document.getElementById('stats-view-monthly').onclick = () => { stats.renderStats('monthly'); };
+    document.getElementById('stats-view-yearly').onclick = () => { stats.renderStats('yearly'); };
+    document.getElementById('stats-prev').onclick = () => { stats.navigateStats(-1); };
+    document.getElementById('stats-next').onclick = () => { stats.navigateStats(1); };
 });
 
 auth.onAuthStateChanged(async user => {
@@ -70,23 +61,22 @@ auth.onAuthStateChanged(async user => {
             records = firestoreRecords;
         }
         palletRecords = await loadDataFromFirestore(user.uid, 'pallets');
-
     } else {
         console.log("Kijelentkezve.");
         records = JSON.parse(localStorage.getItem('workRecords') || '[]');
         palletRecords = JSON.parse(localStorage.getItem('palletRecords') || '[]');
     }
 
-    // Fő renderelő függvény, ami elindítja az appot az adatok betöltése után
     renderApp();
 });
 
-function renderApp() {
-    // Kezdeti állapot renderelése
-    showTab('live'); // Kezdő fül megjelenítése
-    renderWeeklyAllowance();
-    updateUniquePalletLocations();
-    // ... (minden, aminek az induláskor meg kell jelennie) ...
 
-    updateAllTexts(); // A legvégén lefordítjuk a szövegeket
+function renderApp() {
+    ui.updateAllTexts(); // Legelső a fordítás
+    
+    // Kezdeti állapot renderelése
+    ui.showTab('live'); // Kezdő fül megjelenítése
+    tacho.renderWeeklyAllowance();
+    pallets.updateUniquePalletLocations();
+    // ... (minden, aminek az induláskor meg kell jelennie) ...
 }
