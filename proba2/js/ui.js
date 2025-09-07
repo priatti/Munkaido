@@ -1,55 +1,9 @@
 // js/ui.js
 
-import { translations, currentLang } from './main.js';
-import { renderRecords } from './features/records.js';
-import { renderSummary } from './features/summary.js';
-import { renderStats } from './features/stats.js';
-import { initMonthlyReport } from './features/report.js';
-import { renderTachographAnalysis } from './features/tachograph.js';
-import { renderPalletRecords } from './features/pallets.js';
+// KIVETTEM AZ IMPORTOT A MAIN.JS-BŐL, MEGSZÜNTETVE A KÖRKÖRÖS HIVATKOZÁST
+// import { translations, currentLang } from './main.js'; 
 
-
-export function showTab(tabName) { 
-    if(tabName === 'pallets') {
-        document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
-        document.getElementById('palletType').value = localStorage.getItem('lastPalletType') || '';
-    }
-    const allTabs = document.querySelectorAll('.tab'); 
-    const mainTabs = ['live', 'full-day', 'list', 'pallets']; 
-    const dropdownButton = document.getElementById('dropdown-button'); 
-    const dropdownMenu = document.getElementById('dropdown-menu'); 
-    
-    allTabs.forEach(t => t.classList.remove('tab-active')); 
-    dropdownButton.classList.remove('tab-active'); 
-    
-    if (mainTabs.includes(tabName)) { 
-        document.getElementById(`tab-${tabName}`).classList.add('tab-active'); 
-        const moreMenuText = translations[currentLang]?.menuMore || 'More';
-        dropdownButton.innerHTML = `<span>${moreMenuText}</span> ▼`; 
-    } else { 
-        dropdownButton.classList.add('tab-active'); 
-        const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="window.app.showTab('${tabName}')"] .dropdown-item-title`); 
-        if(selectedTitleEl) { 
-            const selectedTitle = selectedTitleEl.textContent; 
-            dropdownButton.innerHTML = `${selectedTitle} ▼`; 
-        } 
-    } 
-    
-    document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); 
-    document.getElementById(`content-${tabName}`).classList.remove('hidden'); 
-    closeDropdown(); 
-    
-    // Tartalom-specifikus renderelők hívása
-    if (tabName === 'list') renderRecords(); 
-    if (tabName === 'summary') renderSummary(); 
-    if (tabName === 'stats') renderStats(); 
-    if (tabName === 'report') initMonthlyReport(); 
-    if (tabName === 'tachograph') renderTachographAnalysis(); 
-    if (tabName === 'pallets') renderPalletRecords(); 
-    
-    updateAllTexts();
-}
+// A FUNKCIÓK MOST MÁR PARAMÉTERKÉNT KAPJÁK MEG A SZÜKSÉGES ADATOKAT
 
 export function setLanguage(lang) {
     if (['hu', 'de'].includes(lang)) {
@@ -58,8 +12,7 @@ export function setLanguage(lang) {
     }
 }
 
-export function updateAllTexts() {
-    const i18n = translations[currentLang];
+export function updateAllTexts(i18n, currentLang) {
     if (!i18n) return; 
 
     document.querySelectorAll('[data-translate-key]').forEach(el => {
@@ -78,7 +31,7 @@ export function updateAllTexts() {
     });
 
     document.title = i18n.appTitle || "Munkaidő Nyilvántartó Pro";
-    updateLanguageButtonStyles();
+    updateLanguageButtonStyles(currentLang);
     
     const compensationSectionDe = document.getElementById('compensation-section-de');
     if(compensationSectionDe) {
@@ -90,7 +43,7 @@ export function updateAllTexts() {
     }
 }
 
-function updateLanguageButtonStyles() {
+function updateLanguageButtonStyles(currentLang) {
     const selector = document.getElementById('languageSelector');
     if (selector) {
         const buttons = selector.querySelectorAll('button');
@@ -141,13 +94,12 @@ export function closeDropdown() {
 }
 
 let alertCallback = null;
-export function showCustomAlert(message, type, callback) { 
+export function showCustomAlert(i18n, message, type, callback) { 
     const overlay = document.getElementById('custom-alert-overlay'); 
     const box = document.getElementById('custom-alert-box'); 
     const iconContainer = document.getElementById('custom-alert-icon'); 
     const messageEl = document.getElementById('custom-alert-message'); 
     const buttonsContainer = document.getElementById('custom-alert-buttons'); 
-    const i18n = translations[currentLang]; 
     messageEl.textContent = message; 
     alertCallback = callback || null; 
     iconContainer.className = 'w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center'; 
