@@ -223,4 +223,4 @@ export function generatePalletReport() {
         console.error("PDF generation error:", e);
         showCustomAlert(i18n.errorPdfGeneration + " " + e.message, 'info');
     }
-} 
+}
