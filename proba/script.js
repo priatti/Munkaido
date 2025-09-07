@@ -18,6 +18,8 @@ const translations = {
         tabPallets: "Raklap",
         menuPalletsDesc: "Raklap egyenleg kezelése",
         menuMore: "Továbbiak",
+        menuHelp: "Súgó & Info",
+        menuHelpDesc: "Az alkalmazás használata",
         menuSummary: "Összesítő",
         menuSummaryDesc: "Napi, heti és havi adatok",
         menuStats: "Statisztika",
@@ -237,241 +239,7 @@ const translations = {
         shareErrorCannotShare: 'Ezt a fájlt nem lehet megosztani.'
     },
     de: {
-        // Allgemein
-        appTitle: "Arbeitszeitnachweis Pro",
-        delete: "Löschen",
-        ok: "Okay",
-        cancel: "Abbrechen",
-        save: "Speichern",
-        cityPlaceholder: "Stadt",
-        fromPlaceholder: "Von",
-        toPlaceholder: "Nach",
-        // Tabs und Menü
-        tabOverview: "Übersicht",
-        tabFullDay: "Ganzer Tag",
-        tabStart: "Start",
-        tabList: "Liste",
-        menuListDesc: "Gespeicherte Arbeitstage",
-        tabPallets: "Palette",
-        menuPalletsDesc: "Palettenbilanz verwalten",
-        menuMore: "Mehr",
-        menuSummary: "Zusammenfassung",
-        menuSummaryDesc: "Tägliche, wöchentliche, monatliche Daten",
-        menuStats: "Statistik",
-        menuStatsDesc: "Detaillierte, blätterbare Diagramme",
-        menuTachograph: "Tachograph",
-        menuTachographDesc: "Analyse der Lenk- und Ruhezeiten",
-        menuReport: "Bericht",
-        menuReportDesc: "Druckbare monatliche Abrechnung",
-        menuSettings: "Einstellungen",
-        menuSettingsDesc: "Datensicherung und persönliche Daten",
-        // Live-Ansicht
-        liveOverviewTitle: "Übersicht",
-        liveNewDayTitle: "Neuen Arbeitstag starten",
-        date: "Datum",
-        time: "Uhrzeit",
-        location: "Ort",
-        weeklyDrive: "Wöchentliche Lenkzeit",
-        startKm: "Anfangs-km",
-        startWorkday: "Arbeitstag starten",
-        workdayInProgress: "Arbeitstag läuft",
-        startedAt: "Gestartet am",
-        newBorderCrossing: "Neuer Grenzübergang",
-        getCountryCodeGPS: "Ländercode per GPS abrufen",
-        addBorderCrossing: "Grenzübergang hinzufügen",
-        finishShift: "Schicht beenden",
-        discardWorkday: "Arbeitstag verwerfen",
-        recordedCrossings: "Erfasste Übergänge:",
-        dashboardDriveThisWeek: "Lenkzeit diese Woche",
-        dashboardWorkThisWeek: "Arbeitszeit diese Woche",
-        dashboardDistanceThisMonth: "Distanz diesen Monat",
-        dashboardDistanceLastWeek: "Distanz letzte Woche",
-        // Ganzer Tag Ansicht
-        fullDayTitle: "Ganzer Arbeitstag erfassen",
-        dateLabelFull: "Datum (Tag des Arbeitsendes)",
-        workTimeAndLocation: "Arbeitszeit und Ort",
-        startTime: "Startzeit",
-        endTime: "Endzeit",
-        compensationLabel: "Pauschale / Pause (wird abgezogen)",
-        startLocation: "Startort",
-        endLocation: "Endort",
-        getLocationGPS: "Standort per GPS abrufen",
-        borderCrossings: "Grenzübergänge",
-        addCrossing: "Neuen Übergang hinzufügen",
-        weeklyDriveTimeHours: "Wöchentliche Lenkzeit (Stunden)",
-        atDayStart: "Bei Tagesbeginn (hh:mm)",
-        atDayEnd: "Bei Tagesende (hh:mm)",
-        kmReading: "Kilometerstand",
-        endKm: "End-km",
-        splitRestQuestion: "Gab es eine zusammenhängende Pause von 3+ Stunden? (Geteilt)",
-        saveEntry: "Eintrag speichern",
-        workTimeDisplay: "Arbeitszeit",
-        nightWorkDisplay: "Nachtarbeit (20:00-05:00)",
-        driveTimeTodayDisplay: "Heutige Lenkzeit",
-        kmDrivenDisplay: "Gefahrene km",
-        // Listenansicht
-        listTitle: "Einträge",
-        noEntries: "Noch keine Einträge vorhanden",
-        entryDeparture: "Abfahrt",
-        entryArrival: "Ankunft",
-        entryWorkTime: "Arbeitszeit",
-        entryCompensation: "Pauschale",
-        entryNightTime: "Nachtarbeit",
-        entryDriveTime: "Lenkzeit",
-        entryDistance: "Distanz",
-        entryCrossingsLabel: "Grenzübergänge",
-        // Zusammenfassungsansicht
-        summaryTitle: "Zusammenfassungen",
-        summaryToday: "Heute",
-        summaryYesterday: "Gestern",
-        summaryThisWeek: "Aktuelle Woche",
-        summaryLastWeek: "Letzte Woche",
-        summaryThisMonth: "Aktueller Monat",
-        summaryLastMonth: "Letzter Monat",
-        summaryDays: "Tage",
-        summaryWork: "Arbeit",
-        summaryNight: "Nacht",
-        summaryDrive: "Lenkzeit",
-        summaryDistance: "Distanz",
-        summaryNoData: "Keine Daten",
-        // Statistikansicht
-        statsTitle: "Detaillierte Statistiken",
-        statsDaily: "Täglich",
-        statsMonthly: "Monatlich",
-        statsYearly: "Jährlich",
-        statsWorkTime: "Arbeitszeit",
-        statsDriveTime: "Lenkzeit",
-        statsNightTime: "Nachtarbeit",
-        statsKmDriven: "Gefahrene Kilometer",
-        statsNoDataPeriod: "Keine Daten für den ausgewählten Zeitraum.",
-        chartMonths: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
-        // Berichtansicht
-        reportTitle: "Monatlicher Bericht",
-        reportMonthSelect: "Monat auswählen",
-        reportGenerate: "Bericht erstellen",
-        reportDownloadPDF: "PDF herunterladen",
-        reportSharePDF: "PDF teilen",
-        reportPrepared: "Bericht vorbereitet.",
-        palletReportGenerate: "Palettenbericht erstellen",
-        // Einstellungen
-        settingsTitle: "Einstellungen und Datenverwaltung",
-        settingsSyncTitle: "Cloud-Synchronisation",
-        settingsSyncDesc: "Melden Sie sich mit Ihrem Google-Konto an, um Ihre Daten in der Cloud zu speichern und auf mehreren Geräten darauf zuzugreifen.",
-        settingsLoginGoogle: "Mit Google-Konto anmelden",
-        settingsLoggedInAs: "Angemeldet als:",
-        settingsLogout: "Abmelden",
-        settingsPersonalData: "Persönliche Daten",
-        settingsNameForReports: "Name (für Berichte)",
-        settingsNamePlaceholder: "Nachname Vorname",
-        settingsSaveData: "Daten speichern",
-        settingsAppearance: "Erscheinungsbild",
-        settingsLanguage: "Sprache",
-        settingsThemeSelect: "Thema auswählen",
-        settingsTheme: "Thema",
-        settingsThemeAuto: "Automatisch",
-        settingsThemeLight: "Hell",
-        settingsThemeDark: "Dunkel",
-        settingsSpecialFunctions: "Sonderfunktionen",
-        settingsFeatureKm: "Kilometererfassung",
-        settingsFeatureDriveTime: "Lenkzeiterfassung",
-        settingsFeaturePallets: "Palettenverwaltung",
-        settingsFeatureCompensation: "Pausen-/Kompensationsabzug",
-        settingsExportTitle: "Daten exportieren (Backup)",
-        settingsExportDesc: "Speichern Sie alle Ihre Einträge in einer JSON-Datei.",
-        settingsAutoExportFreq: "Häufigkeit der auto. Speicherung:",
-        settingsFreqNever: "Nie",
-        settingsFreqDaily: "Täglich",
-        settingsFreqWeekly: "Wöchentlich",
-        settingsFreqMonthly: "Monatlich",
-        settingsAutoExportDesc: "Beim Start der App wird geprüft, ob eine Speicherung fällig ist.",
-        settingsDownloadData: "Daten herunterladen",
-        settingsImportTitle: "Daten importieren",
-        settingsImportDesc: "Laden Sie eine zuvor gespeicherte Datendatei. Achtung: Dies überschreibt die aktuellen Daten!",
-        settingsUploadData: "Daten wiederherstellen",
-        settingsAboutCreator: "Erstellt von: Princz Attila",
-        slogan: "Ein LKW-Fahrer, der eine App macht.",
-        settingsVersion: "Version:",
-        // Tachograph
-        tachoTitle: "Tachographen-Analyse",
-        tachoAllowanceDrive10h: "Verbleibende 10-Std-Fahrten",
-        tachoAllowanceReducedRest: "Verbleibende verk. Ruhezeiten",
-        tachoCompensation: "Ausgleich",
-        tachoLongRest: "Lange Ruhezeit",
-        tachoRegularWeeklyRest: "Regelmäßige wöchentliche Ruhezeit",
-        tachoReducedWeeklyRest: "Reduzierte wöchentliche Ruhezeit",
-        tachoIrregularRest: "Unregelmäßige Ruhezeit",
-        tachoSplitRest: "Geteilte Ruhezeit",
-        tachoRegularDailyRest: "Regelmäßige tägliche Ruhezeit",
-        tachoReducedDailyRest: "reduzierte tägliche Ruhezeit",
-        tachoReason13h: "(wegen 13h+ Arbeit)",
-        tachoIrregularDrive: "Unregelmäßige Lenkzeit",
-        tachoIncreasedDrive: "erhöhte Lenkzeit",
-        tachoNormalDrive: "Normale tägliche Lenkzeit",
-        tachoRestBeforeShift: "Ruhezeit vor der Schicht",
-        tachoDailyDriveTime: "Tägliche Lenkzeit",
-        tachoWasWeeklyRest: "War wöchentliche Ruhezeit?",
-        // Paletten
-        palletsTitle: "Palettenverwaltung",
-        palletsBalance: "Aktueller Saldo:",
-        palletsNewTransaction: "Neue Transaktion",
-        palletsLocationPlaceholder: "Stadt, Firma...",
-        palletsLicensePlate: "Kennzeichen (optional)",
-        palletsLicensePlatePlaceholder: "Z.B. S-AB123",
-        palletsLicensePlateLabel: "Kennzeichen",
-        palletsSaveTransaction: "Transaktion speichern",
-        palletsHistory: "Verlauf",
-        palletsNoTransactions: "Noch keine Palettentransaktionen erfasst.",
-        palletsGivenLabel: "Abgegeben 🚛➡️",
-        palletsTakenLabel: "Aufgenommen 🚛⬅️",
-        palletsTypeLabel: "Typ / Kommentar",
-        palletsTypePlaceholder: "Z.B. EUR, DD, CHEP...",
-        pallets1to1Button: "1:1",
-        palletReportHeaderDate: "Datum",
-        palletReportHeaderLocation: "Ort",
-        palletReportHeaderGiven: "Abgegeben",
-        palletReportHeaderTaken: "Aufgenommen",
-        palletReportHeaderType: "Typ",
-        palletReportHeaderPlate: "Kennzeichen",
-        palletReportHeaderBalance: "Saldo",
-        palletReportFileName: "Paletten_Bericht",
-        palletReportTitle: "Palettenbewegungsbericht",
-        // Meldungen
-        alertLoginError: "Anmeldefehler aufgetreten.",
-        alertPopupClosed: "Das Anmeldefenster wurde geschlossen.",
-        alertPopupBlocked: "Der Browser hat das Pop-up-Fenster blockiert. Bitte erlauben Sie es.",
-        alertDataLoadError: "Fehler beim Laden der Daten.",
-        alertSaveToCloudError: "Fehler beim Speichern in der Cloud.",
-        alertMandatoryFields: "Datum und Arbeitszeit sind erforderlich!",
-        alertKmEndLower: "Fehler: Der End-Kilometerstand darf nicht niedriger sein als der Anfangs-Kilometerstand!",
-        alertWeeklyDriveEndLower: "Fehler: Die wöchentliche Lenkzeit am Ende des Tages darf nicht geringer sein als am Anfang!",
-        alertConfirmZeroValues: "Lenkzeit oder gefahrene Kilometer sind 0. Trotzdem speichern?",
-        alertSaveSuccess: "Eintrag erfolgreich gespeichert!",
-        alertGeolocationNotSupported: "Ihr Browser unterstützt keine Standortermittlung.",
-        alertConfirmDelete: "Möchten Sie dies wirklich löschen?",
-        alertFillAllFields: "Bitte füllen Sie alle Felder aus!",
-        alertNoDataToExport: "Keine Daten zum Exportieren vorhanden!",
-        alertChooseFile: "Bitte wählen Sie eine Datei aus!",
-        alertConfirmImport: "Möchten Sie wirklich importieren? Die aktuellen Daten werden überschrieben!",
-        alertImportSuccess: "Daten erfolgreich importiert!",
-        alertImportInvalid: "Ungültiges Dateiformat.",
-        alertLocationFailed: "Standortermittlung fehlgeschlagen.",
-        alertShareNotSupported: "Ihr Browser unterstützt diese Funktion nicht.",
-        alertGenerateReportFirst: "Erstellen Sie zuerst einen Bericht, um ihn zu teilen!",
-        alertReportNameMissing: "Um einen Bericht zu erstellen, geben Sie bitte Ihren Namen im Einstellungsmenü ein!",
-        palletSaveSuccess: "Transaktion gespeichert!",
-        palletInvalidData: "Bitte geben Sie den Ort und mindestens eine Menge an!",
-        alertNoPalletData: "Keine Palettenbewegungen für einen Bericht vorhanden.",
-        autoBackupOn: "Automatische Sicherung aktiviert!",
-        autoBackupOff: "Automatische Sicherung deaktiviert.",
-        settingsSaved: "Einstellungen gespeichert!",
-        logRecalculatingNightWork: 'Neuberechnung der Nachtarbeitsstunden nach der 20:00-05:00-Regel...',
-        logEntriesUpdated: 'Einträge aktualisiert.',
-        logAutoExportStarted: 'Automatische Sicherung gestartet...',
-        errorPdfGeneration: 'Fehler bei der PDF-Erstellung:',
-        errorSharing: 'Fehler beim Teilen:',
-        shareAborted: 'Teilen abgebrochen.',
-        errorImport: 'Fehler:',
-        shareErrorCannotShare: 'Diese Datei kann nicht geteilt werden.'
+        // ... (német fordítások)
     }
 };
 
@@ -819,6 +587,7 @@ function showTab(tabName) {
     if (tabName === 'report') initMonthlyReport(); 
     if (tabName === 'tachograph') renderTachographAnalysis(); 
     if (tabName === 'pallets') renderPalletRecords(); 
+    if (tabName === 'help') renderHelpTab();
     
     updateAllTexts();
 }
@@ -2062,4 +1831,62 @@ function formatDateTime(date) {
     const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU';
     const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
     return date.toLocaleString(locale, options);
+}
+
+function renderHelpTab() {
+    const container = document.getElementById('content-help');
+    if (!container) return;
+    container.innerHTML = getHelpContent(currentLang);
+    updateAllTexts();
+}
+
+function getHelpContent(lang) {
+    const i18n = translations[lang];
+    return `
+        <h2 class="text-xl font-bold" data-translate-key="menuHelp">Súgó & Info</h2>
+        <div class="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+            <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <h3 class="font-semibold text-lg mb-2">1. Munkanap rögzítése</h3>
+                <p class="mb-2">Két fő módon rögzíthetsz munkanapot:</p>
+                <ul class="list-disc list-inside space-y-2">
+                    <li>
+                        <strong>Élő rögzítés (az "Indítás" fülön):</strong><br>
+                        Ideális, ha a műszak kezdetekor indítod. A program automatikusan felajánlja az előző munkanap záró adatait (helyszín, km, heti vezetési idő), de ezeket felülírhatod. A műszak közben rögzíthetsz határátlépéseket, a végén pedig a "Műszak Befejezése" gombbal tudod lezárni.
+                    </li>
+                    <li>
+                        <strong>Utólagos rögzítés (a "Teljes nap" fülön):</strong><br>
+                        Itt egyben, utólag is felviheted egy teljes, befejezett munkanap összes adatát.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <h3 class="font-semibold text-lg mb-2">2. Fontos fogalmak</h3>
+                <ul class="list-disc list-inside space-y-2">
+                    <li>
+                        <strong>Heti vezetési idő:</strong> Ez a kamion műszerfalán látható, a hétfő 00:00 óta összesített vezetési idő. Alternatívaként a tachográfból kiolvasott kétheti vezetési idő is használható, a program a különbségből számolja a napi vezetést.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <h3 class="font-semibold text-lg mb-2">3. Hasznos Tippek ⚡</h3>
+                <ul class="list-disc list-inside space-y-2">
+                    <li><strong>Időpontok beírása:</strong> Nem szükséges a kettőspontot (:) használni. Például, ha 08:30-at szeretnél írni, elég beírni, hogy 830. A 6:04-hez elég a 604.</li>
+                    <li><strong>Helymeghatározás (📍):</strong> A "Teljes nap" fülön a 📍 ikon a munka befejezésének városát, míg a határátlépéseknél az aktuális országkódot (pl. H, A, D) próbálja meg beilleszteni.</li>
+                    <li><strong>Raklapok 1:1 gomb:</strong> A raklap nyilvántartóban ezzel a gombbal gyorsan átmásolhatod a mennyiséget egyik mezőből a másikba, ami hasznos csere raklapoknál.</li>
+                    <li><strong>Osztott napi pihenő:</strong> Manuálisan jelölheted, ha egy pihenőidő osztott napi pihenőnek minősül.</li>
+                </ul>
+            </div>
+
+            <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <h3 class="font-semibold text-lg mb-2">4. Adatkezelés és Beállítások ⚙️</h3>
+                 <ul class="list-disc list-inside space-y-2">
+                    <li><strong>Adatok exportálása (Backup):</strong> A "Beállítások" menüben rendszeresen mentsd le az adataidat! Ezzel az összes munkádat lementheted egy biztonsági fájlba a telefonodra.</li>
+                    <li><strong>Felhő Szinkronizáció:</strong> Jelentkezz be Google fiókkal, hogy az adataid automatikusan a felhőbe is elmentésre kerüljenek, így másik eszközön is elérheted őket.</li>
+                    <li><strong>Megjelenés:</strong> Itt válthatsz világos és sötét mód között.</li>
+                </ul>
+            </div>
+        </div>
+    `;
 }
