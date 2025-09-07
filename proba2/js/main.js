@@ -7,76 +7,83 @@ import { auth, db, loadDataFromFirestore, migrateLocalToFirestore } from './fire
 import * as ui from './ui.js';
 import * as pallets from './features/pallets.js';
 import * as tacho from './features/tachograph.js';
-import * as report from './features/report.js';
-import * as stats from './features/stats.js';
-import * as summary from './features/summary.js';
-// A többi, még létre nem hozott modul importját is betehetjük, hibát nem okoz
-import * as recordsModule from './features/records.js';
-
+// Még nem létező, de a jövőben szükséges modulok importja
+//import * as report from './features/report.js';
+//import * as stats from './features/stats.js';
+//import * as summary from './features/summary.js';
+//import * as recordsModule from './features/records.js';
 
 // ====== GLOBÁLIS ÁLLAPOT (STATE) ======
 export let currentUser = null;
 export let records = [];
 export let palletRecords = [];
-export const translations = { ...huTranslations.hu, ...deTranslations.de }; // Fontos javítás: .hu és .de kulcsok alól vesszük ki
+export const translations = { ...huTranslations.hu, ...deTranslations.de };
 export let currentLang = localStorage.getItem('language') || (navigator.language.startsWith('de') ? 'de' : 'hu');
+export const i18n = translations[currentLang];
 
 // ====== GLOBÁLIS FUNKCIÓK A HTML SZÁMÁRA ======
 window.app = {
     ...ui,
     ...pallets,
     ...tacho,
-    ...report,
-    ...stats,
-    ...summary,
-    ...recordsModule
+    //...report,
+    //...stats,
+    //...summary,
+    //...recordsModule
 };
+// Néhány funkciónak át kell adni az i18n objektumot, mert most már paraméterként kérik
+window.app.showCustomAlert = (message, type, callback) => ui.showCustomAlert(i18n, message, type, callback);
 window.hideCustomAlert = ui.hideCustomAlert;
 
 
 // ====== ALKALMAZÁS INDÍTÁSA ======
-
 document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.lang = currentLang;
     ui.initTheme();
-    
-    document.getElementById('stats-view-daily').onclick = () => { 
-        stats.renderStats('daily'); 
-        ui.updateAllTexts();
-    };
-    document.getElementById('stats-view-monthly').onclick = () => { 
-        stats.renderStats('monthly'); 
-        ui.updateAllTexts();
-    };
-    document.getElementById('stats-view-yearly').onclick = () => { 
-        stats.renderStats('yearly'); 
-        ui.updateAllTexts();
-    };
-    document.getElementById('stats-prev').onclick = () => { stats.navigateStats(-1); };
-    document.getElementById('stats-next').onclick = () => { stats.navigateStats(1); };
+    // A többi event listener ide jöhet a jövőben
 });
 
 auth.onAuthStateChanged(async user => {
     currentUser = user;
     
     if (user) {
-        // ... (bejelentkezett logika)
+        console.log("Bejelentkezve:", user.uid);
+        const [firestoreRecords, firestorePallets] = await Promise.all([
+            loadDataFromFirestore(user.uid, 'records'),
+            loadDataFromFirestore(user.uid, 'pallets')
+        ]);
+
+        const localRecords = JSON.parse(localStorage.getItem('workRecords') || '[]');
+        if (firestoreRecords.length === 0 && localRecords.length > 0) {
+            await migrateLocalToFirestore(user.uid, localRecords, 'records');
+            records = localRecords;
+        } else {
+            records = firestoreRecords;
+        }
+        palletRecords = firestorePallets;
     } else {
-        // ... (kijelentkezett logika)
+        console.log("Kijelentkezve.");
+        records = JSON.parse(localStorage.getItem('workRecords') || '[]');
+        palletRecords = JSON.parse(localStorage.getItem('palletRecords') || '[]');
     }
-
-    // Adatbetöltés (az egyszerűség kedvéért most kihagyva a hosszú kódot)
-    records = JSON.parse(localStorage.getItem('workRecords') || '[]');
-    palletRecords = JSON.parse(localStorage.getItem('palletRecords') || '[]');
-
 
     renderApp();
 });
 
 
 function renderApp() {
-    ui.showTab('live');
+    // A showTab mostantól nem létezik az ui modulban,
+    // mert a teljes UI vezérlés a main.js-ben történik.
+    // Létrehozunk egy egyszerűsített showTab-ot itt.
+    
+    const tabName = 'live'; // Kezdő fül
+    document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden')); 
+    document.getElementById(`content-${tabName}`).classList.remove('hidden'); 
+    
+    // Kezdeti állapot renderelése
     tacho.renderWeeklyAllowance();
     pallets.updateUniquePalletLocations();
-    ui.updateAllTexts();
+    // ... egyéb induláskori renderelők ...
+
+    ui.updateAllTexts(i18n, currentLang);
 }
