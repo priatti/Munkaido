@@ -1638,6 +1638,24 @@ function generatePalletReport() {
 // ===== TACHOGRÁF ELEMZŐ MODUL (v8.05) ==================
 // =======================================================
 
+// ÚJ: Ikon generáló segédfüggvények
+function createAvailableIcon(number) {
+    return `
+    <svg width="45" height="45" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="45" stroke="#16a34a" stroke-width="6" fill="#f0fdf4" />
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="45" font-weight="bold" fill="#15803d" text-anchor="middle" dy=".3em">${number}</text>
+    </svg>`;
+}
+
+function createUsedIcon(number) {
+    return `
+    <svg width="45" height="45" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="45" stroke="#ef4444" stroke-width="6" fill="#fef2f2" />
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="45" font-weight="bold" fill="#dc2626" text-anchor="middle" dy=".3em">${number}</text>
+        <line x1="20" y1="20" x2="80" y2="80" stroke="#b91c1c" stroke-width="8" stroke-linecap="round" />
+    </svg>`;
+}
+
 function calculateRestDebt() {
     let totalDebtMinutes = 0;
     const sortedRecords = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
@@ -1691,6 +1709,7 @@ function calculateWeeklyAllowance() {
     return { remainingDrives, remainingRests };
 }
 
+// MÓDOSÍTOTT: Teljesen újratervezett függvény az új ikonokkal
 function renderWeeklyAllowance() {
     const i18n = translations[currentLang];
     const liveContainer = document.getElementById('live-allowance-display');
@@ -1699,28 +1718,45 @@ function renderWeeklyAllowance() {
 
     const allowance = calculateWeeklyAllowance();
     const debtMinutes = calculateRestDebt();
+
+    // Ikonok generálása a 10 órás vezetésekhez (összesen 2)
+    let driveIcons = '';
+    for (let i = 0; i < 2; i++) {
+        driveIcons += (i < allowance.remainingDrives) ? createAvailableIcon(10) : createUsedIcon(10);
+    }
+
+    // Ikonok generálása a 9 órás pihenőkhöz (összesen 3)
+    let restIcons = '';
+    for (let i = 0; i < 3; i++) {
+        restIcons += (i < allowance.remainingRests) ? createAvailableIcon(9) : createUsedIcon(9);
+    }
+
     const debtHTML = debtMinutes > 0 ? `
-        <div class="p-2 bg-red-50 dark:bg-red-600/20 rounded-lg border border-red-200 dark:border-red-800">
+        <div class="p-2 bg-red-50 dark:bg-red-900/50 rounded-lg border border-red-200 dark:border-red-800 text-center flex-1">
             <p class="text-sm font-medium text-red-800 dark:text-red-200">${i18n.tachoCompensation}</p>
-            <p class="text-2xl font-bold text-red-600 dark:text-red-400">${formatDuration(debtMinutes)}</p>
+            <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-2">${formatDuration(debtMinutes)}</p>
         </div>` : '';
 
     const html = `
-    <div class="grid ${debtMinutes > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-2 text-center">
-        <div class="p-2 bg-blue-50 dark:bg-blue-600/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">${i18n.tachoAllowanceDrive10h}</p>
-            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">${allowance.remainingDrives}</p>
+    <div class="flex flex-wrap gap-3">
+        <div class="p-2 bg-blue-50 dark:bg-blue-900/50 rounded-lg border border-blue-200 dark:border-blue-800 text-center flex-1 min-w-[150px]">
+            <p class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">${i18n.tachoAllowanceDrive10h}</p>
+            <div class="flex justify-center gap-2">${driveIcons}</div>
         </div>
-        <div class="p-2 bg-orange-50 dark:bg-orange-600/20 rounded-lg border border-orange-200 dark:border-orange-800">
-            <p class="text-sm font-medium text-orange-800 dark:text-orange-200">${i18n.tachoAllowanceReducedRest}</p>
-            <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">${allowance.remainingRests}</p>
+        <div class="p-2 bg-orange-50 dark:bg-orange-900/50 rounded-lg border border-orange-200 dark:border-orange-800 text-center flex-1 min-w-[150px]">
+            <p class="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">${i18n.tachoAllowanceReducedRest}</p>
+            <div class="flex justify-center gap-2">${restIcons}</div>
         </div>
         ${debtHTML}
     </div>`;
+    
+    // Kisebb verzió készítése az áttekintés (live) fülhöz
+    const liveHTML = html.replace(/width="45"/g, 'width="35"').replace(/height="45"/g, 'height="35"');
 
-    liveContainer.innerHTML = html.replace(/text-2xl/g, 'text-xl').replace(/<p class="text-sm/g, '<p class="text-xs');
+    liveContainer.innerHTML = liveHTML;
     tachoContainer.innerHTML = html;
 }
+
 
 function getWeekIdentifier(d) {
     const date = new Date(d.valueOf());
