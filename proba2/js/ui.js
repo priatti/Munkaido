@@ -1,9 +1,7 @@
 // js/ui.js
 
-// KIVETTEM AZ IMPORTOT A MAIN.JS-BŐL, MEGSZÜNTETVE A KÖRKÖRÖS HIVATKOZÁST
-// import { translations, currentLang } from './main.js'; 
-
-// A FUNKCIÓK MOST MÁR PARAMÉTERKÉNT KAPJÁK MEG A SZÜKSÉGES ADATOKAT
+// Ez a fájl már nem importál semmit, csak exportál.
+// A szükséges adatokat (pl. fordításokat) paraméterként kapja meg a main.js-től.
 
 export function setLanguage(lang) {
     if (['hu', 'de'].includes(lang)) {
