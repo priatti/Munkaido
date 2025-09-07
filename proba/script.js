@@ -237,7 +237,7 @@ const translations = {
         shareErrorCannotShare: 'Ezt a fájlt nem lehet megosztani.'
     },
     de: {
-        // Általános
+        // Allgemein
         appTitle: "Arbeitszeitnachweis Pro",
         delete: "Löschen",
         ok: "Okay",
@@ -589,6 +589,24 @@ auth.onAuthStateChanged(async user => {
     
     renderApp();
     checkForAutoExport();
+
+    // Kezdőkép elrejtése és az app megjelenítése
+    const splashScreen = document.getElementById('splash-screen');
+    const appContainer = document.getElementById('app');
+    
+    // Adjunk egy kis időt, hogy minden biztosan betöltődjön
+    setTimeout(() => {
+        if (splashScreen) {
+            splashScreen.classList.add('hidden');
+            // A splash screen eltávolítása az animáció után
+            setTimeout(() => {
+                splashScreen.style.display = 'none';
+            }, 500); // Ennek meg kell egyeznie a CSS transition idejével
+        }
+        if (appContainer) {
+            appContainer.classList.remove('hidden');
+        }
+    }, 500); // 0.5 másodperc késleltetés
 });
 
 async function loadRecordsFromFirestore(collectionName) {
@@ -931,7 +949,7 @@ function startLiveShift() {
         return; 
     } 
     localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry)); 
-    renderStartTab();
+    showTab('start');
     updateAllTexts(); 
 }
 
@@ -1448,7 +1466,7 @@ function checkForAutoExport() {
 }
 
 // =======================================================
-// ===== SPECIÁLIS FUNKCIÓK KEZELÉSE (v8.05) =============
+// ===== SPECIÁLIS FUNKCIÓK KEZELÉSE =====================
 // =======================================================
 
 const featureToggles = ['toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleCompensation'];
@@ -1519,7 +1537,7 @@ function applyFeatureToggles() {
 }
 
 // =======================================================
-// ===== PALETTA NYILVÁNTARTÓ MODUL (v8.05) ==============
+// ===== PALETTA NYILVÁNTARTÓ MODUL ======================
 // =======================================================
 
 let uniquePalletLocations = [];
@@ -1671,6 +1689,7 @@ function renderPalletRecords() {
     }).join('');
 }
 
+
 function generatePalletReport() {
     const i18n = translations[currentLang];
     if (palletRecords.length === 0) {
@@ -1732,7 +1751,7 @@ function generatePalletReport() {
 }
 
 // =======================================================
-// ===== TACHOGRÁF ELEMZŐ MODUL (v8.05) ==================
+// ===== TACHOGRÁF ELEMZŐ MODUL ==========================
 // =======================================================
 
 function createAvailableIcon(number) {
@@ -1866,6 +1885,7 @@ function renderEarliestStart() {
     startTime11h.setHours(startTime11h.getHours() + 11);
 
     let htmlContent = '';
+    const warningText = "Figyelem: A kalkuláció a napi pihenőidővel számol, a heti pihenőidőt nem veszi figyelembe.";
 
     if (allowance.remainingRests > 0) {
         const startTime9h = new Date(endDate.getTime());
@@ -1874,21 +1894,26 @@ function renderEarliestStart() {
         htmlContent = `
         <div class="bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3 space-y-2">
             <h3 class="font-semibold text-indigo-800 dark:text-indigo-200 text-base">Legkorábbi indulás</h3>
-            <p class="text-sm text-gray-700 dark:text-gray-200">
-                <strong>9 órás pihenővel</strong> (csökkentett): <span class="font-bold text-lg text-indigo-600 dark:text-indigo-300">${formatDateTime(startTime9h)}</span>
-            </p>
-            <p class="text-sm text-gray-700 dark:text-gray-200">
-                <strong>11 órás pihenővel</strong> (rendes): <span class="font-bold text-lg">${formatDateTime(startTime11h)}</span>
-            </p>
+            <div class="text-sm text-gray-700 dark:text-gray-200">
+                <strong>9 órás pihenővel</strong> (csökkentett): 
+                <div class="font-bold text-lg text-indigo-600 dark:text-indigo-300">${formatDateTime(startTime9h)}</div>
+            </div>
+            <div class="text-sm text-gray-700 dark:text-gray-200">
+                <strong>11 órás pihenővel</strong> (rendes): 
+                <div class="font-bold text-lg">${formatDateTime(startTime11h)}</div>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 italic pt-2 border-t border-indigo-200/50">${warningText}</p>
         </div>`;
     } else {
         htmlContent = `
         <div class="bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
              <h3 class="font-semibold text-yellow-800 dark:text-yellow-200 text-base">Legkorábbi indulás</h3>
              <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">Nincs több csökkentett pihenőd.</p>
-             <p class="text-sm text-gray-700 dark:text-gray-200 mt-2">
-                <strong>11 órás pihenővel</strong> (rendes): <span class="font-bold text-lg">${formatDateTime(startTime11h)}</span>
-             </p>
+             <div class="text-sm text-gray-700 dark:text-gray-200 mt-2">
+                <strong>11 órás pihenővel</strong> (rendes): 
+                <div class="font-bold text-lg">${formatDateTime(startTime11h)}</div>
+             </div>
+             <p class="text-xs text-gray-500 dark:text-gray-400 italic pt-2 mt-2 border-t border-yellow-200/50">${warningText}</p>
         </div>`;
     }
 
@@ -2035,6 +2060,6 @@ function renderTachographAnalysis() {
 function formatDateTime(date) {
     if (!date) return '';
     const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU';
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+    const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
     return date.toLocaleString(locale, options);
 }
