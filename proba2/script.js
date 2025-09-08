@@ -536,7 +536,7 @@ const translations = {
         alertReportNameMissing: "Um einen Bericht zu erstellen, geben Sie bitte Ihren Namen im Einstellungsmenü ein!",
         palletSaveSuccess: "Transaktion gespeichert!",
         palletInvalidData: "Bitte geben Sie den Ort und mindestens eine Menge an!",
-        alertNoPalletData: "Keine Palettenbewegungen für einen Bericht vorhanden.",
+        alertNoPalletData: "Keine Palettenbewegungsberichte für einen Bericht vorhanden.",
         autoBackupOn: "Automatische Sicherung aktiviert!",
         autoBackupOff: "Automatische Sicherung deaktiviert.",
         settingsSaved: "Einstellungen gespeichert!",
@@ -761,6 +761,9 @@ let uniqueLocations = [];
 let statsView = 'daily';
 let statsDate = new Date();
 let workTimeChart, driveTimeChart, nightTimeChart, kmChart;
+let alertCallback = null;
+let promptCallback = null;
+let currentActiveTab = 'live';
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
@@ -824,8 +827,7 @@ const isoToVehicleCode = { 'at': 'A', 'de': 'D', 'hu': 'H', 'sk': 'SK', 'si': 'S
 async function fetchCountryCodeFor(inputId) { const inputElement = document.getElementById(inputId); if (!inputElement || !navigator.geolocation) return; inputElement.value = "..."; try { const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })); const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&accept-language=en`); if (!response.ok) throw new Error('API error'); const data = await response.json(); const countryCode = data.address.country_code; if (countryCode && isoToVehicleCode[countryCode]) { inputElement.value = isoToVehicleCode[countryCode]; } else { inputElement.value = (countryCode || 'N/A').toUpperCase(); } } catch (error) { inputElement.value = ""; showCustomAlert(translations[currentLang].alertLocationFailed, 'info'); } }
 function toggleDropdown() { document.getElementById('dropdown-menu').classList.toggle('hidden'); }
 function closeDropdown() { document.getElementById('dropdown-menu').classList.add('hidden'); }
-let alertCallback = null;
-let promptCallback = null;
+
 function showCustomAlert(message, type, callback) { const overlay = document.getElementById('custom-alert-overlay'); const box = document.getElementById('custom-alert-box'); const iconContainer = document.getElementById('custom-alert-icon'); const messageEl = document.getElementById('custom-alert-message'); const buttonsContainer = document.getElementById('custom-alert-buttons'); const i18n = translations[currentLang]; messageEl.textContent = message; alertCallback = callback || null; iconContainer.className = 'w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center'; buttonsContainer.innerHTML = ''; const warningIcon = `<svg class="w-10 h-10 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`; if (type === 'warning') { iconContainer.classList.add('bg-yellow-100'); iconContainer.innerHTML = warningIcon; buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button><button onclick="hideCustomAlert(true)" class="py-2 px-6 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.save}</button>`; } else if (type === 'info') { iconContainer.classList.add('bg-yellow-100'); iconContainer.innerHTML = warningIcon; buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(true)" class="py-2 w-2/3 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.ok}</button>`; } else if (type === 'success') { iconContainer.classList.add('bg-green-100', 'success-icon'); iconContainer.innerHTML = `<svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path class="checkmark-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`; buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(true)" class="py-2 w-2/3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600">${i18n.ok}</button>`; } overlay.classList.remove('hidden'); overlay.classList.add('flex'); setTimeout(() => { overlay.classList.remove('opacity-0'); box.classList.remove('scale-95'); }, 10); }
 function hideCustomAlert(isConfirmed) { const overlay = document.getElementById('custom-alert-overlay'); const box = document.getElementById('custom-alert-box'); overlay.classList.add('opacity-0'); box.classList.add('scale-95'); setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); if (isConfirmed && alertCallback) { alertCallback(); } alertCallback = null; }, 300); }
 
@@ -839,27 +841,24 @@ function showCustomPrompt(title, message, placeholder, iconHTML, callback) {
     const buttonsContainer = document.getElementById('custom-prompt-buttons');
     const i18n = translations[currentLang];
 
-    // Tartalom beállítása
     titleEl.textContent = title;
-    messageEl.innerHTML = message; // innerHTML, hogy a <strong> tag működjön
+    messageEl.innerHTML = message;
     inputEl.placeholder = placeholder;
-    inputEl.value = ''; // Mező kiürítése
+    inputEl.value = '';
     iconContainer.innerHTML = iconHTML;
     promptCallback = callback || null;
 
-    // Gombok létrehozása
     buttonsContainer.innerHTML = `
         <button onclick="hideCustomPrompt(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button>
         <button onclick="hideCustomPrompt(true)" class="py-2 px-6 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600">${i18n.save}</button>
     `;
 
-    // Megjelenítés animációval
     overlay.classList.remove('hidden');
     overlay.classList.add('flex');
     setTimeout(() => {
         overlay.classList.remove('opacity-0');
         box.classList.remove('scale-95');
-        inputEl.focus(); // Fókusz a beviteli mezőn
+        inputEl.focus();
     }, 10);
 }
 
@@ -868,7 +867,6 @@ function hideCustomPrompt(isConfirmed) {
     const box = document.getElementById('custom-prompt-box');
     const inputEl = document.getElementById('custom-prompt-input');
 
-    // Elrejtés animációval
     overlay.classList.add('opacity-0');
     box.classList.add('scale-95');
 
@@ -877,9 +875,9 @@ function hideCustomPrompt(isConfirmed) {
         overlay.classList.remove('flex');
         
         if (isConfirmed && promptCallback) {
-            promptCallback(inputEl.value); // Visszaadjuk a beviteli mező értékét
+            promptCallback(inputEl.value);
         }
-        promptCallback = null; // Callback törlése
+        promptCallback = null;
     }, 300);
 }
 
@@ -909,7 +907,6 @@ async function saveEntry() {
         return;
     }
 
-    // --- Hétvégi áthúzódás ellenőrzése ---
     const endDateTime = new Date(`${recordData.date}T${recordData.endTime}`);
     let startDateTime = new Date(`${recordData.date}T${recordData.startTime}`);
     if (endDateTime < startDateTime) {
@@ -917,7 +914,6 @@ async function saveEntry() {
     }
     const isRollover = startDateTime.getDay() === 0 && endDateTime.getDay() === 1;
 
-    // --- Mentési logika ---
     const finalizeSave = async (manualDriveMinutes = null) => {
         if (recordData.kmEnd > 0 && recordData.kmEnd < recordData.kmStart) { showCustomAlert(i18n.alertKmEndLower, 'info'); return; }
         if (!isRollover && parseTimeToMinutes(recordData.weeklyDriveEndStr) > 0 && parseTimeToMinutes(recordData.weeklyDriveEndStr) < parseTimeToMinutes(recordData.weeklyDriveStartStr)) { showCustomAlert(i18n.alertWeeklyDriveEndLower, 'info'); return; }
@@ -977,6 +973,8 @@ async function saveEntry() {
     }
 }
 function showTab(tabName) { 
+    currentActiveTab = tabName;
+
     if(tabName === 'pallets') {
         document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
@@ -1213,7 +1211,20 @@ function editRecord(id) {
     (record.crossings || []).forEach(c => addCrossingRow(c.from, c.to, c.time));
     updateDisplays();
 }
-async function deleteRecord(id) { if (confirm(translations[currentLang].alertConfirmDelete)) { const splitData = getSplitRestData(); delete splitData[id]; saveSplitRestData(splitData); await deleteRecordFromStorage(id); records = records.filter(r => r.id !== String(id)); if(!currentUser) { localStorage.setItem('workRecords', JSON.stringify(records)); } renderApp(); showTab(document.querySelector('.tab-active').id.replace('tab-','')); } }
+async function deleteRecord(id) { 
+    if (confirm(translations[currentLang].alertConfirmDelete)) { 
+        const splitData = getSplitRestData(); 
+        delete splitData[id]; 
+        saveSplitRestData(splitData); 
+        await deleteRecordFromStorage(id); 
+        records = records.filter(r => r.id !== String(id)); 
+        if(!currentUser) { 
+            localStorage.setItem('workRecords', JSON.stringify(records)); 
+        } 
+        renderApp(); 
+        showTab(currentActiveTab); 
+    } 
+}
 function renderRecords() { const i18n = translations[currentLang]; const container = document.getElementById('recordsContent'); if (!container) return; const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU'; container.innerHTML = records.length === 0 ? `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>` : getSortedRecords().map(r => { const d = new Date(r.date); const day = d.getUTCDay(); const weekendClass = (day === 6 || day === 0) ? 'bg-red-50' : ''; const isOvernight = new Date(`1970-01-01T${r.endTime}`) < new Date(`1970-01-01T${r.startTime}`); const endDate = new Date(r.date + 'T00:00:00'); let startDate = new Date(r.date + 'T00:00:00'); if (isOvernight) { startDate.setDate(startDate.getDate() - 1); } const formatShortDate = (dt) => dt.toLocaleDateString(locale, { month: '2-digit', day: '2-digit' }); return `<div class="bg-gray-50 rounded-lg p-3 mb-3 text-sm ${weekendClass}"><div class="flex items-center justify-between mb-2"><div class="font-semibold">${isOvernight?`${startDate.toLocaleDateString(locale)} - ${endDate.toLocaleDateString(locale)}`:endDate.toLocaleDateString(locale)}</div><div><button onclick="editRecord('${r.id}')" class="text-blue-500 p-1">✏️</button><button onclick="deleteRecord('${r.id}')" class="text-red-500 p-1">🗑️</button></div></div><div class="space-y-1"><div class="flex justify-between"><span>${i18n.entryDeparture}:</span><span>${isOvernight?formatShortDate(startDate):""} ${r.startTime} (${r.startLocation||"N/A"})</span></div><div class="flex justify-between"><span>${i18n.entryArrival}:</span><span>${formatShortDate(endDate)} ${r.endTime} (${r.endLocation||"N/A"})</span></div><div class="flex justify-between border-t pt-1 mt-1"><span>${i18n.entryWorkTime}:</span><span class="font-bold">${formatDuration(r.workMinutes)}</span></div>${r.compensationMinutes > 0 ? `<div class="flex justify-between text-yellow-700 text-xs"><span>&nbsp;&nbsp;└ ${i18n.entryCompensation}:</span><span>-${formatDuration(r.compensationMinutes)}</span></div>` : ''}<div class="flex justify-between"><span>${i18n.entryNightTime}:</span><span class="text-purple-600">${formatDuration(r.nightWorkMinutes||0)}</span></div><div class="flex justify-between"><span>${i18n.entryDriveTime}:</span><span class="text-blue-700">${formatDuration(r.driveMinutes)}</span></div><div class="flex justify-between"><span>${i18n.entryDistance}:</span><span>${r.kmDriven} km</span></div>${(r.crossings&&r.crossings.length>0)?`<div class="border-t pt-2 mt-2"><p class="font-semibold text-xs text-indigo-700">${i18n.entryCrossingsLabel}:</p><div class="text-xs text-gray-600 pl-2">${r.crossings.map(c=>`<span>${c.from} - ${c.to} (${c.time})</span>`).join("<br>")}</div></div>`:""}</div></div>`; }).join(''); }
 function renderSummary() {
     const i18n = translations[currentLang];
