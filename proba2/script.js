@@ -180,6 +180,7 @@ const translations = {
         tachoNormalDrive: "Normál napi vezetés",
         tachoRestBeforeShift: "Műszak előtti pihenő",
         tachoDailyDriveTime: "Napi vezetési idő",
+        tachoNoDriveTime: "Nincs vezetés rögzítve",
         tachoInProgress: "Folyamatban...",
         earliestStartTitle: "Legkorábbi indulás",
         latestRestStartTitle: "Legkésőbbi pihenő kezdés",
@@ -2232,7 +2233,6 @@ function renderTachographAnalysis() {
                  restAnalysis = { text: `${i18n.tachoIrregularRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-red-500 text-white' };
             }
         } else {
-            // Ez csak a legelső rögzített napnál jelenik meg
             restAnalysis = { text: 'Első rögzített nap', colorClass: 'bg-gray-200 text-gray-800' };
             reducedDailyRestCounter = 0;
         }
@@ -2242,7 +2242,9 @@ function renderTachographAnalysis() {
         const driveHours = driveMinutes / 60;
         let driveAnalysis;
         
-        if (driveHours > 10) {
+        if (driveMinutes <= 0) {
+            driveAnalysis = { text: i18n.tachoNoDriveTime, colorClass: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' };
+        } else if (driveHours > 10) {
             driveAnalysis = { text: `${i18n.tachoIrregularDrive} (${formatDuration(driveMinutes)})`, colorClass: 'bg-red-500 text-white' };
         } else if (driveHours > 9) {
             const weekId = getWeekIdentifier(new Date(currentRecord.date));
