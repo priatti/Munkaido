@@ -825,8 +825,64 @@ async function fetchCountryCodeFor(inputId) { const inputElement = document.getE
 function toggleDropdown() { document.getElementById('dropdown-menu').classList.toggle('hidden'); }
 function closeDropdown() { document.getElementById('dropdown-menu').classList.add('hidden'); }
 let alertCallback = null;
+let promptCallback = null;
 function showCustomAlert(message, type, callback) { const overlay = document.getElementById('custom-alert-overlay'); const box = document.getElementById('custom-alert-box'); const iconContainer = document.getElementById('custom-alert-icon'); const messageEl = document.getElementById('custom-alert-message'); const buttonsContainer = document.getElementById('custom-alert-buttons'); const i18n = translations[currentLang]; messageEl.textContent = message; alertCallback = callback || null; iconContainer.className = 'w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center'; buttonsContainer.innerHTML = ''; const warningIcon = `<svg class="w-10 h-10 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`; if (type === 'warning') { iconContainer.classList.add('bg-yellow-100'); iconContainer.innerHTML = warningIcon; buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button><button onclick="hideCustomAlert(true)" class="py-2 px-6 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.save}</button>`; } else if (type === 'info') { iconContainer.classList.add('bg-yellow-100'); iconContainer.innerHTML = warningIcon; buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(true)" class="py-2 w-2/3 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.ok}</button>`; } else if (type === 'success') { iconContainer.classList.add('bg-green-100', 'success-icon'); iconContainer.innerHTML = `<svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path class="checkmark-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`; buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(true)" class="py-2 w-2/3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600">${i18n.ok}</button>`; } overlay.classList.remove('hidden'); overlay.classList.add('flex'); setTimeout(() => { overlay.classList.remove('opacity-0'); box.classList.remove('scale-95'); }, 10); }
 function hideCustomAlert(isConfirmed) { const overlay = document.getElementById('custom-alert-overlay'); const box = document.getElementById('custom-alert-box'); overlay.classList.add('opacity-0'); box.classList.add('scale-95'); setTimeout(() => { overlay.classList.add('hidden'); overlay.classList.remove('flex'); if (isConfirmed && alertCallback) { alertCallback(); } alertCallback = null; }, 300); }
+
+function showCustomPrompt(title, message, placeholder, iconHTML, callback) {
+    const overlay = document.getElementById('custom-prompt-overlay');
+    const box = document.getElementById('custom-prompt-box');
+    const iconContainer = document.getElementById('custom-prompt-icon');
+    const titleEl = document.getElementById('custom-prompt-title');
+    const messageEl = document.getElementById('custom-prompt-message');
+    const inputEl = document.getElementById('custom-prompt-input');
+    const buttonsContainer = document.getElementById('custom-prompt-buttons');
+    const i18n = translations[currentLang];
+
+    // Tartalom beállítása
+    titleEl.textContent = title;
+    messageEl.innerHTML = message; // innerHTML, hogy a <strong> tag működjön
+    inputEl.placeholder = placeholder;
+    inputEl.value = ''; // Mező kiürítése
+    iconContainer.innerHTML = iconHTML;
+    promptCallback = callback || null;
+
+    // Gombok létrehozása
+    buttonsContainer.innerHTML = `
+        <button onclick="hideCustomPrompt(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button>
+        <button onclick="hideCustomPrompt(true)" class="py-2 px-6 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600">${i18n.save}</button>
+    `;
+
+    // Megjelenítés animációval
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+    setTimeout(() => {
+        overlay.classList.remove('opacity-0');
+        box.classList.remove('scale-95');
+        inputEl.focus(); // Fókusz a beviteli mezőn
+    }, 10);
+}
+
+function hideCustomPrompt(isConfirmed) {
+    const overlay = document.getElementById('custom-prompt-overlay');
+    const box = document.getElementById('custom-prompt-box');
+    const inputEl = document.getElementById('custom-prompt-input');
+
+    // Elrejtés animációval
+    overlay.classList.add('opacity-0');
+    box.classList.add('scale-95');
+
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+        
+        if (isConfirmed && promptCallback) {
+            promptCallback(inputEl.value); // Visszaadjuk a beviteli mező értékét
+        }
+        promptCallback = null; // Callback törlése
+    }, 300);
+}
+
 async function saveEntry() {
     const i18n = translations[currentLang];
     const recordData = {
