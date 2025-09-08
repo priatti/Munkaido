@@ -2179,8 +2179,12 @@ function renderTachographAnalysis() {
     const i18n = translations[currentLang];
     const container = document.getElementById('tachograph-list');
     if (!container) return;
+
     const sortedRecords = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
-    if (sortedRecords.length < 1) { container.innerHTML = `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>`; return; }
+    if (sortedRecords.length < 1) {
+        container.innerHTML = `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>`;
+        return;
+    }
 
     const splitRestData = getSplitRestData();
     let analysisResults = [];
@@ -2189,9 +2193,10 @@ function renderTachographAnalysis() {
 
     for (let i = 0; i < sortedRecords.length; i++) {
         const currentRecord = sortedRecords[i];
-        const previousRecord = i > 0 ? sortedRecords[i-1] : null;
-        let restAnalysis = { text: 'First recorded day', colorClass: 'bg-gray-200 text-gray-800' };
-        
+        const previousRecord = i > 0 ? sortedRecords[i - 1] : null;
+
+        // 1. Pihenőidő elemzése (a MŰSZAK ELŐTTI pihenő)
+        let restAnalysis;
         if (previousRecord) {
             const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
             const currentStart = new Date(`${currentRecord.date}T${currentRecord.startTime}`);
@@ -2201,45 +2206,54 @@ function renderTachographAnalysis() {
             const prevWorkDurationHours = previousRecord.workMinutes / 60;
 
             if (restDurationHours >= 45) {
-                restAnalysis = { text: `${i18n.tachoRegularWeeklyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-700 text-white' };
+                restAnalysis = { text: `${i18n.tachoWeeklyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-700 text-white' };
                 reducedDailyRestCounter = 0;
             } else if (restDurationHours >= 24) {
-                 restAnalysis = { text: `${i18n.tachoReducedWeeklyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-700 text-white' };
-                 reducedDailyRestCounter = 0;
-            } else if (restDurationHours < 9) {
-                restAnalysis = { text: `${i18n.tachoIrregularRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-red-500 text-white' };
+                restAnalysis = { text: `${i18n.tachoReducedWeeklyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-700 text-white' };
+                reducedDailyRestCounter = 0;
             } else if (isSplitRest) {
                 restAnalysis = { text: `${i18n.tachoSplitRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-200 text-green-800' };
             } else if (restDurationHours >= 11 && prevWorkDurationHours <= 13) {
                 restAnalysis = { text: `${i18n.tachoRegularDailyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-500 text-white' };
-                 reducedDailyRestCounter = 0;
-            } else {
+                reducedDailyRestCounter = 0;
+            } else if (restDurationHours >= 9) {
                 reducedDailyRestCounter++;
                 const isForcedReduced = prevWorkDurationHours > 13;
                 const reason = isForcedReduced ? ` ${i18n.tachoReason13h}` : '';
                 let colorClass, countText;
-                switch(reducedDailyRestCounter) {
+                switch (reducedDailyRestCounter) {
                     case 1: colorClass = 'bg-yellow-200 text-yellow-800'; countText = '1.'; break;
                     case 2: colorClass = 'bg-yellow-400 text-black'; countText = '2.'; break;
                     case 3: colorClass = 'bg-orange-400 text-black'; countText = '3.'; break;
                     default: colorClass = 'bg-red-500 text-white'; countText = `${reducedDailyRestCounter}.`; break;
                 }
                 restAnalysis = { text: `${countText} ${i18n.tachoReducedDailyRest}${reason} (${formatDuration(restDurationMinutes)})`, colorClass: colorClass };
+            } else {
+                 restAnalysis = { text: `${i18n.tachoIrregularRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-red-500 text-white' };
             }
+        } else {
+            // Ez csak a legelső rögzített napnál jelenik meg
+            restAnalysis = { text: 'Első rögzített nap', colorClass: 'bg-gray-200 text-gray-800' };
+            reducedDailyRestCounter = 0;
         }
 
+        // 2. Vezetési idő elemzése (az ADOTT NAPI vezetés)
+        const driveMinutes = currentRecord.driveMinutes || 0;
+        const driveHours = driveMinutes / 60;
         let driveAnalysis;
-        const driveHours = currentRecord.driveMinutes / 60;
+        
         if (driveHours > 10) {
-            driveAnalysis = { text: `${i18n.tachoIrregularDrive} (${formatDuration(currentRecord.driveMinutes)})`, colorClass: 'bg-red-500 text-white' };
+            driveAnalysis = { text: `${i18n.tachoIrregularDrive} (${formatDuration(driveMinutes)})`, colorClass: 'bg-red-500 text-white' };
         } else if (driveHours > 9) {
             const weekId = getWeekIdentifier(new Date(currentRecord.date));
             extendedDrivingInWeekCounter[weekId] = (extendedDrivingInWeekCounter[weekId] || 0) + 1;
             const countInWeek = extendedDrivingInWeekCounter[weekId];
-            driveAnalysis = { text: `${countInWeek}. ${countInWeek > 2 ? '(irregular) ' : ''}${i18n.tachoIncreasedDrive} (${formatDuration(currentRecord.driveMinutes)})`, colorClass: countInWeek > 2 ? 'bg-red-500 text-white' : 'bg-blue-400 text-white' };
+            const irregularText = countInWeek > 2 ? '(szabálytalan) ' : '';
+            driveAnalysis = { text: `${countInWeek}. ${irregularText}${i18n.tachoIncreasedDrive} (${formatDuration(driveMinutes)})`, colorClass: countInWeek > 2 ? 'bg-red-500 text-white' : 'bg-blue-400 text-white' };
         } else {
-            driveAnalysis = { text: `${i18n.tachoNormalDrive} (${formatDuration(currentRecord.driveMinutes)})`, colorClass: 'bg-gray-300 text-gray-800' };
+            driveAnalysis = { text: `${i18n.tachoNormalDrive} (${formatDuration(driveMinutes)})`, colorClass: 'bg-gray-300 text-gray-800' };
         }
+
         analysisResults.push({ record: currentRecord, rest: restAnalysis, drive: driveAnalysis, isSplit: splitRestData[currentRecord.id] === true || currentRecord.isSplitRest });
     }
 
