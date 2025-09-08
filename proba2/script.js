@@ -908,16 +908,23 @@ async function saveEntry() {
         return;
     }
 
+    // --- Bővített áthúzódás ellenőrzés ---
     const endDateTime = new Date(`${recordData.date}T${recordData.endTime}`);
     let startDateTime = new Date(`${recordData.date}T${recordData.startTime}`);
     if (endDateTime < startDateTime) {
         startDateTime.setDate(startDateTime.getDate() - 1);
     }
-    const isRollover = startDateTime.getDay() === 0 && endDateTime.getDay() === 1;
+    const isDateRollover = startDateTime.getDay() === 0 && endDateTime.getDay() === 1;
+    const isDriveTimeRollover = parseTimeToMinutes(recordData.weeklyDriveEndStr) < parseTimeToMinutes(recordData.weeklyDriveStartStr);
+    
+    const needsManualDriveInput = isDateRollover || isDriveTimeRollover;
 
+    // --- Mentési logika ---
     const finalizeSave = async (manualDriveMinutes = null) => {
-        if (recordData.kmEnd > 0 && recordData.kmEnd < recordData.kmStart) { showCustomAlert(i18n.alertKmEndLower, 'info'); return; }
-        if (!isRollover && parseTimeToMinutes(recordData.weeklyDriveEndStr) > 0 && parseTimeToMinutes(recordData.weeklyDriveEndStr) < parseTimeToMinutes(recordData.weeklyDriveStartStr)) { showCustomAlert(i18n.alertWeeklyDriveEndLower, 'info'); return; }
+        if (recordData.kmEnd > 0 && recordData.kmEnd < recordData.kmStart) {
+            showCustomAlert(i18n.alertKmEndLower, 'info');
+            return;
+        }
 
         const compensationMinutes = parseTimeToMinutes(recordData.compensationTime) || 0;
         const grossWorkMinutes = calculateWorkMinutes(recordData.startTime, recordData.endTime);
@@ -955,24 +962,25 @@ async function saveEntry() {
         if ((newRecord.driveMinutes === 0 || newRecord.kmDriven === 0) && manualDriveMinutes === null) {
             showCustomAlert(i18n.alertConfirmZeroValues, 'warning', proceedWithSave);
         } else {
-            proceedWithSave();
+            await proceedWithSave();
         }
     };
 
-    if (isRollover) {
+    if (needsManualDriveInput) {
         const tachoIcon = `<svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
-        showCustomPrompt(i18n.alertRolloverTitle, i18n.alertRolloverPrompt, i18n.alertRolloverPlaceholder, tachoIcon, (driveTimeInput) => {
+        showCustomPrompt(i18n.alertRolloverTitle, i18n.alertRolloverPrompt, i18n.alertRolloverPlaceholder, tachoIcon, async (driveTimeInput) => {
             if (driveTimeInput) {
                 const manualMinutes = parseTimeToMinutes(driveTimeInput);
                  if (manualMinutes >= 0) {
-                    finalizeSave(manualMinutes);
+                    await finalizeSave(manualMinutes);
                 }
             }
         });
     } else {
-        finalizeSave();
+        await finalizeSave();
     }
 }
+
 function showTab(tabName) { 
     currentActiveTab = tabName;
 
