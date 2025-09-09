@@ -2,8 +2,9 @@
 // ===== TACHOGRÁF ELEMZŐ (FEATURE) ======================
 // =======================================================
 
-// A heti keretek (10 órás vezetés, csökkentett pihenő) kiszámítása
+// A heti keretek (10 órás vezetés, csökkentett pihenő) kiszámítása (JAVÍTOTT LOGIKA)
 function calculateWeeklyAllowance() {
+    const i18n = translations[currentLang];
     const now = new Date();
     const { start, end } = getWeekRange(now);
     const startStr = toISODate(start);
@@ -13,29 +14,30 @@ function calculateWeeklyAllowance() {
     const remainingDrives = Math.max(0, 2 - extendedDrivesThisWeek);
     
     let reducedRestsInCycle = 0;
-    const sortedRecords = getSortedRecords();
+    // Kifejezetten ehhez az elemzéshez készítünk egy legrégebbi->legújabb sorrendet
+    const analysisOrderRecords = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
     const splitData = getSplitRestData();
 
-    // Visszafelé haladunk a bejegyzésekben, amíg heti pihenőt nem találunk
-    for (let i = sortedRecords.length - 1; i > 0; i--) {
-        const currentRecord = sortedRecords[i];
-        const previousRecord = sortedRecords[i-1];
+    // A legfrissebb bejegyzéstől haladunk visszafelé az időben
+    for (let i = analysisOrderRecords.length - 1; i > 0; i--) {
+        const currentRecord = analysisOrderRecords[i];
+        const previousRecord = analysisOrderRecords[i-1]; // Az időben őt megelőző bejegyzés
+        
         const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
         const currentStart = new Date(`${currentRecord.date}T${currentRecord.startTime}`);
-        const restDurationHours = Math.round((currentStart - prevEnd) / 60000) / 60;
-        
-        // Megszakítjuk, ha 24 órás vagy hosszabb pihenőt (heti pihenőt) találunk
+        const restDurationHours = (currentStart - prevEnd) / (1000 * 60 * 60);
+
+        // Ha heti pihenőt találunk (>=24h), a ciklus megszakad, nem számolunk tovább
         if (restDurationHours >= 24) {
             break;
         }
         
         const isSplitRest = splitData[previousRecord.id] === true || previousRecord.isSplitRest;
-        if (isSplitRest) continue; // Az osztott pihenőket nem számoljuk csökkentettnek
+        if (isSplitRest) continue;
         
         const prevWorkDurationHours = previousRecord.workMinutes / 60;
         const isForcedReduced = prevWorkDurationHours > 13;
 
-        // Csökkentett pihenőnek számít, ha 9-11 óra közötti VAGY ha a munkaidő 13 óránál több volt
         if ((restDurationHours >= 9 && restDurationHours < 11) || isForcedReduced) {
             reducedRestsInCycle++;
         }
@@ -75,29 +77,28 @@ function renderWeeklyAllowance() {
         </div>
     </div>`;
     
-    // Az élő nézeten kisebb ikonokat használunk
     const liveHTML = html.replace(/width="45"/g, 'width="35"').replace(/height="45"/g, 'height="35"');
 
     liveContainer.innerHTML = liveHTML;
     tachoContainer.innerHTML = html;
 }
 
-// SVG ikon generálása a rendelkezésre álló keretekhez (JAVÍTOTT VERZIÓ)
+// SVG ikon generálása a rendelkezésre álló keretekhez (VÉGLEGES JAVÍTÁS)
 function createAvailableIcon(number) {
     return `
     <svg width="45" height="45" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="45" stroke-width="6" class="stroke-green-600 dark:stroke-green-400 fill-green-50 dark:fill-green-900/50" />
-        <text x="50" y="50" font-family="Arial, sans-serif" font-size="45" font-weight="bold" class="fill-green-700 dark:fill-green-200" text-anchor="middle" dy=".3em">${number}</text>
+        <circle cx="50" cy="50" r="45" stroke-width="6" stroke="#16a34a" fill="#f0fdf4" />
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="45" font-weight="bold" fill="#15803d" text-anchor="middle" dy=".3em">${number}</text>
     </svg>`;
 }
 
-// SVG ikon generálása az elhasznált keretekhez (JAVÍTOTT VERZIÓ)
+// SVG ikon generálása az elhasznált keretekhez (VÉGLEGES JAVÍTÁS)
 function createUsedIcon(number) {
     return `
     <svg width="45" height="45" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="45" stroke-width="6" class="stroke-red-500 dark:stroke-red-400 fill-red-50 dark:fill-red-900/50" />
-        <text x="50" y="50" font-family="Arial, sans-serif" font-size="45" font-weight="bold" class="fill-red-600 dark:fill-red-300" text-anchor="middle" dy=".3em">${number}</text>
-        <line x1="20" y1="20" x2="80" y2="80" class="stroke-red-700 dark:stroke-red-500" stroke-width="8" stroke-linecap="round" />
+        <circle cx="50" cy="50" r="45" stroke-width="6" stroke="#ef4444" fill="#fef2f2" />
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="45" font-weight="bold" fill="#dc2626" text-anchor="middle" dy=".3em">${number}</text>
+        <line x1="20" y1="20" x2="80" y2="80" stroke="#b91c1c" stroke-width="8" stroke-linecap="round" />
     </svg>`;
 }
 
@@ -110,7 +111,6 @@ function renderTachoHelperCards() {
     inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
 
     if (inProgressEntry) {
-        // "Legkésőbbi pihenő kezdés" kártya kirajzolása, ha műszak van folyamatban
         const allowance = calculateWeeklyAllowance();
         const startDate = new Date(`${inProgressEntry.date}T${inProgressEntry.startTime}`);
         const latestRestStart11h = new Date(startDate.getTime());
@@ -146,7 +146,6 @@ function renderTachoHelperCards() {
         container.innerHTML = htmlContent;
 
     } else {
-        // "Legkorábbi indulás" kártya kirajzolása, ha nincs folyamatban lévő műszak
         const lastRecord = getLatestRecord();
         if (!lastRecord || !lastRecord.date || !lastRecord.endTime) {
             container.innerHTML = '';
@@ -220,7 +219,6 @@ function renderTachographAnalysis() {
         titleElement.after(warningBanner);
     }
 
-    // 1. SORBARENDEZÉS: legrégebbitől a legfrissebbig (az elemzéshez ez kell)
     const sortedRecords = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
     
     if (sortedRecords.length < 1) {
@@ -237,7 +235,6 @@ function renderTachographAnalysis() {
         const currentRecord = sortedRecords[i];
         const previousRecord = i > 0 ? sortedRecords[i - 1] : null;
 
-        // Pihenőidő elemzése
         let restAnalysis;
         if (previousRecord) {
             const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
@@ -278,7 +275,6 @@ function renderTachographAnalysis() {
             reducedDailyRestCounter = 0;
         }
 
-        // Vezetési idő elemzése
         const driveMinutes = currentRecord.driveMinutes || 0;
         const driveHours = driveMinutes / 60;
         let driveAnalysis;
@@ -300,7 +296,6 @@ function renderTachographAnalysis() {
         analysisResults.push({ record: currentRecord, rest: restAnalysis, drive: driveAnalysis, isSplit: splitRestData[currentRecord.id] === true || currentRecord.isSplitRest });
     }
 
-    // 2. MEGJELENÍTÉS: a feldolgozott lista megfordítása, hogy a legfrissebb legyen felül
     container.innerHTML = analysisResults.reverse().map(res => {
         const d = new Date(res.record.date + 'T00:00:00');
         const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU';
