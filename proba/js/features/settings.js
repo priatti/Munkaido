@@ -17,7 +17,7 @@ function loadSettings() {
 
 // Adatok exportálása JSON fájlba
 function exportData() {
-    if (records.length === 0) {
+    if (records.length === 0 && palletRecords.length === 0) {
         showCustomAlert(translations[currentLang].alertNoDataToExport, 'info');
         return;
     }
@@ -51,11 +51,10 @@ function importData() {
         reader.onload = async function (e) {
             try {
                 const imported = JSON.parse(e.target.result);
-                // Visszafelé kompatibilitás a régi (csak workRecords) exporttal
-                if (Array.isArray(imported)) {
+                if (Array.isArray(imported)) { // Visszafelé kompatibilitás a régi (csak workRecords) exporttal
                     records = imported;
-                    palletRecords = []; // Régi import esetén töröljük a raklapokat
-                } else if (imported.workRecords && imported.palletRecords) {
+                    palletRecords = []; 
+                } else if (imported.workRecords || imported.palletRecords) {
                     records = imported.workRecords || [];
                     palletRecords = imported.palletRecords || [];
                 } else {
@@ -139,7 +138,6 @@ function applyFeatureToggles() {
     if (liveAllowanceDisplay) liveAllowanceDisplay.style.display = showDriveTime ? 'block' : 'none';
     if (tachographMenuItem) tachographMenuItem.style.display = showDriveTime ? 'flex' : 'none';
     
-    // Ha a felhasználó kikapcsol egy aktív fület, váltsunk vissza az áttekintésre
     if (!showDriveTime && currentActiveTab === 'tachograph') showTab('live');
     if (!showPallets && currentActiveTab === 'pallets') showTab('live');
 }
@@ -147,12 +145,11 @@ function applyFeatureToggles() {
 // Automatikus mentés (export) ellenőrzése
 function checkForAutoExport() {
     const frequency = localStorage.getItem('autoExportFrequency') || 'never';
-    if (frequency === 'never' || records.length === 0) {
+    if (frequency === 'never' || (records.length === 0 && palletRecords.length === 0)) {
         return;
     }
     const lastExportDateStr = localStorage.getItem('lastAutoExportDate');
     if (!lastExportDateStr) {
-        // Ha van beállítás, de még nem volt mentés, mentsünk most
         localStorage.setItem('lastAutoExportDate', new Date().toISOString());
         return;
     }
@@ -173,4 +170,101 @@ function checkForAutoExport() {
         exportData();
         localStorage.setItem('lastAutoExportDate', new Date().toISOString());
     }
+}
+
+// =======================================================
+// ===== RAKLAP BEÁLLÍTÁSOK (SETTINGS) ===================
+// =======================================================
+
+// Inicializálja a raklap beállítások eseménykezelőit
+function initializePalletSettings() {
+    const toggle = document.getElementById('toggleMultiPallet');
+    if (!toggle) return;
+
+    // Beállítás betöltése és eseményfigyelő hozzáadása a kapcsolóhoz
+    const isMultiPalletMode = localStorage.getItem('palletMode') === 'multi';
+    toggle.checked = isMultiPalletMode;
+    updateToggleVisuals(toggle); // Vizuális állapot frissítése
+    updateMultiPalletSettingsVisibility(isMultiPalletMode);
+
+    toggle.addEventListener('change', (e) => {
+        const newMode = e.target.checked ? 'multi' : 'single';
+        localStorage.setItem('palletMode', newMode);
+        updateToggleVisuals(e.target);
+        updateMultiPalletSettingsVisibility(e.target.checked);
+    });
+
+    // Raklaptípusok renderelése
+    renderPalletTypesList();
+}
+
+// Megjeleníti vagy elrejti a több-raklapos beállításokat
+function updateMultiPalletSettingsVisibility(isVisible) {
+    const container = document.getElementById('multi-pallet-settings-container');
+    if (isVisible) {
+        container.classList.remove('hidden');
+    } else {
+        container.classList.add('hidden');
+    }
+}
+
+// Kiolvassa a raklaptípusokat a mentésből (EUR mindig az első)
+function getPalletTypes() {
+    const savedTypes = JSON.parse(localStorage.getItem('customPalletTypes') || '[]');
+    // Biztosítjuk, hogy az 'EUR' csak egyszer szerepeljen és mindig az elején
+    const uniqueTypes = [...new Set(savedTypes)];
+    return ['EUR', ...uniqueTypes.filter(t => t !== 'EUR')];
+}
+
+// Elmenti az egyedi raklaptípusokat
+function savePalletTypes(types) {
+    // Az 'EUR'-t sosem mentjük, mert az fix
+    const customTypes = types.filter(t => t !== 'EUR');
+    localStorage.setItem('customPalletTypes', JSON.stringify(customTypes));
+}
+
+// Megjeleníti a beállításokban a raklaptípusok listáját
+function renderPalletTypesList() {
+    const listContainer = document.getElementById('pallet-types-list');
+    if (!listContainer) return;
+
+    const types = getPalletTypes();
+    listContainer.innerHTML = types.map(type => `
+        <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-600 p-2 rounded-lg">
+            <span class="font-semibold text-gray-800 dark:text-gray-100">${type}</span>
+            ${type !== 'EUR' ? `<button onclick="deletePalletType('${type}')" class="text-red-500 hover:text-red-700 text-xl font-bold">×</button>` : ''}
+        </div>
+    `).join('');
+}
+
+// Új raklaptípus hozzáadása
+function addPalletType() {
+    const input = document.getElementById('newPalletTypeName');
+    const newType = input.value.trim().toUpperCase();
+
+    if (!newType) {
+        showCustomAlert('A típusnév nem lehet üres!', 'info');
+        return;
+    }
+
+    const currentTypes = getPalletTypes();
+    if (currentTypes.includes(newType)) {
+        showCustomAlert('Ez a típus már létezik!', 'info');
+        return;
+    }
+
+    currentTypes.push(newType);
+    savePalletTypes(currentTypes);
+    renderPalletTypesList();
+    input.value = '';
+}
+
+// Raklaptípus törlése
+function deletePalletType(typeToDelete) {
+    showCustomAlert(`Biztosan törölni szeretnéd a(z) "${typeToDelete}" típust?`, 'warning', () => {
+        let currentTypes = getPalletTypes();
+        currentTypes = currentTypes.filter(t => t !== typeToDelete);
+        savePalletTypes(currentTypes);
+        renderPalletTypesList();
+    });
 }
