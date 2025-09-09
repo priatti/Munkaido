@@ -3,25 +3,24 @@
 // =======================================================
 
 // ====== GLOBÁLIS ÁLLAPOT (STATE) ======
-// Ezek a változók tárolják az alkalmazás aktuális adatait.
 let records = [];
 let palletRecords = [];
-let editingId = null; // Ha ez nem null, akkor egy létező bejegyzést szerkesztünk
+let editingId = null; 
 let inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
 let uniqueLocations = [];
 let uniquePalletLocations = [];
 let currentActiveTab = 'live';
 
 // ====== ALKALMAZÁS INDÍTÁSA ======
-// Ez a funkció fut le a HTML dokumentum betöltődésekor.
 document.addEventListener('DOMContentLoaded', () => {
     // Alapfunkciók inicializálása
     initTheme();
     loadSettings();
     initializeFeatureToggles();
     initializePwaInstall();
-    initializeAuth(); // Ez indítja el az adatbetöltést és az app renderelését
-
+    initializePalletSettings(); // <-- EZ AZ ÚJ SOR
+    initializeAuth(); 
+    
     // Globális eseménykezelők beállítása
     document.addEventListener('click', (event) => {
         const dropdownContainer = document.getElementById('dropdown-container');
@@ -33,20 +32,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Gombokhoz és beviteli mezőkhöz tartozó eseményfigyelők
     setupEventListeners();
 });
 
 // ====== FŐ RENDERELŐ FUNKCIÓ ======
-// Ez a funkció felel az egész alkalmazás felületének frissítéséért az aktuális adatok alapján.
 function renderApp() {
     applyFeatureToggles();
     updateUniqueLocations();
     updateUniquePalletLocations();
     initAllAutocomplete();
     
-    // Frissíti az összes nézetet, még azokat is, amik rejtve vannak,
-    // hogy a fülváltáskor naprakész tartalom jelenjen meg.
     renderLiveTabView();
     renderStartTab();
     renderRecords();
@@ -55,14 +50,14 @@ function renderApp() {
     if (document.getElementById('content-tachograph').offsetParent !== null) renderTachographAnalysis();
     if (document.getElementById('content-pallets').offsetParent !== null) renderPalletRecords();
     
-    updateAllTexts(); // Végül frissítjük a nyelvi szövegeket
+    updateAllTexts(); 
 }
+
 
 // ====== NÉZETKEZELÉS (FÜLEK) ======
 function showTab(tabName) {
     currentActiveTab = tabName;
 
-    // Speciális inicializálási logika bizonyos füleknél
     if (tabName === 'full-day' && !editingId) {
         resetEntryForm();
         loadLastValues();
@@ -124,7 +119,8 @@ function showTab(tabName) {
 function toggleDropdown() { document.getElementById('dropdown-menu').classList.toggle('hidden'); }
 function closeDropdown() { document.getElementById('dropdown-menu').classList.add('hidden'); }
 
-// ====== ÁLTALÁNOS SEGÉDFÜGGVÉNYEK ======
+
+// ====== SEGÉDFÜGGVÉNYEK ======
 function getSortedRecords() {
     return [...(records || [])].sort((a, b) => new Date(`${b.date}T${b.startTime}`) - new Date(`${a.date}T${a.startTime}`));
 }
@@ -184,14 +180,12 @@ async function runNightWorkRecalculation() {
     console.log(`${updatedCount} ${i18n.logEntriesUpdated}`);
 }
 
-// ====== NÉZETSPECIFIKUS RENDERELŐK ======
 function renderLiveTabView() {
     renderWeeklyAllowance();
     renderTachoHelperCards();
     renderDashboard();
 }
 
-// Az "Indítás" fül tartalmának frissítése (TELJES FÜGGVÉNY)
 function renderStartTab() {
     const i18n = translations[currentLang];
     inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
@@ -274,7 +268,6 @@ function renderStartTab() {
     }
 }
 
-// A fő műszerfal kártyáinak kirajzolása (TELJES FÜGGVÉNY)
 function renderDashboard() {
     const i18n = translations[currentLang];
     const container = document.getElementById('dashboard-cards');
@@ -299,23 +292,18 @@ function renderDashboard() {
     `).join('');
 }
 
-
-// ====== ESEMÉNYKEZELŐK KÖZPONTOSÍTOTT BEÁLLÍTÁSA ======
 function setupEventListeners() {
-    // Teljes nap űrlap mezőinek figyelése
     ['startTime', 'endTime', 'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd', 'compensationTime'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', updateDisplays);
     });
 
-    // Statisztika gombjai
     document.getElementById('stats-view-daily').onclick = () => setStatsView('daily');
     document.getElementById('stats-view-monthly').onclick = () => setStatsView('monthly');
     document.getElementById('stats-view-yearly').onclick = () => setStatsView('yearly');
     document.getElementById('stats-prev').onclick = () => navigateStats(-1);
     document.getElementById('stats-next').onclick = () => navigateStats(1);
 
-    // Beállítások
     document.getElementById('autoExportSelector').addEventListener('change', (e) => {
         const i18n = translations[currentLang];
         localStorage.setItem('autoExportFrequency', e.target.value);
@@ -327,7 +315,6 @@ function setupEventListeners() {
         }
     });
 
-    // Raklap 1:1 gomb
     const pallet1to1Btn = document.getElementById('pallet-1to1-btn');
     if (pallet1to1Btn) {
         pallet1to1Btn.addEventListener('click', () => {
@@ -340,4 +327,4 @@ function setupEventListeners() {
             }
         });
     }
-              } 
+}
