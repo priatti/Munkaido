@@ -52,28 +52,62 @@ async function deletePalletEntry(id) {
     });
 }
 
-// Aktuális raklap egyenleg frissítése a UI-on
+// Aktuális raklap egyenleg frissítése a UI-on (TELJESEN ÚJ VERZIÓ)
 function updatePalletBalance() {
     const i18n = translations[currentLang];
-    const balance = palletRecords.reduce((acc, curr) => {
-        return acc + (curr.palletsTaken || 0) - (curr.palletsGiven || 0);
-    }, 0);
-    
     const displayEl = document.getElementById('palletBalanceDisplay');
-    let colorClass = 'text-gray-700 dark:text-gray-200';
-    if (balance > 0) colorClass = 'text-green-600 dark:text-green-400';
-    if (balance < 0) colorClass = 'text-red-500 dark:text-red-400';
+    if (!displayEl) return;
+
+    const palletMode = localStorage.getItem('palletMode') || 'single';
+    let balanceHTML = '';
+    let totalBalance = 0;
+
+    // Ha csak egy típust kezelünk, a régi logika marad
+    if (palletMode === 'single') {
+        const balance = palletRecords.reduce((acc, curr) => acc + (curr.palletsTaken || 0) - (curr.palletsGiven || 0), 0);
+        const colorClass = balance > 0 ? 'text-green-600 dark:text-green-400' : (balance < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-700 dark:text-gray-200');
+        balanceHTML = `<p class="text-2xl font-bold ${colorClass}">${balance} db</p>`;
+    } 
+    // Ha több típust, akkor külön számolunk mindent
+    else {
+        const types = getPalletTypes();
+        const balances = {};
+        
+        // Kiszámoljuk minden típus egyenlegét
+        types.forEach(type => {
+            const typeBalance = palletRecords
+                .filter(record => record.type === type)
+                .reduce((acc, curr) => acc + (curr.palletsTaken || 0) - (curr.palletsGiven || 0), 0);
+            balances[type] = typeBalance;
+            totalBalance += typeBalance;
+        });
+
+        // Előállítjuk a részletező HTML-t
+        const balanceDetails = types.map(type => {
+            const balance = balances[type];
+            // Csak azokat a típusokat jelenítjük meg, amiknek volt már mozgása
+            if (!palletRecords.some(r => r.type === type)) return ''; 
+            const colorClass = balance > 0 ? 'text-green-600 dark:text-green-400' : (balance < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400');
+            return `<span class="font-semibold ${colorClass}">${type}: ${balance}</span>`;
+        }).filter(Boolean).join(' / '); // A filter(Boolean) kiszűri az üres stringeket
+
+        const totalColorClass = totalBalance > 0 ? 'text-green-600 dark:text-green-400' : (totalBalance < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-700 dark:text-gray-200');
+        balanceHTML = `
+            <p class="text-2xl font-bold ${totalColorClass}">${totalBalance} db</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${balanceDetails}</p>
+        `;
+    }
 
     displayEl.innerHTML = `
         <p class="text-sm font-medium">${i18n.palletsBalance}</p>
-        <p class="text-2xl font-bold ${colorClass}">${balance} db</p>
+        ${balanceHTML}
     `;
 }
 
+
 // A raklap tranzakciók listájának és a teljes felületnek a kirajzolása
 function renderPalletRecords() {
-    // Először kirajzoljuk a típusválasztó gombokat
-    renderPalletTypeSelector(); 
+    renderPalletTypeSelector(); // Kirajzoljuk a típusválasztó gombokat
 
     const i18n = translations[currentLang];
     const container = document.getElementById('palletRecordsContainer');
@@ -113,7 +147,6 @@ function renderPalletRecords() {
         }
 
         const detailsHTML = [
-            // A típust most már egy címkeként jelenítjük meg
             p.type ? `<span class="mt-1 text-xs font-semibold bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-2 py-1 rounded-full">${p.type}</span>` : '',
             p.licensePlate ? `<p class="text-xs text-gray-400 mt-1">${i18n.palletsLicensePlateLabel}: ${p.licensePlate}</p>` : ''
         ].filter(Boolean).join('');
@@ -130,12 +163,12 @@ function renderPalletRecords() {
                  <p class="text-xs text-gray-400">(+${taken} / -${given})</p>
                  <button onclick="deletePalletEntry('${p.id}')" class="text-xs text-gray-400 hover:text-red-500 mt-1">🗑️ <span data-translate-key="delete">${i18n.delete}</span></button>
             </div>
-        </div>`;
+        </div>
+        `;
     }).join('');
 }
 
-
-// ÚJ FUNKCIÓ: A típusválasztó gombok kirajzolása a beállítások alapján
+// A típusválasztó gombok kirajzolása a beállítások alapján
 function renderPalletTypeSelector() {
     const container = document.getElementById('pallet-type-selector');
     if (!container) return;
@@ -145,14 +178,19 @@ function renderPalletTypeSelector() {
     if (palletMode === 'single') {
         selectedPalletType = 'EUR'; // Egyszerűsített módban mindig EUR
         container.innerHTML = `
-            <button class="w-full text-left font-semibold p-2 rounded-lg bg-green-100 dark:bg-green-800/50 text-gray-800 dark:text-gray-100">
+            <button class="w-full text-left font-semibold p-2 rounded-lg bg-green-100 dark:bg-green-800/50 text-gray-800 dark:text-gray-100 cursor-default">
                 ✓ EUR
             </button>`;
     } else {
-        const types = getPalletTypes(); // Lekérjük a beállított típusokat
+        const types = getPalletTypes();
+        // Alapértelmezett kiválasztás, ha a jelenlegi nem létezik
+        if (!types.includes(selectedPalletType)) {
+            selectedPalletType = 'EUR';
+        }
+
         container.innerHTML = types.map(type => {
             const isActive = type === selectedPalletType;
-            const activeClass = isActive ? 'bg-green-100 dark:bg-green-800/50' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300';
+            const activeClass = isActive ? 'bg-green-100 dark:bg-green-800/50' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600';
             
             return `
                 <button onclick="selectPalletType('${type}')" class="font-semibold p-2 rounded-lg text-sm ${activeClass} text-gray-800 dark:text-gray-100">
@@ -162,7 +200,7 @@ function renderPalletTypeSelector() {
     }
 }
 
-// ÚJ FUNKCIÓ: A raklaptípus kiválasztását kezelő esemény
+// A raklaptípus kiválasztását kezelő esemény
 function selectPalletType(type) {
     selectedPalletType = type;
     renderPalletTypeSelector(); // Újrarajzoljuk a gombokat, hogy a vizuális állapot frissüljön
