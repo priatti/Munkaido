@@ -82,20 +82,20 @@ function renderWeeklyAllowance() {
     tachoContainer.innerHTML = html;
 }
 
-// SVG ikon generálása a rendelkezésre álló keretekhez
+// SVG ikon generálása a rendelkezésre álló keretekhez (JAVÍTOTT VERZIÓ)
 function createAvailableIcon(number) {
     return `
     <svg width="45" height="45" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="45" class="stroke-green-600 dark:stroke-green-400" stroke-width="6" class="fill-green-50 dark:fill-green-900/50" />
+        <circle cx="50" cy="50" r="45" stroke-width="6" class="stroke-green-600 dark:stroke-green-400 fill-green-50 dark:fill-green-900/50" />
         <text x="50" y="50" font-family="Arial, sans-serif" font-size="45" font-weight="bold" class="fill-green-700 dark:fill-green-200" text-anchor="middle" dy=".3em">${number}</text>
     </svg>`;
 }
 
-// SVG ikon generálása az elhasznált keretekhez
+// SVG ikon generálása az elhasznált keretekhez (JAVÍTOTT VERZIÓ)
 function createUsedIcon(number) {
     return `
     <svg width="45" height="45" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="45" class="stroke-red-500 dark:stroke-red-400" stroke-width="6" class="fill-red-50 dark:fill-red-900/50" />
+        <circle cx="50" cy="50" r="45" stroke-width="6" class="stroke-red-500 dark:stroke-red-400 fill-red-50 dark:fill-red-900/50" />
         <text x="50" y="50" font-family="Arial, sans-serif" font-size="45" font-weight="bold" class="fill-red-600 dark:fill-red-300" text-anchor="middle" dy=".3em">${number}</text>
         <line x1="20" y1="20" x2="80" y2="80" class="stroke-red-700 dark:stroke-red-500" stroke-width="8" stroke-linecap="round" />
     </svg>`;
