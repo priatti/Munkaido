@@ -446,6 +446,18 @@
             <input type="text" id="custom-prompt-input" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg mb-4 text-center">
             <div id="custom-prompt-buttons" class="flex justify-center gap-4"></div>
         </div>
+		<div id="pallet-report-modal-overlay" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300">
+        <div id="pallet-report-modal-box" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-2xl w-11/12 max-w-sm mx-auto transform transition-transform duration-300 scale-95">
+            <h3 class="text-xl font-semibold text-center mb-4 text-gray-900 dark:text-gray-100">Raklap Riport Készítése</h3>
+            <p class="text-center text-sm text-gray-600 dark:text-gray-300 mb-4">Válaszd ki, melyik típus(ok)ról szeretnél riportot:</p>
+            
+            <div id="pallet-report-types-container" class="space-y-2 max-h-48 overflow-y-auto mb-6"></div>
+
+            <div id="pallet-report-modal-buttons" class="flex justify-center gap-4">
+                <button onclick="hidePalletReportModal()" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">Mégse</button>
+                <button onclick="createSelectedPalletReport()" class="py-2 px-6 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600">Riport generálása</button>
+            </div>
+        </div>
     </div>
 	
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
