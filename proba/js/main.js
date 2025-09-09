@@ -63,9 +63,7 @@ function showTab(tabName) {
         loadLastValues();
     }
     if (tabName === 'pallets') {
-        document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
-        renderPalletRecords();
+        renderPalletRecords(); // Most már ez a funkció tölti ki az alapértelmezett értékeket is
     }
     if (tabName === 'report') {
         initMonthlyReport();
@@ -291,18 +289,22 @@ function renderDashboard() {
     `).join('');
 }
 
+// JAVÍTOTT FUNKCIÓ
 function setupEventListeners() {
+    // Általános űrlap mezők figyelése
     ['startTime', 'endTime', 'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd', 'compensationTime'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', updateDisplays);
     });
 
+    // Statisztika gombjainak figyelése
     document.getElementById('stats-view-daily').onclick = () => setStatsView('daily');
     document.getElementById('stats-view-monthly').onclick = () => setStatsView('monthly');
     document.getElementById('stats-view-yearly').onclick = () => setStatsView('yearly');
     document.getElementById('stats-prev').onclick = () => navigateStats(-1);
     document.getElementById('stats-next').onclick = () => navigateStats(1);
 
+    // Beállítások figyelése
     document.getElementById('autoExportSelector').addEventListener('change', (e) => {
         const i18n = translations[currentLang];
         localStorage.setItem('autoExportFrequency', e.target.value);
@@ -313,17 +315,4 @@ function setupEventListeners() {
             showCustomAlert(i18n.autoBackupOff, 'info');
         }
     });
-
-    const pallet1to1Btn = document.getElementById('pallet-1to1-btn');
-    if (pallet1to1Btn) {
-        pallet1to1Btn.addEventListener('click', () => {
-            const givenInput = document.getElementById('palletGiven');
-            const takenInput = document.getElementById('palletTaken');
-            if (givenInput.value) {
-                takenInput.value = givenInput.value;
-            } else if (takenInput.value) {
-                givenInput.value = takenInput.value;
-            }
-        });
-    }
 }
