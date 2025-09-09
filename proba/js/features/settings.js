@@ -86,10 +86,25 @@ function updateToggleVisuals(checkbox) {
     const label = checkbox.closest('label');
     if (!label) return;
     const checkmark = label.querySelector('.toggle-checkmark');
+
+    // Definiáljuk a kinézethez szükséges CSS osztályokat
+    const activeClasses = ['bg-green-100', 'dark:bg-green-800/50'];
+    const inactiveClasses = ['hover:bg-gray-200', 'dark:hover:bg-gray-700'];
+
     if (checkbox.checked) {
-        if (checkmark) checkmark.classList.remove('hidden');
+        // Ha be van kapcsolva:
+        label.classList.remove(...inactiveClasses);
+        label.classList.add(...activeClasses);
+        if (checkmark) {
+            checkmark.classList.remove('hidden');
+        }
     } else {
-        if (checkmark) checkmark.classList.add('hidden');
+        // Ha ki van kapcsolva:
+        label.classList.remove(...activeClasses);
+        label.classList.add(...inactiveClasses);
+        if (checkmark) {
+            checkmark.classList.add('hidden');
+        }
     }
 }
 
