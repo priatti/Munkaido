@@ -98,8 +98,12 @@ function updatePalletBalance() {
     `;
 }
 
-// A raklap tranzakciók listájának és a teljes felületnek a kirajzolása
+// JAVÍTOTT FUNKCIÓ
 function renderPalletRecords() {
+    // Dátum és rendszám alapértelmezett beállítása
+    document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
+    
     renderPalletTypeSelector(); 
 
     const i18n = translations[currentLang];
@@ -159,9 +163,23 @@ function renderPalletRecords() {
         </div>
         `;
     }).join('');
+
+    // A "1:1" gomb eseménykezelőjének beállítása, miután a gomb létrejött a HTML-ben
+    const pallet1to1Btn = document.getElementById('pallet-1to1-btn');
+    if (pallet1to1Btn) {
+        pallet1to1Btn.onclick = () => {
+            const givenInput = document.getElementById('palletGiven');
+            const takenInput = document.getElementById('palletTaken');
+            if (givenInput.value) {
+                takenInput.value = givenInput.value;
+            } else if (takenInput.value) {
+                givenInput.value = takenInput.value;
+            }
+        };
+    }
 }
 
-// A típusválasztó gombok kirajzolása a beállítások alapján
+// A típusválasztó gombok kirajzolása
 function renderPalletTypeSelector() {
     const container = document.getElementById('pallet-type-selector');
     if (!container) return;
@@ -190,9 +208,8 @@ function selectPalletType(type) {
     renderPalletTypeSelector();
 }
 
-// ======== ÚJ RIPORTGENERÁLÓ LOGIKA ========
+// ======== RIPORTGENERÁLÓ LOGIKA ========
 
-// 1. A régi funkció mostantól a felugró ablakot nyitja meg
 function generatePalletReport() {
     const i18n = translations[currentLang];
     if (palletRecords.length === 0) {
@@ -200,15 +217,13 @@ function generatePalletReport() {
         return;
     }
     
-    // Egyszerűsített módban azonnal generálunk, csak az EUR-ról
     const palletMode = localStorage.getItem('palletMode') || 'single';
     if (palletMode === 'single') {
         createSelectedPalletReport(['EUR']);
         return;
     }
 
-    // Részletes módban: felugró ablak tartalmának feltöltése és megjelenítése
-    const types = getPalletTypes().filter(type => palletRecords.some(r => r.type === type)); // Csak azokat, amikhez van bejegyzés
+    const types = getPalletTypes().filter(type => palletRecords.some(r => r.type === type));
     const container = document.getElementById('pallet-report-types-container');
     container.innerHTML = types.map(type => `
         <label class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
@@ -220,7 +235,6 @@ function generatePalletReport() {
     showPalletReportModal();
 }
 
-// 2. Új funkciók a felugró ablak megjelenítésére/elrejtésére
 function showPalletReportModal() {
     const overlay = document.getElementById('pallet-report-modal-overlay');
     overlay.classList.remove('hidden');
@@ -233,15 +247,14 @@ function hidePalletReportModal() {
     overlay.classList.remove('flex');
 }
 
-// 3. Ez az új funkció generálja le a PDF-et a kiválasztott típusok alapján
 function createSelectedPalletReport(selectedTypesArray = null) {
     const i18n = translations[currentLang];
     const userName = document.getElementById('userNameInput').value || 'N/A';
     
     let selectedTypes;
-    if (selectedTypesArray) { // Ha közvetlenül kapunk típusokat (pl. egyszerűsített módból)
+    if (selectedTypesArray) {
         selectedTypes = selectedTypesArray;
-    } else { // Ha a felugró ablakból olvassuk ki
+    } else {
         selectedTypes = Array.from(document.querySelectorAll('.pallet-report-checkbox:checked')).map(cb => cb.value);
     }
     
@@ -266,25 +279,21 @@ function createSelectedPalletReport(selectedTypesArray = null) {
             const typeRecords = palletRecords.filter(r => r.type === type).sort((a, b) => new Date(a.date) - new Date(b.date));
             if (typeRecords.length === 0) return;
 
-            // Oldaltörés, ha már nincs elég hely
             if (yPos > pageBottom - 40) {
                 doc.addPage();
                 yPos = 20;
             }
-            // Szeparátor az egyes típusok között
             if (typeIndex > 0) {
                 doc.setLineWidth(0.5);
                 doc.line(15, yPos, 195, yPos);
                 yPos += 10;
             }
 
-            // Típus-specifikus fejléc
             const finalBalance = typeRecords.reduce((acc, p) => acc + (p.palletsTaken || 0) - (p.palletsGiven || 0), 0);
             doc.setFontSize(14); doc.setFont(undefined, 'bold');
             doc.text(`${type} Egyenleg: ${finalBalance > 0 ? '+' : ''}${finalBalance} db`, 15, yPos);
             yPos += 10;
 
-            // Táblázat fejléce
             const headers = [i18n.palletReportHeaderDate, i18n.palletReportHeaderLocation, i18n.palletReportHeaderGiven, i18n.palletReportHeaderTaken, i18n.palletReportHeaderPlate, i18n.palletReportHeaderBalance];
             const colWidths = [25, 65, 20, 20, 30, 20];
             doc.setFont('Helvetica', 'bold'); doc.setFontSize(10);
@@ -294,7 +303,6 @@ function createSelectedPalletReport(selectedTypesArray = null) {
             doc.setLineWidth(0.2); doc.line(15, yPos, 195, yPos);
             yPos += 5;
 
-            // Táblázat tartalma
             doc.setFont('Helvetica', 'normal'); doc.setFontSize(9);
             let runningBalance = 0;
             typeRecords.forEach(p => {
@@ -308,7 +316,7 @@ function createSelectedPalletReport(selectedTypesArray = null) {
                 row.forEach((cell, i) => { doc.text(String(cell), xPos, yPos); xPos += colWidths[i]; });
                 yPos += 6;
             });
-            yPos += 5; // Térköz a következő típus előtt
+            yPos += 5;
         });
 
         doc.save(`${i18n.palletReportFileName}-${userName.replace(/ /g, "_")}-${new Date().toISOString().split("T")[0]}.pdf`);
