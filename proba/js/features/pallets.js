@@ -25,7 +25,7 @@ async function savePalletEntry() {
         location,
         palletsGiven,
         palletsTaken,
-        type: selectedPalletType, // A régi input helyett a kiválasztott típust mentjük
+        type: selectedPalletType,
         licensePlate
     };
 
@@ -33,7 +33,7 @@ async function savePalletEntry() {
 
     palletRecords.push(newEntry);
     await savePalletRecords();
-    renderPalletRecords(); // Újrarajzolja a listát és a gombokat is
+    renderPalletRecords();
     updateUniquePalletLocations();
 
     document.getElementById('palletLocation').value = '';
@@ -52,7 +52,7 @@ async function deletePalletEntry(id) {
     });
 }
 
-// Aktuális raklap egyenleg frissítése a UI-on (TELJESEN ÚJ VERZIÓ)
+// Aktuális raklap egyenleg frissítése a UI-on
 function updatePalletBalance() {
     const i18n = translations[currentLang];
     const displayEl = document.getElementById('palletBalanceDisplay');
@@ -62,18 +62,14 @@ function updatePalletBalance() {
     let balanceHTML = '';
     let totalBalance = 0;
 
-    // Ha csak egy típust kezelünk, a régi logika marad
     if (palletMode === 'single') {
         const balance = palletRecords.reduce((acc, curr) => acc + (curr.palletsTaken || 0) - (curr.palletsGiven || 0), 0);
         const colorClass = balance > 0 ? 'text-green-600 dark:text-green-400' : (balance < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-700 dark:text-gray-200');
         balanceHTML = `<p class="text-2xl font-bold ${colorClass}">${balance} db</p>`;
-    } 
-    // Ha több típust, akkor külön számolunk mindent
-    else {
+    } else {
         const types = getPalletTypes();
         const balances = {};
         
-        // Kiszámoljuk minden típus egyenlegét
         types.forEach(type => {
             const typeBalance = palletRecords
                 .filter(record => record.type === type)
@@ -82,14 +78,12 @@ function updatePalletBalance() {
             totalBalance += typeBalance;
         });
 
-        // Előállítjuk a részletező HTML-t
         const balanceDetails = types.map(type => {
-            const balance = balances[type];
-            // Csak azokat a típusokat jelenítjük meg, amiknek volt már mozgása
             if (!palletRecords.some(r => r.type === type)) return ''; 
+            const balance = balances[type];
             const colorClass = balance > 0 ? 'text-green-600 dark:text-green-400' : (balance < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400');
             return `<span class="font-semibold ${colorClass}">${type}: ${balance}</span>`;
-        }).filter(Boolean).join(' / '); // A filter(Boolean) kiszűri az üres stringeket
+        }).filter(Boolean).join(' / ');
 
         const totalColorClass = totalBalance > 0 ? 'text-green-600 dark:text-green-400' : (totalBalance < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-700 dark:text-gray-200');
         balanceHTML = `
@@ -104,10 +98,9 @@ function updatePalletBalance() {
     `;
 }
 
-
 // A raklap tranzakciók listájának és a teljes felületnek a kirajzolása
 function renderPalletRecords() {
-    renderPalletTypeSelector(); // Kirajzoljuk a típusválasztó gombokat
+    renderPalletTypeSelector(); 
 
     const i18n = translations[currentLang];
     const container = document.getElementById('palletRecordsContainer');
@@ -176,26 +169,17 @@ function renderPalletTypeSelector() {
     const palletMode = localStorage.getItem('palletMode') || 'single';
 
     if (palletMode === 'single') {
-        selectedPalletType = 'EUR'; // Egyszerűsített módban mindig EUR
-        container.innerHTML = `
-            <button class="w-full text-left font-semibold p-2 rounded-lg bg-green-100 dark:bg-green-800/50 text-gray-800 dark:text-gray-100 cursor-default">
-                ✓ EUR
-            </button>`;
+        selectedPalletType = 'EUR';
+        container.innerHTML = `<button class="w-full text-left font-semibold p-2 rounded-lg bg-green-100 dark:bg-green-800/50 text-gray-800 dark:text-gray-100 cursor-default">✓ EUR</button>`;
     } else {
         const types = getPalletTypes();
-        // Alapértelmezett kiválasztás, ha a jelenlegi nem létezik
         if (!types.includes(selectedPalletType)) {
             selectedPalletType = 'EUR';
         }
-
         container.innerHTML = types.map(type => {
             const isActive = type === selectedPalletType;
             const activeClass = isActive ? 'bg-green-100 dark:bg-green-800/50' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600';
-            
-            return `
-                <button onclick="selectPalletType('${type}')" class="font-semibold p-2 rounded-lg text-sm ${activeClass} text-gray-800 dark:text-gray-100">
-                    ${isActive ? '✓ ' : ''}${type}
-                </button>`;
+            return `<button onclick="selectPalletType('${type}')" class="font-semibold p-2 rounded-lg text-sm ${activeClass} text-gray-800 dark:text-gray-100">${isActive ? '✓ ' : ''}${type}</button>`;
         }).join('');
     }
 }
@@ -203,62 +187,128 @@ function renderPalletTypeSelector() {
 // A raklaptípus kiválasztását kezelő esemény
 function selectPalletType(type) {
     selectedPalletType = type;
-    renderPalletTypeSelector(); // Újrarajzoljuk a gombokat, hogy a vizuális állapot frissüljön
+    renderPalletTypeSelector();
 }
 
+// ======== ÚJ RIPORTGENERÁLÓ LOGIKA ========
 
-// Raklap riport generálása PDF-be (egyelőre változatlan)
+// 1. A régi funkció mostantól a felugró ablakot nyitja meg
 function generatePalletReport() {
     const i18n = translations[currentLang];
     if (palletRecords.length === 0) {
         showCustomAlert(i18n.alertNoPalletData, "info");
         return;
     }
+    
+    // Egyszerűsített módban azonnal generálunk, csak az EUR-ról
+    const palletMode = localStorage.getItem('palletMode') || 'single';
+    if (palletMode === 'single') {
+        createSelectedPalletReport(['EUR']);
+        return;
+    }
+
+    // Részletes módban: felugró ablak tartalmának feltöltése és megjelenítése
+    const types = getPalletTypes().filter(type => palletRecords.some(r => r.type === type)); // Csak azokat, amikhez van bejegyzés
+    const container = document.getElementById('pallet-report-types-container');
+    container.innerHTML = types.map(type => `
+        <label class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+            <span class="font-semibold text-gray-800 dark:text-gray-100">${type}</span>
+            <input type="checkbox" value="${type}" class="pallet-report-checkbox h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
+        </label>
+    `).join('');
+
+    showPalletReportModal();
+}
+
+// 2. Új funkciók a felugró ablak megjelenítésére/elrejtésére
+function showPalletReportModal() {
+    const overlay = document.getElementById('pallet-report-modal-overlay');
+    overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
+}
+
+function hidePalletReportModal() {
+    const overlay = document.getElementById('pallet-report-modal-overlay');
+    overlay.classList.add('hidden');
+    overlay.classList.remove('flex');
+}
+
+// 3. Ez az új funkció generálja le a PDF-et a kiválasztott típusok alapján
+function createSelectedPalletReport(selectedTypesArray = null) {
+    const i18n = translations[currentLang];
+    const userName = document.getElementById('userNameInput').value || 'N/A';
+    
+    let selectedTypes;
+    if (selectedTypesArray) { // Ha közvetlenül kapunk típusokat (pl. egyszerűsített módból)
+        selectedTypes = selectedTypesArray;
+    } else { // Ha a felugró ablakból olvassuk ki
+        selectedTypes = Array.from(document.querySelectorAll('.pallet-report-checkbox:checked')).map(cb => cb.value);
+    }
+    
+    if (selectedTypes.length === 0) {
+        showCustomAlert("Kérlek, válassz legalább egy raklaptípust a riport elkészítéséhez!", "info");
+        return;
+    }
+
+    hidePalletReportModal();
+
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        const userName = document.getElementById('userNameInput').value || 'N/A';
-        const sortedRecords = [...palletRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        let currentBalance = 0;
-        const balanceAfterEach = sortedRecords.map(p => {
-            currentBalance += (p.palletsTaken || 0) - (p.palletsGiven || 0);
-            return currentBalance;
-        });
-
+        
         doc.setFontSize(18); doc.setFont(undefined, 'bold'); doc.text(i18n.palletReportTitle, 105, 15, { align: 'center' });
         doc.setFontSize(12); doc.text(userName, 105, 23, { align: 'center' });
-        doc.setFontSize(10); doc.text(`${i18n.palletsBalance} ${currentBalance} db`, 105, 31, { align: 'center' });
 
-        let yPos = 40;
-        const headers = [i18n.palletReportHeaderDate, i18n.palletReportHeaderLocation, i18n.palletReportHeaderGiven, i18n.palletReportHeaderTaken, i18n.palletReportHeaderType, i18n.palletReportHeaderPlate, i18n.palletReportHeaderBalance];
-        const colWidths = [25, 55, 18, 18, 22, 22, 20];
+        let yPos = 35;
+        const pageBottom = 280;
 
-        doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(10);
-        let xPos = 15;
-        headers.forEach((h, i) => {
-            doc.text(h, xPos, yPos);
-            xPos += colWidths[i];
-        });
-        yPos += 7;
-        doc.setLineWidth(0.5);
-        doc.line(15, yPos - 5, 195, yPos - 5);
-        doc.setFont('Helvetica', 'normal');
-        doc.setFontSize(9);
+        selectedTypes.forEach((type, typeIndex) => {
+            const typeRecords = palletRecords.filter(r => r.type === type).sort((a, b) => new Date(a.date) - new Date(b.date));
+            if (typeRecords.length === 0) return;
 
-        sortedRecords.forEach((p, index) => {
-            xPos = 15;
-            const row = [p.date, p.location, p.palletsGiven || '0', p.palletsTaken || '0', p.type || '-', p.licensePlate || '-', `${balanceAfterEach[index]} db`];
-            row.forEach((cell, i) => {
-                doc.text(String(cell), xPos, yPos);
-                xPos += colWidths[i];
-            });
-            yPos += 6;
-            if (yPos > 280) {
+            // Oldaltörés, ha már nincs elég hely
+            if (yPos > pageBottom - 40) {
                 doc.addPage();
                 yPos = 20;
             }
+            // Szeparátor az egyes típusok között
+            if (typeIndex > 0) {
+                doc.setLineWidth(0.5);
+                doc.line(15, yPos, 195, yPos);
+                yPos += 10;
+            }
+
+            // Típus-specifikus fejléc
+            const finalBalance = typeRecords.reduce((acc, p) => acc + (p.palletsTaken || 0) - (p.palletsGiven || 0), 0);
+            doc.setFontSize(14); doc.setFont(undefined, 'bold');
+            doc.text(`${type} Egyenleg: ${finalBalance > 0 ? '+' : ''}${finalBalance} db`, 15, yPos);
+            yPos += 10;
+
+            // Táblázat fejléce
+            const headers = [i18n.palletReportHeaderDate, i18n.palletReportHeaderLocation, i18n.palletReportHeaderGiven, i18n.palletReportHeaderTaken, i18n.palletReportHeaderPlate, i18n.palletReportHeaderBalance];
+            const colWidths = [25, 65, 20, 20, 30, 20];
+            doc.setFont('Helvetica', 'bold'); doc.setFontSize(10);
+            let xPos = 15;
+            headers.forEach((h, i) => { doc.text(h, xPos, yPos); xPos += colWidths[i]; });
+            yPos += 2;
+            doc.setLineWidth(0.2); doc.line(15, yPos, 195, yPos);
+            yPos += 5;
+
+            // Táblázat tartalma
+            doc.setFont('Helvetica', 'normal'); doc.setFontSize(9);
+            let runningBalance = 0;
+            typeRecords.forEach(p => {
+                if (yPos > pageBottom - 10) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                runningBalance += (p.palletsTaken || 0) - (p.palletsGiven || 0);
+                xPos = 15;
+                const row = [p.date, p.location, p.palletsGiven || '0', p.palletsTaken || '0', p.licensePlate || '-', `${runningBalance > 0 ? '+' : ''}${runningBalance}`];
+                row.forEach((cell, i) => { doc.text(String(cell), xPos, yPos); xPos += colWidths[i]; });
+                yPos += 6;
+            });
+            yPos += 5; // Térköz a következő típus előtt
         });
 
         doc.save(`${i18n.palletReportFileName}-${userName.replace(/ /g, "_")}-${new Date().toISOString().split("T")[0]}.pdf`);
