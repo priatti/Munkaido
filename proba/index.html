@@ -6,7 +6,7 @@
     <title>Munkaidő Nyilvántartó Pro</title>
 
     <link rel="manifest" href="manifest.json">
-	<link rel="icon" type="image/png" href="assets/images/icon-192x192.png">
+    <link rel="icon" type="image/png" href="assets/images/icon-192x192.png">
     <meta name="theme-color" content="#2563eb"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Munkaidő Pro">
@@ -316,6 +316,29 @@
                             </div>
                         </label>
                     </div>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+                        <h3 class="font-semibold">📦 Raklap Beállítások</h3>
+                        <label class="flex items-center justify-between cursor-pointer p-2 rounded-lg transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+                            <span class="text-gray-700 dark:text-gray-300">
+                                Több raklaptípus kezelése
+                                <span class="block text-xs text-gray-500">Kapcsold be, ha az EUR mellett más típusokat is szeretnél nyilvántartani (pl. DD, CHEP).</span>
+                            </span>
+                            <div class="relative">
+                                <input type="checkbox" id="toggleMultiPallet" class="sr-only toggle-label">
+                                <div class="block bg-gray-300 dark:bg-gray-600 w-14 h-8 rounded-full toggle-bg"></div>
+                                <div class="toggle-dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                            </div>
+                        </label>
+                        <div id="multi-pallet-settings-container" class="hidden border-t border-gray-200 dark:border-gray-600 pt-3">
+                            <label class="block text-sm font-medium mb-1">Egyedi raklaptípusok</label>
+                            <div id="pallet-types-list" class="space-y-2 mb-3"></div>
+                            <div class="flex gap-2">
+                                <input type="text" id="newPalletTypeName" placeholder="Pl. DD, CHEP..." class="w-full p-2 border rounded-lg text-sm uppercase">
+                                <button onclick="addPalletType()" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg text-sm whitespace-nowrap">+ Add</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                         <h3 class="font-semibold mb-2" data-translate-key="settingsExportTitle">Adatok exportálása (Backup)</h3>
                         <p class="text-sm text-gray-600 dark:text-gray-300 mb-2" data-translate-key="settingsExportDesc">Mentsd le az összes bejegyzésedet egy JSON fájlba.</p>
@@ -407,7 +430,7 @@
             <div id="content-help" class="hidden space-y-6"></div>
         </div>
     </div>
-
+    
     <div id="custom-alert-overlay" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300">
         <div id="custom-alert-box" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-2xl w-11/12 max-w-sm mx-auto transform transition-transform duration-300 scale-95">
             <div id="custom-alert-icon" class="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center"></div>
