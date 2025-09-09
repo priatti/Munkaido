@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Munkaidő Nyilvántartó Pro</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb"/>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Munkaidő Pro">
+    <link rel="apple-touch-icon" href="assets/images/icon-192x192.png">
+
+    <script>
+      window.SENTRY_OPTIONS = { release: "8.18" };
+    </script>
+    <script src="https://js-de.sentry-cdn.com/fbd6c74b8f2150cffb3f052ed6e84740.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900">
+
+    <div id="splash-screen">
+        <img src="assets/images/splash.jpg" alt="Munkaidő Nyilvántartó Pro">
+    </div>
+
+    <div id="app" class="max-w-md mx-auto bg-white dark:bg-gray-800 min-h-screen hidden">
+        <div class="bg-blue-600 text-white p-4">
+            <h1 class="text-xl font-bold text-center" data-translate-key="appTitle">Munkaidő Nyilvántartó Pro</h1>
+        </div>
+        <div class="flex bg-gray-100 dark:bg-gray-900 shadow-sm">
+            <button onclick="showTab('live')" id="tab-live" class="tab tab-active">📊 <span data-translate-key="tabOverview">Áttekintés</span></button>
+            <button onclick="showTab('start')" id="tab-start" class="tab">🚀 <span data-translate-key="tabStart">Indítás</span></button>
+            <button onclick="showTab('full-day')" id="tab-full-day" class="tab">➕ <span data-translate-key="tabFullDay">Teljes nap</span></button>
+            <div id="dropdown-container" class="relative flex-1">
+                <button onclick="toggleDropdown()" id="dropdown-button" class="tab w-full"><span data-translate-key="menuMore">Továbbiak</span> ▼</button>
+                <div id="dropdown-menu" class="dropdown-content hidden">
+                    <button onclick="showTab('list')" class="dropdown-item"><span class="dropdown-item-icon">📅</span><div><p class="dropdown-item-title" data-translate-key="tabList">Lista</p><p class="dropdown-item-desc" data-translate-key="menuListDesc">Mentett munkanapok</p></div></button>
+                    <button onclick="showTab('pallets')" id="menu-item-pallets" class="dropdown-item"><span class="dropdown-item-icon">📦</span><div><p class="dropdown-item-title" data-translate-key="tabPallets">Raklap</p><p class="dropdown-item-desc" data-translate-key="menuPalletsDesc">Raklap egyenleg kezelése</p></div></button>
+                    <button onclick="showTab('summary')" class="dropdown-item"><span class="dropdown-item-icon">📊</span><div><p class="dropdown-item-title" data-translate-key="menuSummary">Összesítő</p><p class="dropdown-item-desc" data-translate-key="menuSummaryDesc">Napi, heti és havi adatok</p></div></button>
+                    <button onclick="showTab('stats')" class="dropdown-item"><span class="dropdown-item-icon">📈</span><div><p class="dropdown-item-title" data-translate-key="menuStats">Statisztika</p><p class="dropdown-item-desc" data-translate-key="menuStatsDesc">Részletes, lapozható diagramok</p></div></button>
+                    <button onclick="showTab('tachograph')" id="menu-item-tachograph" class="dropdown-item"><span class="dropdown-item-icon">⏱️</span><div><p class="dropdown-item-title" data-translate-key="menuTachograph">Tachográf</p><p class="dropdown-item-desc" data-translate-key="menuTachographDesc">Vezetési és pihenőidő elemzés</p></div></button>
+                    <button onclick="showTab('report')" class="dropdown-item"><span class="dropdown-item-icon">📋</span><div><p class="dropdown-item-title" data-translate-key="menuReport">Riport</p><p class="dropdown-item-desc" data-translate-key="menuReportDesc">Nyomtatható havi elszámolás</p></div></button>
+                    <button onclick="showTab('settings')" class="dropdown-item"><span class="dropdown-item-icon">⚙️</span><div><p class="dropdown-item-title" data-translate-key="menuSettings">Beállítások</p><p class="dropdown-item-desc" data-translate-key="menuSettingsDesc">Adatmentés és személyes adatok</p></div></button>
+                    <button onclick="showTab('help')" class="dropdown-item"><span class="dropdown-item-icon">❓</span><div><p class="dropdown-item-title" data-translate-key="menuHelp">Súgó</p><p class="dropdown-item-desc" data-translate-key="menuHelpDesc">Használati útmutató és tippek</p></div></button>
+                </div>
+            </div>
+        </div>
+        <div class="p-4">
+            <div id="content-live" class="space-y-4"></div>
+            <div id="content-start" class="hidden space-y-4"></div>
+            <div id="content-full-day" class="hidden space-y-4"></div>
+            <div id="content-list" class="hidden"></div>
+            <div id="content-summary" class="hidden"></div>
+            <div id="content-stats" class="hidden space-y-4"></div>
+            <div id="content-report" class="hidden"></div>
+            <div id="content-settings" class="hidden"></div>
+            <div id="content-tachograph" class="hidden"></div>
+            <div id="content-pallets" class="hidden space-y-4"></div>
+            <div id="content-help" class="hidden space-y-6"></div>
+        </div>
+    </div>
+    
+    <div id="custom-alert-overlay" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300"></div>
+    <div id="custom-prompt-overlay" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDGgG3y0ppl4639bzjzKA7Yq8BmSkhR-LU",
+        authDomain: "munkaido-3cc44.firebaseapp.com",
+        projectId: "munkaido-3cc44",
+        storageBucket: "munkaido-3cc44.firebasestorage.app",
+        messagingSenderId: "706081294435",
+        appId: "1:706081294435:web:c8ae57cbe45477de415056"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+	
+    <script src="js/config/translations.js"></script>
+    <script src="js/utils/time.js"></script>
+    <script src="js/utils/geolocation.js"></script>
+    
+    <script src="js/ui/ui.js"></script>
+    <script src="js/services/database.js"></script>
+    <script src="js/services/pwa.js"></script>
+
+    <script src="js/features/workday.js"></script>
+    <script src="js/features/recordsList.js"></script>
+    <script src="js/features/pallets.js"></script>
+    <script src="js/features/summary.js"></script>
+    <script src="js/features/stats.js"></script>
+    <script src="js/features/report.js"></script>
+    <script src="js/features/tachograph.js"></script>
+    <script src="js/features/settings.js"></script>
+    <script src="js/features/help.js"></script>
+
+    <script src="js/main.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('Service Worker sikeresen regisztrálva:', registration.scope))
+                    .catch(error => console.error('Service Worker regisztráció sikertelen:', error));
+            });
+        }
+    </script>
+</body>
+</html> 
