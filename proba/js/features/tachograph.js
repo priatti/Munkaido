@@ -220,7 +220,9 @@ function renderTachographAnalysis() {
         titleElement.after(warningBanner);
     }
 
-    const sortedRecords = getSortedRecords();
+    // 1. SORBARENDEZÉS: legrégebbitől a legfrissebbig (az elemzéshez ez kell)
+    const sortedRecords = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
+    
     if (sortedRecords.length < 1) {
         container.innerHTML = `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>`;
         return;
@@ -235,7 +237,7 @@ function renderTachographAnalysis() {
         const currentRecord = sortedRecords[i];
         const previousRecord = i > 0 ? sortedRecords[i - 1] : null;
 
-        // 1. Pihenőidő elemzése (a MŰSZAK ELŐTTI pihenő)
+        // Pihenőidő elemzése
         let restAnalysis;
         if (previousRecord) {
             const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
@@ -276,7 +278,7 @@ function renderTachographAnalysis() {
             reducedDailyRestCounter = 0;
         }
 
-        // 2. Vezetési idő elemzése (az ADOTT NAPI vezetés)
+        // Vezetési idő elemzése
         const driveMinutes = currentRecord.driveMinutes || 0;
         const driveHours = driveMinutes / 60;
         let driveAnalysis;
@@ -298,12 +300,13 @@ function renderTachographAnalysis() {
         analysisResults.push({ record: currentRecord, rest: restAnalysis, drive: driveAnalysis, isSplit: splitRestData[currentRecord.id] === true || currentRecord.isSplitRest });
     }
 
+    // 2. MEGJELENÍTÉS: a feldolgozott lista megfordítása, hogy a legfrissebb legyen felül
     container.innerHTML = analysisResults.reverse().map(res => {
         const d = new Date(res.record.date + 'T00:00:00');
-        const dateString = d.toLocaleDateString(currentLang, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+        const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU';
+        const dateString = d.toLocaleDateString(locale, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
         const isSplitActiveClass = res.isSplit ? 'bg-green-200 dark:bg-green-800/50 font-semibold' : 'hover:bg-gray-200 dark:hover:bg-gray-700';
         const checkmark = res.isSplit ? '<span class="font-bold text-lg">✓</span>' : '';
-        
         const borderColorClass = res.rest.colorClass.split(' ')[0].replace('bg-', 'border-');
 
         return `
@@ -328,7 +331,6 @@ function renderTachographAnalysis() {
         </div>`;
     }).join('');
 }
-
 
 // Segédfüggvények az osztott pihenő adatok mentéséhez/betöltéséhez
 function getSplitRestData() { return JSON.parse(localStorage.getItem('splitRestData') || '{}'); }
