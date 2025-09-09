@@ -2,6 +2,9 @@
 // ===== RAKLAPKEZELÉS (FEATURE) =========================
 // =======================================================
 
+// Globális változó a kiválasztott raklaptípus tárolására
+let selectedPalletType = 'EUR';
+
 // Új raklap tranzakció mentése
 async function savePalletEntry() {
     const i18n = translations[currentLang];
@@ -9,7 +12,6 @@ async function savePalletEntry() {
     const location = document.getElementById('palletLocation').value.trim();
     const palletsGiven = parseInt(document.getElementById('palletGiven').value, 10) || 0;
     const palletsTaken = parseInt(document.getElementById('palletTaken').value, 10) || 0;
-    const palletType = document.getElementById('palletType').value.trim();
     const licensePlate = document.getElementById('palletLicensePlate').value.trim().toUpperCase();
 
     if (!date || !location || (palletsGiven === 0 && palletsTaken === 0)) {
@@ -23,22 +25,20 @@ async function savePalletEntry() {
         location,
         palletsGiven,
         palletsTaken,
-        type: palletType,
+        type: selectedPalletType, // A régi input helyett a kiválasztott típust mentjük
         licensePlate
     };
 
     if (licensePlate) localStorage.setItem('lastPalletLicensePlate', licensePlate);
-    if (palletType) localStorage.setItem('lastPalletType', palletType);
 
     palletRecords.push(newEntry);
     await savePalletRecords();
-    renderPalletRecords();
+    renderPalletRecords(); // Újrarajzolja a listát és a gombokat is
     updateUniquePalletLocations();
 
     document.getElementById('palletLocation').value = '';
     document.getElementById('palletGiven').value = '';
     document.getElementById('palletTaken').value = '';
-    document.getElementById('palletType').value = localStorage.getItem('lastPalletType') || '';
     document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
     showCustomAlert(i18n.palletSaveSuccess, "success");
 }
@@ -70,8 +70,11 @@ function updatePalletBalance() {
     `;
 }
 
-// A raklap tranzakciók listájának kirajzolása
+// A raklap tranzakciók listájának és a teljes felületnek a kirajzolása
 function renderPalletRecords() {
+    // Először kirajzoljuk a típusválasztó gombokat
+    renderPalletTypeSelector(); 
+
     const i18n = translations[currentLang];
     const container = document.getElementById('palletRecordsContainer');
     if (!container) return;
@@ -110,7 +113,8 @@ function renderPalletRecords() {
         }
 
         const detailsHTML = [
-            p.type ? `<p class="text-xs text-gray-500 mt-1">${p.type}</p>` : '',
+            // A típust most már egy címkeként jelenítjük meg
+            p.type ? `<span class="mt-1 text-xs font-semibold bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-2 py-1 rounded-full">${p.type}</span>` : '',
             p.licensePlate ? `<p class="text-xs text-gray-400 mt-1">${i18n.palletsLicensePlateLabel}: ${p.licensePlate}</p>` : ''
         ].filter(Boolean).join('');
 
@@ -119,19 +123,53 @@ function renderPalletRecords() {
             <div>
                 <p class="font-semibold dropdown-item-title">${p.location}</p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">${p.date}</p>
-                ${detailsHTML}
+                <div class="flex items-center gap-2 mt-1">${detailsHTML}</div>
             </div>
             <div class="text-right">
                  <p class="font-bold text-lg ${colorClass}">${quantityText} db</p>
                  <p class="text-xs text-gray-400">(+${taken} / -${given})</p>
                  <button onclick="deletePalletEntry('${p.id}')" class="text-xs text-gray-400 hover:text-red-500 mt-1">🗑️ <span data-translate-key="delete">${i18n.delete}</span></button>
             </div>
-        </div>
-        `;
+        </div>`;
     }).join('');
 }
 
-// Raklap riport generálása PDF-be
+
+// ÚJ FUNKCIÓ: A típusválasztó gombok kirajzolása a beállítások alapján
+function renderPalletTypeSelector() {
+    const container = document.getElementById('pallet-type-selector');
+    if (!container) return;
+
+    const palletMode = localStorage.getItem('palletMode') || 'single';
+
+    if (palletMode === 'single') {
+        selectedPalletType = 'EUR'; // Egyszerűsített módban mindig EUR
+        container.innerHTML = `
+            <button class="w-full text-left font-semibold p-2 rounded-lg bg-green-100 dark:bg-green-800/50 text-gray-800 dark:text-gray-100">
+                ✓ EUR
+            </button>`;
+    } else {
+        const types = getPalletTypes(); // Lekérjük a beállított típusokat
+        container.innerHTML = types.map(type => {
+            const isActive = type === selectedPalletType;
+            const activeClass = isActive ? 'bg-green-100 dark:bg-green-800/50' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300';
+            
+            return `
+                <button onclick="selectPalletType('${type}')" class="font-semibold p-2 rounded-lg text-sm ${activeClass} text-gray-800 dark:text-gray-100">
+                    ${isActive ? '✓ ' : ''}${type}
+                </button>`;
+        }).join('');
+    }
+}
+
+// ÚJ FUNKCIÓ: A raklaptípus kiválasztását kezelő esemény
+function selectPalletType(type) {
+    selectedPalletType = type;
+    renderPalletTypeSelector(); // Újrarajzoljuk a gombokat, hogy a vizuális állapot frissüljön
+}
+
+
+// Raklap riport generálása PDF-be (egyelőre változatlan)
 function generatePalletReport() {
     const i18n = translations[currentLang];
     if (palletRecords.length === 0) {
@@ -190,4 +228,4 @@ function generatePalletReport() {
         console.error("PDF generation error:", e);
         showCustomAlert(i18n.errorPdfGeneration + " " + e.message, 'info');
     }
-} 
+}
