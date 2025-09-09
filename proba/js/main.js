@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     initializeFeatureToggles();
     initializePwaInstall();
-    initializePalletSettings(); // <-- EZ AZ ÚJ SOR
+    initializePalletSettings();
     initializeAuth(); 
     
     // Globális eseménykezelők beállítása
@@ -65,7 +65,6 @@ function showTab(tabName) {
     if (tabName === 'pallets') {
         document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
-        document.getElementById('palletType').value = localStorage.getItem('lastPalletType') || '';
         renderPalletRecords();
     }
     if (tabName === 'report') {
@@ -275,7 +274,7 @@ function renderDashboard() {
     const now = new Date();
     const thisWeek = calculateSummaryForDateRange(getWeekRange(now));
     const lastWeek = calculateSummaryForDateRange(getWeekRange(now, -1));
-    const thisMonth = calculateSummaryForMonth(now);
+    const thisMonth = calculateSummaryForMonth(new Date());
     
     const cards = [
         { labelKey: 'dashboardDriveThisWeek', value: formatDuration(thisWeek.driveMinutes), color: 'blue' },
