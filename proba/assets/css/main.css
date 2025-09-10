@@ -61,7 +61,7 @@ html.dark .autocomplete-item:hover { background-color: #6b7280; }
     pointer-events: none;
 }
 
-/* Enhanced Toggle Styles */
+/* Enhanced Toggle Styles - JAVÍTOTT: CSAK CHECKMARK, NINCS CSÚSZKA */
 
 /* Modern Enhanced Toggle Container */
 .enhanced-toggle-container {
@@ -106,6 +106,7 @@ html.dark .enhanced-toggle-container.active {
     font-weight: 600;
     color: #374151;
     transition: color 0.2s ease;
+    flex: 1;
 }
 
 .enhanced-toggle-container.active .enhanced-toggle-text {
@@ -120,9 +121,9 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-text {
     color: #6ee7b7;
 }
 
-/* Checkmark styling */
+/* Checkmark styling - EGYSZERŰSÍTETT */
 .enhanced-toggle-checkmark {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: bold;
     color: #22c55e;
     margin-left: 0.5rem;
@@ -134,39 +135,6 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-text {
 .enhanced-toggle-container.active .enhanced-toggle-checkmark {
     opacity: 1;
     transform: scale(1);
-}
-
-/* Modern switch styling */
-.enhanced-toggle-switch {
-    position: relative;
-    width: 3.5rem;
-    height: 1.75rem;
-    background-color: #d1d5db;
-    border-radius: 9999px;
-    transition: background-color 0.3s ease;
-    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-}
-
-.enhanced-toggle-switch.active {
-    background-color: #22c55e;
-    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(34, 197, 94, 0.1);
-}
-
-.enhanced-toggle-dot {
-    position: absolute;
-    top: 0.125rem;
-    left: 0.125rem;
-    width: 1.5rem;
-    height: 1.5rem;
-    background-color: white;
-    border-radius: 50%;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
-}
-
-.enhanced-toggle-switch.active .enhanced-toggle-dot {
-    transform: translateX(1.75rem);
-    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* Description text */
