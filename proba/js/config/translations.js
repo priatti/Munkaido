@@ -222,16 +222,6 @@ const translations = {
         palletReportHeaderBalance: "Egyenleg",
         palletReportFileName: "Raklap_Riport",
         palletReportTitle: "Raklapmozgás Riport",
-        // Raklap beállítások
-        toggleMultiPallet: "Több raklaptípus kezelése",
-        multiPalletDesc: "Kapcsold be, ha az EUR mellett más típusokat is szeretnél nyilvántartani (pl. DD, CHEP).",
-        addPalletType: "Hozzáadás",
-        newPalletTypeLabel: "Egyedi raklaptípusok",
-        newPalletTypePlaceholder: "Pl. DD, CHEP...",
-        palletTypeName: "Típusnév",
-        deletePalletTypeConfirm: "Biztosan törölni szeretnéd a(z) \"{type}\" típust?",
-        palletTypeExists: "Ez a típus már létezik!",
-        palletTypeNameEmpty: "A típusnév nem lehet üres!",
         // Üzenetek
         alertRolloverTitle: "Áthúzódó műszak",
         alertRolloverPrompt: "Észleltük, hogy a műszakod a hétvégén áthúzódott (vasárnapi indulás, hétfői érkezés). Kérjük, add meg a műszak <strong>teljes vezetési idejét</strong> a tachográf alapján:",
@@ -537,16 +527,6 @@ const translations = {
         palletReportHeaderBalance: "Saldo",
         palletReportFileName: "Paletten_Bericht",
         palletReportTitle: "Palettenbewegungsbericht",
-        // Raklap beállítások - JAVÍTOTT NÉMET FORDÍTÁSOK
-        toggleMultiPallet: "Mehrere Palettentypen verwalten",
-        multiPalletDesc: "Aktivieren Sie diese Option, wenn Sie neben EUR auch andere Typen verwalten möchten (z.B. DD, CHEP).",
-        addPalletType: "Hinzufügen",
-        newPalletTypeLabel: "Benutzerdefinierte Palettentypen",
-        newPalletTypePlaceholder: "Z.B. DD, CHEP...",
-        palletTypeName: "Typname",
-        deletePalletTypeConfirm: "Möchten Sie den Typ \"{type}\" wirklich löschen?",
-        palletTypeExists: "Dieser Typ existiert bereits!",
-        palletTypeNameEmpty: "Der Typname darf nicht leer sein!",
         // Meldungen
         alertRolloverTitle: "Schicht über das Wochenende",
         alertRolloverPrompt: "Wir haben festgestellt, dass Ihre Schicht über das Wochenende ging (Start am Sonntag, Ende am Montag). Bitte geben Sie die **gesamte Lenkzeit** für diese Schicht gemäß dem Tachographen ein:",
@@ -684,4 +664,3 @@ function updateLanguageButtonStyles() {
         });
     }
 }
-        
