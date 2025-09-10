@@ -1,7 +1,7 @@
 const translations = {
     hu: {
         // Általános
-        appTitle: "Munkaidő Nyilván tartó Pro",
+        appTitle: "Munkaidő Nyilvántartó Pro",
         delete: "Törlés",
         ok: "Rendben",
         cancel: "Mégse",
