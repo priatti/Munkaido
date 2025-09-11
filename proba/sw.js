@@ -1,9 +1,9 @@
-const CACHE_NAME = 'munkaido-pro-cache-v'6; // Verziószámot növeltem, hogy biztosan frissüljön
+const CACHE_NAME = 'munkaido-pro-cache-v6'; // Verziószám növelve a frissítéshez
 const urlsToCache = [
   // Alapvető fájlok
   '/',
   'index.html',
-  'manifest.json', // Manifestet is érdemes hozzáadni
+  'manifest.json',
   'assets/css/main.css',
 
   // Képek
