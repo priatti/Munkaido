@@ -124,23 +124,22 @@ html.dark .autocomplete-item:hover { background-color: #6b7280; }
     pointer-events: none;
 }
 
-/* === MÓDOSÍTOTT RÉSZ KEZDETE === */
 /* Enhanced Toggle Styles */
 .enhanced-toggle-container {
     display: flex;
     align-items: center;
-    justify-content: center; /* KÖZÉPRE IGAZÍTÁS */
+    justify-content: space-between;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
     border: 1px solid #e5e7eb;
     cursor: pointer;
     transition: all 0.2s ease;
-    background-color: #f0fdf4; /* EGYSZERŰ, VILÁGOSZÖLD HÁTTÉR */
+    background-color: #f9fafb;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     margin-bottom: 0.5rem;
-    min-height: 2.5rem;
+    min-height: 3rem;
+    position: relative;
 }
-/* === MÓDOSÍTOTT RÉSZ VÉGE === */
 
 .enhanced-toggle-container:hover {
     transform: translateY(-1px);
@@ -160,7 +159,7 @@ html.dark .autocomplete-item:hover { background-color: #6b7280; }
 }
 
 html.dark .enhanced-toggle-container {
-    background: #22c55e20; /* Sötét módban is kap egy alap zöldes hátteret */
+    background: #374151;
     border-color: #6b7280;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
 }
@@ -188,12 +187,23 @@ html.dark .enhanced-toggle-container:hover {
     gap: 0.125rem;
 }
 
+.enhanced-toggle-description {
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.125rem;
+}
+
 .enhanced-toggle-container.active .enhanced-toggle-text {
     color: #065f46;
 }
 
 html.dark .enhanced-toggle-text {
     color: #f3f4f6;
+}
+
+html.dark .enhanced-toggle-description {
+    color: #9ca3af;
 }
 
 html.dark .enhanced-toggle-container.active .enhanced-toggle-text {
@@ -240,4 +250,15 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-checkmark {
     transition: all 0.2s ease;
 }
 
-input[}
+/* SR-only - képernyőolvasóknak látható, de vizuálisan rejtett */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
