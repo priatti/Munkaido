@@ -61,27 +61,27 @@ html.dark .autocomplete-item:hover { background-color: #6b7280; }
     pointer-events: none;
 }
 
-/* JAVÍTOTT Enhanced Toggle Styles - SZEBB, LAPOSABB DESIGN */
+/* JAVÍTOTT Enhanced Toggle Styles - KOMPAKT, KISEBB DESIGN */
 
-/* Modern Enhanced Toggle Container */
+/* Modern Enhanced Toggle Container - KOMPAKT VERZIÓ */
 .enhanced-toggle-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.25rem;
-    border-radius: 0.75rem;
-    border: 2px solid #e5e7eb;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-    margin-bottom: 0.75rem;
-    min-height: 4rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    margin-bottom: 0.5rem;
+    min-height: 2.5rem;
 }
 
 .enhanced-toggle-container:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.1);
     border-color: #d1d5db;
 }
 
@@ -89,43 +89,43 @@ html.dark .autocomplete-item:hover { background-color: #6b7280; }
 .enhanced-toggle-container.active {
     background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
     border-color: #10b981;
-    box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 2px 12px -3px rgba(16, 185, 129, 0.25);
 }
 
 .enhanced-toggle-container.active:hover {
-    box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4);
-    transform: translateY(-2px);
+    box-shadow: 0 4px 16px -4px rgba(16, 185, 129, 0.3);
+    transform: translateY(-1px);
 }
 
 /* Dark mode support - JAVÍTOTT */
 html.dark .enhanced-toggle-container {
     background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
     border-color: #6b7280;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 html.dark .enhanced-toggle-container.active {
     background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
     border-color: #10b981;
-    box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 2px 12px -3px rgba(16, 185, 129, 0.3);
 }
 
 html.dark .enhanced-toggle-container:hover {
     border-color: #9ca3af;
-    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.3);
 }
 
-/* Toggle text styling - JAVÍTOTT TIPOGRÁFIA */
+/* Toggle text styling - KOMPAKT TIPOGRÁFIA */
 .enhanced-toggle-text {
     font-weight: 600;
     color: #374151;
-    transition: color 0.3s ease;
+    transition: color 0.2s ease;
     flex: 1;
-    font-size: 0.95rem;
-    line-height: 1.4;
+    font-size: 0.875rem;
+    line-height: 1.3;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.125rem;
 }
 
 .enhanced-toggle-container.active .enhanced-toggle-text {
@@ -140,20 +140,20 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-text {
     color: #6ee7b7;
 }
 
-/* Checkmark styling - SZEBB IKON */
+/* Checkmark styling - KISEBB IKON */
 .enhanced-toggle-checkmark {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: bold;
     color: #10b981;
-    margin-left: 1rem;
+    margin-left: 0.75rem;
     opacity: 0;
     transform: scale(0) rotate(-45deg);
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2rem;
+    height: 2rem;
     background: rgba(16, 185, 129, 0.1);
     border-radius: 50%;
     border: 2px solid transparent;
@@ -176,13 +176,13 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-checkmark {
     background: rgba(110, 231, 183, 0.2);
 }
 
-/* Description text - JAVÍTOTT */
+/* Description text - KISEBB */
 .enhanced-toggle-description {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #6b7280;
-    line-height: 1.3;
+    line-height: 1.2;
     margin-top: 0.125rem;
-    transition: color 0.3s ease;
+    transition: color 0.2s ease;
 }
 
 html.dark .enhanced-toggle-description {
@@ -195,4 +195,4 @@ html.dark .enhanced-toggle-description {
 
 html.dark .enhanced-toggle-container.active .enhanced-toggle-description {
     color: #6ee7b7;
-}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               }
