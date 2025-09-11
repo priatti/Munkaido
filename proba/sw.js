@@ -1,4 +1,4 @@
-const CACHE_NAME = 'munkaido-pro-cache-v4'; // Verziószámot növeltem, hogy biztosan frissüljön
+const CACHE_NAME = 'munkaido-pro-cache-v5'; // Verziószámot növeltem, hogy biztosan frissüljön
 const urlsToCache = [
   '/',
   'index.html',
