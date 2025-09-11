@@ -1,21 +1,41 @@
-const CACHE_NAME = 'munkaido-pro-cache-v5'; // Verziószámot növeltem, hogy biztosan frissüljön
+const CACHE_NAME = 'munkaido-pro-cache-v'6; // Verziószámot növeltem, hogy biztosan frissüljön
 const urlsToCache = [
+  // Alapvető fájlok
   '/',
   'index.html',
-
-  'js/main.js',
-  'js/config/translations.js',
-  'js/utils/time.js',
-  'js/ui/ui.js',
-  'js/services/database.js',
-  'js/features/workday.js',
-  'js/features/recordsList.js',
-
+  'manifest.json', // Manifestet is érdemes hozzáadni
   'assets/css/main.css',
+
+  // Képek
   'assets/images/splash.jpg',
   'assets/images/icon-192x192.png',
   'assets/images/icon-512x512.png',
 
+  // JS segédfüggvények (utils)
+  'js/utils/time.js',
+  'js/utils/geolocation.js',
+
+  // JS UI és szolgáltatások (services)
+  'js/ui/ui.js',
+  'js/services/database.js',
+  'js/services/pwa.js',
+
+  // JS funkciók (features)
+  'js/features/workday.js',
+  'js/features/recordsList.js',
+  'js/features/pallets.js',
+  'js/features/summary.js',
+  'js/features/stats.js',
+  'js/features/report.js',
+  'js/features/tachograph.js',
+  'js/features/settings.js',
+  'js/features/help.js',
+
+  // JS konfiguráció és fő vezérlő
+  'js/config/translations.js',
+  'js/main.js',
+
+  // Külső források
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/chart.js'
 ];
