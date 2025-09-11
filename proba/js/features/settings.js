@@ -83,14 +83,28 @@ const featureToggles = ['toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleC
 
 // JAVÍTOTT: Egyszerű checkbox inicializálás - nincs enhanced toggle
 function initializeFeatureToggles() {
+    // Speciális funkciók kapcsolói
     featureToggles.forEach(toggleId => {
         const checkbox = document.getElementById(toggleId);
         if (checkbox) {
             const savedState = localStorage.getItem(toggleId) === 'true';
             checkbox.checked = savedState;
             
+            // JAVÍTÁS: Ha ez egy enhanced toggle, akkor frissítjük a vizuális állapotot
+            const container = checkbox.closest('.enhanced-toggle-container');
+            if (container) {
+                updateEnhancedToggleVisuals(checkbox);
+            }
+            
             checkbox.addEventListener('change', (e) => {
                 localStorage.setItem(toggleId, e.target.checked);
+                
+                // JAVÍTÁS: Ha ez egy enhanced toggle, frissítjük a vizuális állapotot
+                const container = e.target.closest('.enhanced-toggle-container');
+                if (container) {
+                    updateEnhancedToggleVisuals(e.target);
+                }
+                
                 applyFeatureToggles();
             });
         }
@@ -99,9 +113,19 @@ function initializeFeatureToggles() {
     // Osztott pihenő kapcsoló inicializálása (ez maradhat enhanced)
     const splitRestToggle = document.getElementById('toggleSplitRest');
     if (splitRestToggle) {
+        // Kezdeti állapot beállítása
+        updateEnhancedToggleVisuals(splitRestToggle);
+        
         splitRestToggle.addEventListener('change', (e) => {
             updateEnhancedToggleVisuals(e.target);
         });
+    }
+    
+    // Több raklaptípus kapcsoló inicializálása
+    const multiPalletToggle = document.getElementById('toggleMultiPallet');
+    if (multiPalletToggle) {
+        // Kezdeti állapot beállítása
+        updateEnhancedToggleVisuals(multiPalletToggle);
     }
     
     applyFeatureToggles();
@@ -110,18 +134,22 @@ function initializeFeatureToggles() {
 // ENHANCED: Új vizuális kapcsoló kezelés - CSAK az enhanced toggle-oknak
 function updateEnhancedToggleVisuals(checkbox) {
     const container = checkbox.closest('.enhanced-toggle-container');
+    if (!container) return;
+    
     const checkmark = container.querySelector('.enhanced-toggle-checkmark');
     
-    if (!container) return;
-
     if (checkbox.checked) {
         // Aktív állapot
         container.classList.add('active');
-        if (checkmark) checkmark.classList.remove('hidden');
+        if (checkmark) {
+            checkmark.classList.remove('hidden');
+        }
     } else {
         // Inaktív állapot
         container.classList.remove('active');
-        if (checkmark) checkmark.classList.add('hidden');
+        if (checkmark) {
+            checkmark.classList.add('hidden');
+        }
     }
 }
 
