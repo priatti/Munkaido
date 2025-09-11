@@ -81,7 +81,33 @@ function importData() {
 // Speciális funkciók (pl. km, vezetési idő) kapcsolóinak kezelése
 const featureToggles = ['toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleCompensation'];
 
-// ENHANCED: Új vizuális kapcsoló kezelés - JAVÍTOTT (nincs csúszka)
+// JAVÍTOTT: Egyszerű checkbox inicializálás - nincs enhanced toggle
+function initializeFeatureToggles() {
+    featureToggles.forEach(toggleId => {
+        const checkbox = document.getElementById(toggleId);
+        if (checkbox) {
+            const savedState = localStorage.getItem(toggleId) === 'true';
+            checkbox.checked = savedState;
+            
+            checkbox.addEventListener('change', (e) => {
+                localStorage.setItem(toggleId, e.target.checked);
+                applyFeatureToggles();
+            });
+        }
+    });
+    
+    // Osztott pihenő kapcsoló inicializálása (ez maradhat enhanced)
+    const splitRestToggle = document.getElementById('toggleSplitRest');
+    if (splitRestToggle) {
+        splitRestToggle.addEventListener('change', (e) => {
+            updateEnhancedToggleVisuals(e.target);
+        });
+    }
+    
+    applyFeatureToggles();
+}
+
+// ENHANCED: Új vizuális kapcsoló kezelés - CSAK az enhanced toggle-oknak
 function updateEnhancedToggleVisuals(checkbox) {
     const container = checkbox.closest('.enhanced-toggle-container');
     const checkmark = container.querySelector('.enhanced-toggle-checkmark');
@@ -97,33 +123,6 @@ function updateEnhancedToggleVisuals(checkbox) {
         container.classList.remove('active');
         if (checkmark) checkmark.classList.add('hidden');
     }
-}
-
-// Speciális funkciók kapcsolóinak inicializálása
-function initializeFeatureToggles() {
-    featureToggles.forEach(toggleId => {
-        const checkbox = document.getElementById(toggleId);
-        if (checkbox) {
-            const savedState = localStorage.getItem(toggleId) === 'true';
-            checkbox.checked = savedState;
-            updateEnhancedToggleVisuals(checkbox);
-            checkbox.addEventListener('change', (e) => {
-                localStorage.setItem(toggleId, e.target.checked);
-                applyFeatureToggles();
-                updateEnhancedToggleVisuals(e.target);
-            });
-        }
-    });
-    
-    // Osztott pihenő kapcsoló inicializálása
-    const splitRestToggle = document.getElementById('toggleSplitRest');
-    if (splitRestToggle) {
-        splitRestToggle.addEventListener('change', (e) => {
-            updateEnhancedToggleVisuals(e.target);
-        });
-    }
-    
-    applyFeatureToggles();
 }
 
 // A speciális funkciók állapotának érvényesítése a UI-on - JAVÍTOTT
@@ -147,7 +146,7 @@ function applyFeatureToggles() {
     }
     
     // JAVÍTVA: Kompenzáció kapcsoló a beállításokban - csak németnél rejtjük el
-    const compensationToggleContainer = document.getElementById('toggleCompensation')?.closest('.enhanced-toggle-container');
+    const compensationToggleContainer = document.getElementById('toggleCompensation')?.closest('label');
     if (compensationToggleContainer) {
         compensationToggleContainer.style.display = currentLang === 'de' ? 'none' : 'flex';
     }
