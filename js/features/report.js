@@ -2,7 +2,54 @@
 // ===== PDF RIPORTOK (CLEAN IMPLEMENTATION) ============
 // =======================================================
 
+
 let currentMonthlyData = null;
+
+// Try to collect month records from app state/localStorage in a robust way
+function collectMonthRecords(selectedMonth) {
+    const isRecord = (o) => o && typeof o === 'object' && typeof o.date === 'string';
+    const pick = (arr) => Array.isArray(arr) ? arr.filter(r => isRecord(r) && r.date.startsWith(selectedMonth)) : [];
+
+    // 1) Common globals
+    const candidates = [
+        window.records, window.workDays, window.workdays, window.entries, window.days,
+        window.savedRecords, window.savedDays, window.data && window.data.workdays
+    ];
+    for (const c of candidates) {
+        const hit = pick(c);
+        if (hit.length) return hit.sort((a,b)=> (a.date>b.date?1:-1));
+    }
+
+    // 2) LocalStorage hunt
+    try {
+        const results = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const raw = localStorage.getItem(key);
+            if (!raw || raw.length > 5_000_000) continue; // skip huge blobs
+            try {
+                const val = JSON.parse(raw);
+                if (Array.isArray(val)) {
+                    results.push(...pick(val));
+                } else if (val && typeof val === 'object') {
+                    // month map?
+                    if (Array.isArray(val[selectedMonth])) {
+                        results.push(...pick(val[selectedMonth]));
+                    } else {
+                        // nested arrays
+                        for (const k in val) {
+                            const v = val[k];
+                            if (Array.isArray(v)) results.push(...pick(v));
+                        }
+                    }
+                }
+            } catch(_) { /* ignore non-JSON */ }
+        }
+        if (results.length) return results.sort((a,b)=> (a.date>b.date?1:-1));
+    } catch(_) {}
+
+    return [];
+}
 
 // Német hónapnevek és napnevek
 const germanMonths = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
@@ -36,8 +83,7 @@ function generateMonthlyReport() {
     const selectedMonth = document.getElementById('monthSelector')?.value || new Date().toISOString().slice(0,7);
 
     // `records` globál: az app fő adathalmaza
-    const monthRecords = (Array.isArray(window.records) ? window.records : []).filter(r => (r?.date || '').startsWith(selectedMonth));
-    monthRecords.sort((a,b) => new Date(a.date) - new Date(b.date));
+    const monthRecords = collectMonthRecords(selectedMonth);
     currentMonthlyData = { month: selectedMonth, records: monthRecords };
 
     const content = document.getElementById('monthlyReportContent');
@@ -168,19 +214,8 @@ function drawPdfTable(doc, rows) {
     const left = 12, right = 200;
     let y = 40;
 
-    function drawHeader() {
-        doc.setFontSize(18); doc.setFont(undefined, 'bold');
-        doc.text('ARBEITSZEITNACHWEIS', 105, 15, { align: 'center' });
-
-        const [year, month] = currentMonthlyData.month.split('-');
-        const mName = germanMonths[parseInt(month) - 1];
-        doc.setFontSize(12); doc.setFont(undefined, 'normal');
-        doc.text(`${mName} ${year}`, 105, 22, { align: 'center' });
-
-        const userName = (document.getElementById('userNameInput')?.value || 'N/A').trim() || 'N/A';
-        doc.text(userName, 105, 28, { align: 'center' });
-
-        // Head row
+    function drawHeaderRow() {
+        // Only the table header row (no big title here)
         y = 34;
         const headers = ['Datum','Beginn','Ort','Ende','Ort','Grenzübergänge','Arbeit','Nacht'];
         const widths = [24, 18, 28, 18, 28, 36, 18, 18];
@@ -194,7 +229,7 @@ function drawPdfTable(doc, rows) {
         return widths;
     }
 
-    const widths = drawHeader();
+    const widths = drawHeaderRow();
 
     function drawRow(cols, zebra) {
         let x = left;
@@ -223,7 +258,7 @@ function drawPdfTable(doc, rows) {
         y += h + 3;
 
         if (y > 270) {
-            doc.addPage(); y = 40; drawHeader();
+            doc.addPage(); y = 40; drawHeaderRow();
         }
     }
 
