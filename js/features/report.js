@@ -51,6 +51,13 @@
            r.date && (r.startTime || r.start) && (r.endTime || r.end) ;
   }
   // Normalize a record to the expected shape
+  
+  function dedupeById(arr){
+    const map = new Map();
+    for (const r of arr){ map.set(String(r.id||r.date||Math.random()), r); }
+    return Array.from(map.values());
+  }
+
   function normalizeRecord(r){
     const date = toISODateLoose(r.date) || r.date;
     const startTime = r.startTime || r.start || '';
@@ -65,6 +72,66 @@
     const crossings = Array.isArray(r.crossings)? r.crossings : [];
     return { id: String(r.id||Date.now()), date, startTime, endTime, startLocation, endLocation, workMinutes, nightWorkMinutes, driveMinutes, kmDriven, crossings };
   }
+
+  function collectFromLocalStorageDeep(){
+    const out = [];
+    const visited = new Set();
+
+    function walk(node){
+      if (!node || visited.has(node)) return;
+      if (typeof node === 'object') visited.add(node);
+
+      // detect record-like object
+      if (looksLikeRecord(node)) { out.push(normalizeRecord(node)); return; }
+
+      if (Array.isArray(node)){
+        for (const n of node) walk(n);
+        return;
+      }
+      if (typeof node === 'object'){
+        // Case: { 'YYYY-MM-DD': { ... } } or { 'YYYY-MM': { 'DD': {...} } }
+        for (const [k,v] of Object.entries(node)){
+          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v === 'object'){
+            const rec = Object.assign({ date: k }, v);
+            if (looksLikeRecord(rec)) out.push(normalizeRecord(rec));
+          }
+        }
+        // Month object { 'YYYY-MM': { '01': {...}, '02': {...} } }
+        for (const [k,v] of Object.entries(node)){
+          if (/^\d{4}-\d{2}$/.test(k) && v && typeof v === 'object'){
+            for (const [dk, dv] of Object.entries(v)){
+              if (/^\d{2}$/.test(dk) && dv && typeof dv === 'object'){
+                const rec = Object.assign({ date: `${k}-${dk}` }, dv);
+                if (looksLikeRecord(rec)) out.push(normalizeRecord(rec));
+              }
+            }
+          }
+        }
+        // Recurse deeper
+        for (const v of Object.values(node)) walk(v);
+      }
+    }
+
+    try{
+      for (let i=0; i<localStorage.length; i++){
+        const key = localStorage.key(i);
+        try{
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          try {
+            const val = JSON.parse(raw);
+            walk(val);
+          } catch(e) {
+            // not JSON, ignore
+          }
+        }catch(e){/* ignore single key errors */}
+      }
+    }catch(e){ console.warn('[Report] localStorage deep scan failed:', e); }
+
+    console.log('[Report] localStorage deep found:', out.length);
+    return out;
+  }
+
 
   async function collectFromIndexedDB(){
     const acc = [];
@@ -132,10 +199,12 @@
       }
     }catch(e){ console.warn('[Report] db.getAllRecords failed:', e); }
     // 3) localStorage
-    const ls = collectFromLocalStorage();
+    const ls1 = collectFromLocalStorage();
+    const ls2 = collectFromLocalStorageDeep();
+    const ls = [...ls1, ...ls2];
     if (ls.length){
-      console.log('[Report] Using localStorage(workRecords):', ls.length);
-      return ls;
+      console.log('[Report] Using localStorage (deep):', ls.length);
+      return dedupeById(ls);
     }
     // 4) IndexedDB scan
     const idb = await collectFromIndexedDB();
