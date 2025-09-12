@@ -85,6 +85,7 @@ function generateMonthlyReport() {
     // `records` globál: az app fő adathalmaza
     const monthRecords = collectMonthRecords(selectedMonth);
     currentMonthlyData = { month: selectedMonth, records: monthRecords };
+    renderMonthlyReportPreview();
 
     const content = document.getElementById('monthlyReportContent');
     if (content) {
@@ -275,3 +276,90 @@ window.generateMonthlyReport  = generateMonthlyReport;
 window.generateAndProcessPDF  = generateAndProcessPDF;
 window.exportToPDF            = function(){ return generateAndProcessPDF('save'); };
 window.sharePDF               = function(){ return generateAndProcessPDF('share'); };
+
+
+// -------------------------------------------------------
+// On-page preview list (after "Riport generálása")
+// -------------------------------------------------------
+function renderMonthlyReportPreview() {
+    if (!currentMonthlyData || !Array.isArray(currentMonthlyData.records)) return;
+    const container = document.getElementById('monthlyReportContent');
+    if (!container) return;
+
+    const isDE = currentLang === 'de';
+    const H = isDE
+        ? ['Datum', 'Beginn', 'Ort', 'Ende', 'Ort', 'Grenzübergänge', 'Arbeit', 'Nacht']
+        : ['Dátum', 'Kezdés', 'Hely', 'Befejezés', 'Hely', 'Határátlépések', 'Munka', 'Éjszaka'];
+
+    // Build rows html
+    let totalWork = 0, totalNight = 0;
+    const rows = currentMonthlyData.records.map(rec => {
+        const d = new Date(`${rec.date}T00:00:00`);
+        const dayNamesHU = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
+        const dayNamesDE = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+        const weekday = (isDE ? dayNamesDE : dayNamesHU)[d.getDay()];
+
+        const [yy, mm, dd] = (rec.date || '').split('-');
+        const dateCell = `${dd}.${mm}.<div class="text-xs opacity-70">${weekday}</div>`;
+
+        const begin = rec.startTime || '';
+        const end   = rec.endTime || '';
+        const beginPlace = (rec.startLocation || '').toString();
+        const endPlace   = (rec.endLocation || '').toString();
+
+        const workMin  = Number(rec.workMinutes || 0);
+        const nightMin = Number(rec.nightWorkMinutes || 0);
+        totalWork  += workMin;
+        totalNight += nightMin;
+
+        let crossingsText = '-';
+        const arr = Array.isArray(rec.crossings) ? rec.crossings : (Array.isArray(rec.borderCrossings) ? rec.borderCrossings : []);
+        if (arr.length) {
+            crossingsText = arr.map(c => {
+                const fr = (c.from || c.fr || '').toString().toUpperCase();
+                const to = (c.to || '').toString().toUpperCase();
+                const t  = (c.time || '').toString();
+                return `${fr}-${to}${t ? ` (${t})` : ''}`;
+            }).join('<br>');
+        }
+
+        return `<tr class="border-b border-gray-200 dark:border-gray-700">
+            <td class="py-2 align-top">${dateCell}</td>
+            <td class="py-2 align-top">${begin || ''}</td>
+            <td class="py-2 align-top">${escapeHtml(beginPlace)}</td>
+            <td class="py-2 align-top">${end || ''}</td>
+            <td class="py-2 align-top">${escapeHtml(endPlace)}</td>
+            <td class="py-2 align-top">${crossingsText}</td>
+            <td class="py-2 align-top whitespace-nowrap">${formatAsHoursAndMinutes(workMin)}</td>
+            <td class="py-2 align-top whitespace-nowrap">${formatAsHoursAndMinutes(nightMin)}</td>
+        </tr>`;
+    }).join('');
+
+    const totalsHtml = `<div class="mt-3 text-right text-sm font-semibold">
+        ${(isDE ? 'Gesamt Arbeitszeit' : 'Összes munkaidő')}: ${formatAsHoursAndMinutes(totalWork)} &nbsp; • &nbsp;
+        ${(isDE ? 'Gesamt Nachtzeit' : 'Összes éjszaka')}: ${formatAsHoursAndMinutes(totalNight)}
+    </div>`;
+
+    container.innerHTML = `
+        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <table class="min-w-full text-sm">
+                <thead class="bg-gray-50 dark:bg-gray-800/60">
+                    <tr>
+                        ${H.map(h => `<th class="text-left font-semibold px-2 py-2">${h}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-900/40">
+                    ${rows || ''}
+                </tbody>
+            </table>
+        </div>
+        ${totalsHtml}
+    `;
+}
+
+// Tiny util
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\\'':'&#39;'
+    })[m]);
+}
