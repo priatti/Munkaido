@@ -1,365 +1,333 @@
-// =======================================================
-// ===== PDF RIPORTOK (CLEAN IMPLEMENTATION) ============
-// =======================================================
+// proba/js/features/report.js
+// Robust monthly report (German-only), with record collection from multiple sources.
+// Works even if data lives in window.records, localStorage('workRecords'), or IndexedDB.
 
+(function(){
+  const $ = (sel) => document.querySelector(sel);
+  let currentMonthlyData = null;
 
-let currentMonthlyData = null;
+  // --- helpers ---
+  const germanMonths = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  const germanFullDays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
 
-// Try to collect month records from app state/localStorage in a robust way
-function collectMonthRecords(selectedMonth) {
-    const isRecord = (o) => o && typeof o === 'object' && typeof o.date === 'string';
-    const pick = (arr) => Array.isArray(arr) ? arr.filter(r => isRecord(r) && r.date.startsWith(selectedMonth)) : [];
-
-    // 1) Common globals
-    const candidates = [
-        window.records, window.workDays, window.workdays, window.entries, window.days,
-        window.savedRecords, window.savedDays, window.data && window.data.workdays
-    ];
-    for (const c of candidates) {
-        const hit = pick(c);
-        if (hit.length) return hit.sort((a,b)=> (a.date>b.date?1:-1));
+  function fmtHM(mins){
+    mins = Math.max(0, Math.round(mins||0));
+    const h = Math.floor(mins/60);
+    const m = mins%60;
+    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+  }
+  function parseHM(str){
+    if(!str) return 0;
+    const m = String(str).trim().match(/^\s*(\d{1,2})\s*[:h]?(\d{0,2})\s*$/);
+    if(!m) return 0;
+    const hh = parseInt(m[1],10);
+    const mm = m[2]?parseInt(m[2],10):0;
+    return hh*60+mm;
+  }
+  function toISODateLoose(s){
+    // try to normalize a few formats to YYYY-MM-DD
+    if(!s) return null;
+    s = String(s).trim();
+    // already ISO
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    // 2025. 09. 03 -> 2025-09-03
+    let m = s.match(/^(\d{4})[.\/-]\s*(\d{1,2})[.\/-]\s*(\d{1,2})$/);
+    if(m){
+      const y = m[1], mo = String(m[2]).padStart(2,'0'), d = String(m[3]).padStart(2,'0');
+      return `${y}-${mo}-${d}`;
     }
+    // 03.09.2025 / 3.9.2025 -> 2025-09-03
+    m = s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+    if(m){
+      const d = String(m[1]).padStart(2,'0'), mo = String(m[2]).padStart(2,'0'), y = m[3];
+      return `${y}-${mo}-${d}`;
+    }
+    return null;
+  }
 
-    // 2) LocalStorage hunt
-    try {
-        const results = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            const raw = localStorage.getItem(key);
-            if (!raw || raw.length > 5_000_000) continue; // skip huge blobs
-            try {
-                const val = JSON.parse(raw);
-                if (Array.isArray(val)) {
-                    results.push(...pick(val));
-                } else if (val && typeof val === 'object') {
-                    // month map?
-                    if (Array.isArray(val[selectedMonth])) {
-                        results.push(...pick(val[selectedMonth]));
-                    } else {
-                        // nested arrays
-                        for (const k in val) {
-                            const v = val[k];
-                            if (Array.isArray(v)) results.push(...pick(v));
-                        }
-                    }
-                }
-            } catch(_) { /* ignore non-JSON */ }
+  // Heuristic to decide whether an object looks like a work record
+  function looksLikeRecord(r){
+    return r && typeof r==='object' &&
+           r.date && (r.startTime || r.start) && (r.endTime || r.end) ;
+  }
+  // Normalize a record to the expected shape
+  function normalizeRecord(r){
+    const date = toISODateLoose(r.date) || r.date;
+    const startTime = r.startTime || r.start || '';
+    const endTime = r.endTime || r.end || '';
+    const workMinutes = 'workMinutes' in r ? r.workMinutes :
+        (('workTime' in r) ? parseHM(r.workTime) : 0);
+    const nightWorkMinutes = r.nightWorkMinutes || r.night || 0;
+    const driveMinutes = r.driveMinutes || r.drive || 0;
+    const kmDriven = r.kmDriven || r.km || 0;
+    const startLocation = r.startLocation || r.from || r.startLoc || '';
+    const endLocation = r.endLocation || r.to || r.endLoc || '';
+    const crossings = Array.isArray(r.crossings)? r.crossings : [];
+    return { id: String(r.id||Date.now()), date, startTime, endTime, startLocation, endLocation, workMinutes, nightWorkMinutes, driveMinutes, kmDriven, crossings };
+  }
+
+  async function collectFromIndexedDB(){
+    const acc = [];
+    try{
+      if (!('indexedDB' in window) || !indexedDB.databases) return [];
+      const dbs = await indexedDB.databases();
+      for(const info of dbs){
+        if(!info || !info.name) continue;
+        const db = await new Promise((resolve,reject)=>{
+          const req = indexedDB.open(info.name);
+          req.onsuccess = ()=>resolve(req.result);
+          req.onerror = ()=>reject(req.error||new Error('IDB open error'));
+        });
+        try{
+          const stores = Array.from(db.objectStoreNames || []);
+          for(const storeName of stores){
+            const rows = await new Promise((resolve,reject)=>{
+              const tx = db.transaction(storeName,'readonly');
+              const st = tx.objectStore(storeName);
+              const req = st.getAll();
+              req.onsuccess = ()=>resolve(req.result||[]);
+              req.onerror = ()=>reject(req.error||new Error('IDB getAll error'));
+            });
+            for(const row of rows){
+              if(looksLikeRecord(row)) acc.push(normalizeRecord(row));
+            }
+          }
+        }finally{
+          try{ db.close(); }catch(_){}
         }
-        if (results.length) return results.sort((a,b)=> (a.date>b.date?1:-1));
-    } catch(_) {}
+      }
+    }catch(e){
+      console.warn('[Report] IDB scan failed:', e);
+    }
+    return acc;
+  }
 
+  function collectFromLocalStorage(){
+    const out = [];
+    try{
+      const raw = localStorage.getItem('workRecords');
+      if(!raw) return out;
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr)){
+        for(const r of arr){ if(looksLikeRecord(r)) out.push(normalizeRecord(r)); }
+      }
+    }catch(e){ console.warn('[Report] localStorage parse failed:', e); }
+    return out;
+  }
+
+  async function collectRecords(){
+    // 1) window.records if available
+    if (Array.isArray(window.records) && window.records.length){
+      console.log('[Report] Using window.records:', window.records.length);
+      return window.records.map(normalizeRecord);
+    }
+    // 2) module database getter (best guess)
+    try{
+      if (window.db && typeof window.db.getAllRecords==='function'){
+        const arr = await window.db.getAllRecords();
+        if (Array.isArray(arr) && arr.length){
+          console.log('[Report] Using db.getAllRecords:', arr.length);
+          return arr.map(normalizeRecord);
+        }
+      }
+    }catch(e){ console.warn('[Report] db.getAllRecords failed:', e); }
+    // 3) localStorage
+    const ls = collectFromLocalStorage();
+    if (ls.length){
+      console.log('[Report] Using localStorage(workRecords):', ls.length);
+      return ls;
+    }
+    // 4) IndexedDB scan
+    const idb = await collectFromIndexedDB();
+    if (idb.length){
+      console.log('[Report] Using IndexedDB scan:', idb.length);
+      return idb;
+    }
+    console.log('[Report] No records found.');
     return [];
-}
+  }
 
-// Német hónapnevek és napnevek
-const germanMonths = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-const germanFullDays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  // ----- Public API expected by the app -----
+  window.initMonthlyReport = function(){
+    const inp = $('#monthSelector');
+    if (inp) inp.value = new Date().toISOString().slice(0,7);
+    const cont = $('#monthlyReportContent');
+    if (cont) cont.innerHTML = '';
+    const dl = $('#pdfExportBtn'); if (dl) dl.classList.add('hidden');
+    const sh = $('#pdfShareBtn'); if (sh) sh.classList.add('hidden');
+  };
 
-// Riport fül inicializálása
-function initMonthlyReport() {
-    const monthSel = document.getElementById('monthSelector');
-    if (monthSel) monthSel.value = new Date().toISOString().slice(0, 7);
-
-    const content = document.getElementById('monthlyReportContent');
-    if (content) content.innerHTML = '';
-
-    const exportBtn = document.getElementById('pdfExportBtn');
-    const shareBtn  = document.getElementById('pdfShareBtn');
-    if (exportBtn) exportBtn.classList.add('hidden');
-    if (shareBtn)  shareBtn.classList.add('hidden');
-}
-
-// Havi riport előkészítése
-function generateMonthlyReport() {
-    const i18n = translations[currentLang];
-    const userName = (document.getElementById('userNameInput')?.value || '').trim();
-
-    // Német riporthoz a név legyen meg (DE-ben kérted, HU-ban nem kötelező, de itt nem tiltjuk)
-    if (!userName && currentLang === 'de') {
-        showCustomAlert(i18n?.alertReportNameMissing || 'Bitte geben Sie den Namen ein.', 'info', () => showTab('settings'));
-        return;
+  window.generateMonthlyReport = async function(){
+    const userName = $('#userNameInput') ? $('#userNameInput').value.trim() : '';
+    if (!userName){
+      alert('Bitte tragen Sie oben Ihren Namen ein (Einstellungen)');
+      return;
     }
+    const selectedMonth = $('#monthSelector').value; // 'YYYY-MM'
+    const all = await collectRecords();
+    const monthRecords = all.filter(r => r.date && String(r.date).startsWith(selectedMonth));
+    monthRecords.sort((a,b)=> new Date(a.date) - new Date(b.date));
 
-    const selectedMonth = document.getElementById('monthSelector')?.value || new Date().toISOString().slice(0,7);
-
-    // `records` globál: az app fő adathalmaza
-    const monthRecords = collectMonthRecords(selectedMonth);
     currentMonthlyData = { month: selectedMonth, records: monthRecords };
-    renderMonthlyReportPreview();
 
-    const content = document.getElementById('monthlyReportContent');
-    if (content) {
-        content.innerHTML = `<div class="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-100 p-4 rounded-lg text-center">
-            ${i18n?.reportPrepared || 'Der Monatsbericht wurde vorbereitet.'}
-        </div>`;
+    const cont = $('#monthlyReportContent');
+    if (cont){
+      if (monthRecords.length){
+        const html = monthRecords.map(r=>{
+          const cr = (r.crossings||[]).map(c=>`${c.from}-${c.to} (${c.time})`).join(', ');
+          return `<div class="text-xs py-1 border-b">
+            <strong>${r.date}</strong> &nbsp; ${r.startTime} ${r.startLocation||'-'} → ${r.endTime} ${r.endLocation||'-'} &nbsp; | Arbeit: ${fmtHM(r.workMinutes)} Nacht: ${fmtHM(r.nightWorkMinutes||0)} ${cr?('| '+cr):''}
+          </div>`;
+        }).join('');
+        cont.innerHTML = `<div class="bg-white p-3">${html}</div>`;
+      } else {
+        cont.innerHTML = `<div class="bg-white p-3 text-sm text-gray-600">Keine Einträge im gewählten Monat gefunden.</div>`;
+      }
     }
+    const dl = $('#pdfExportBtn'); if (dl) dl.classList.remove('hidden');
+    if (navigator.share){ const sh = $('#pdfShareBtn'); if (sh) sh.classList.remove('hidden'); }
+  };
 
-    const exportBtn = document.getElementById('pdfExportBtn');
-    const shareBtn  = document.getElementById('pdfShareBtn');
-    if (exportBtn) exportBtn.classList.remove('hidden');
-    if (shareBtn && navigator.share) shareBtn.classList.remove('hidden');
-}
+  window.exportToPDF = function(){
+    if (!currentMonthlyData){ alert('Bitte zuerst den Bericht erstellen.'); return; }
+    try{
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p','mm','a4');
+      const userName = $('#userNameInput') ? $('#userNameInput').value : 'N/A';
+      const [year, month] = currentMonthlyData.month.split('-');
+      const monthName = germanMonths[parseInt(month)-1];
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const recordsMap = new Map(currentMonthlyData.records.map(r => [r.date, r]));
 
-// PDF készítés + mentés/megosztás (mindig NÉMET nyelvű riport)
-async function generateAndProcessPDF(action) {
-    const i18n = translations[currentLang];
-    if (!currentMonthlyData) {
-        showCustomAlert(i18n?.alertGenerateReportFirst || 'Bitte bereiten Sie zuerst den Monatsbericht vor.', 'info');
-        return;
-    }
+      // header
+      doc.setFontSize(18); doc.setFont(undefined,'bold'); doc.text('ARBEITSZEITNACHWEIS', 105, 15, {align:'center'});
+      doc.setFontSize(14); doc.setFont(undefined,'normal'); doc.text(`${monthName} ${year}`, 105, 23, {align:'center'});
+      doc.setFontSize(12); doc.text(userName, 105, 31, {align:'center'});
 
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p','mm','a4');
+      let yPos = 40;
+      const pageBottom = 280;
+      const left = 15, tableW = 180;
+      const headers = ['Datum','Beginn','Ort','Ende','Ort','Grenzübergänge','Arbeit','Nacht'];
+      const colW = [25,15,30,15,30,35,15,15];
 
-        const userName = (document.getElementById('userNameInput')?.value || 'N/A').trim() || 'N/A';
-        const [year, month] = currentMonthlyData.month.split('-');
-        const monthName = germanMonths[parseInt(month)-1];
-
-        // Fejléc (mindig német)
-        doc.setFontSize(18); doc.setFont(undefined,'bold'); doc.text('ARBEITSZEITNACHWEIS', 105, 15, { align: 'center' });
-        doc.setFontSize(14); doc.setFont(undefined,'normal'); doc.text(`${monthName} ${year}`, 105, 23, { align: 'center' });
-        doc.setFontSize(12); doc.text(userName, 105, 31, { align: 'center' });
-
-        // Táblázat
-        const tableData = generateTableDataForMonth(parseInt(year), parseInt(month));
-        const { rows, totalWorkMinutes, totalNightWorkMinutes } = tableData;
-        drawPdfTable(doc, rows);
-
-        // Összesítők
-        let yPos = (doc.autoTable && doc.autoTable.previous && doc.autoTable.previous.finalY) || 60;
-        if (yPos > 260) { doc.addPage(); yPos = 20; }
-        doc.setFontSize(10); doc.setFont(undefined,'bold');
-        doc.text(`Gesamt Arbeitszeit: ${formatAsHoursAndMinutes(totalWorkMinutes)}`, 205, yPos + 10, { align: 'right' });
-        doc.text(`Gesamt Nachtzeit: ${formatAsHoursAndMinutes(totalNightWorkMinutes)}`, 205, yPos + 16, { align: 'right' });
-
-        const fileName = `Arbeitszeitnachweis-${userName.replace(/ /g, '_')}-${year}-${monthName}.pdf`;
-
-        if (action === 'save') {
-            doc.save(fileName);
-            return;
-        }
-
-        if (action === 'share') {
-            const blob = doc.output('blob');
-            const file = new File([blob], fileName, { type: 'application/pdf' });
-            if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
-                await navigator.share({ title: fileName, text: 'Arbeitszeitnachweis', files: [file] });
-            } else if (navigator.share) {
-                const url = URL.createObjectURL(blob);
-                await navigator.share({ title: fileName, url });
-                setTimeout(() => URL.revokeObjectURL(url), 10000);
-            } else {
-                showCustomAlert(i18n?.alertShareNotSupported || 'Teilen wird nicht unterstützt. Bitte laden Sie die PDF herunter.', 'info');
-            }
-            return;
-        }
-    } catch (error) {
-        if (error?.name === 'AbortError') {
-            console.log('Share aborted');
-        } else {
-            console.error('PDF/Share error:', error);
-            showCustomAlert(`${i18n?.errorSharing || 'Fehler beim Teilen:'} ${error?.message || ''}`, 'info');
-        }
-    }
-}
-
-// Táblázat adatok a hónapra (mindig német formátum)
-function generateTableDataForMonth(year, month) {
-    const rows = [];
-    let totalWorkMinutes = 0;
-    let totalNightWorkMinutes = 0;
-
-    if (!currentMonthlyData || !Array.isArray(currentMonthlyData.records)) {
-        return { rows, totalWorkMinutes, totalNightWorkMinutes };
-    }
-
-    currentMonthlyData.records.forEach(rec => {
-        const d = new Date(`${rec.date}T00:00:00`);
-        const weekday = germanFullDays[d.getDay()];
-        const [yy, mm, dd] = (rec.date || '').split('-');
-        const dateLabel = `${dd}.${mm}.\n${weekday}`;
-
-        const begin      = rec.startTime || '';
-        const beginPlace = (rec.startLocation || '').toString();
-        const end        = rec.endTime || '';
-        const endPlace   = (rec.endLocation || '').toString();
-
-        let crossingsText = '-';
-        try {
-            const arr = rec.crossings || rec.borderCrossings || [];
-            if (arr && arr.length) {
-                crossingsText = arr.map(c => {
-                    const fr = (c.from || c.fr || '').toString().toUpperCase();
-                    const to = (c.to || '').toString().toUpperCase();
-                    const t  = (c.time || '').toString();
-                    return `${fr}-${to}${t ? ` (${t})` : ''}`;
-                }).join('\\n');
-            }
-        } catch(e) {}
-
-        const work  = formatAsHoursAndMinutes(rec.workMinutes || 0);
-        const night = formatAsHoursAndMinutes(rec.nightWorkMinutes || 0);
-
-        rows.push([dateLabel, begin, beginPlace, end, endPlace, crossingsText, work, night]);
-
-        totalWorkMinutes      += (rec.workMinutes || 0);
-        totalNightWorkMinutes += (rec.nightWorkMinutes || 0);
-    });
-
-    return { rows, totalWorkMinutes, totalNightWorkMinutes };
-}
-
-// Táblázat rajzolás (német fejléccel)
-function drawPdfTable(doc, rows) {
-    const left = 12, right = 200;
-    let y = 40;
-
-    function drawHeaderRow() {
-        // Only the table header row (no big title here)
-        y = 34;
-        const headers = ['Datum','Beginn','Ort','Ende','Ort','Grenzübergänge','Arbeit','Nacht'];
-        const widths = [24, 18, 28, 18, 28, 36, 18, 18];
+      const drawHeader = () => {
+        doc.setFont('Helvetica','bold'); doc.setFontSize(9); doc.setTextColor(0,0,0); doc.setDrawColor(150,150,150);
         let x = left;
-        doc.setFillColor(245,245,245);
-        doc.rect(left, y, right-left, 7, 'F');
-        doc.setFontSize(10); doc.setFont(undefined, 'bold');
-        headers.forEach((h, idx) => { doc.text(h, x + 2, y + 5); x += widths[idx]; });
-        doc.setDrawColor(200); doc.setLineWidth(0.2); doc.line(left, y+7, right, y+7);
-        y += 9;
-        return widths;
-    }
+        headers.forEach((h,i)=>{ doc.rect(x,yPos,colW[i],7,'S'); doc.text(h, x+colW[i]/2, yPos+4.5, {align:'center'}); x+=colW[i]; });
+        yPos += 7;
+        doc.setFont('Helvetica','normal');
+      };
+      drawHeader();
 
-    const widths = drawHeaderRow();
+      let totalWork = 0, totalNight = 0;
+      for (let day=1; day<=daysInMonth; day++){
+        const dateISO = new Date(Date.UTC(year, month-1, day)).toISOString().split('T')[0];
+        const dayOfWeek = new Date(Date.UTC(year, month-1, day)).getUTCDay();
+        const r = recordsMap.get(dateISO);
 
-    function drawRow(cols, zebra) {
+        const dateDisp = `${String(day).padStart(2,'0')}.${String(month).padStart(2,'0')}.\n${germanFullDays[dayOfWeek]}`;
+        const crossings = (r && Array.isArray(r.crossings) && r.crossings.length)
+          ? r.crossings.map(c=>`${c.from}-${c.to} (${c.time})`).join('\n') : '-';
+
+        // row height auto
+        const dateLines = doc.splitTextToSize(dateDisp, colW[0]-2);
+        const sLocLines = doc.splitTextToSize(r?.startLocation || '-', colW[2]-2);
+        const eLocLines = doc.splitTextToSize(r?.endLocation || '-', colW[4]-2);
+        const crLines   = doc.splitTextToSize(crossings, colW[5]-2);
+        const rowH = Math.max(dateLines.length, sLocLines.length, eLocLines.length, crLines.length)*4.5 + 4;
+
+        if (yPos + rowH > pageBottom){ doc.addPage(); yPos = 20; drawHeader(); }
+
+        const cells = r ? [dateDisp, r.startTime, r.startLocation||'-', r.endTime, r.endLocation||'-', crossings, fmtHM(r.workMinutes), fmtHM(r.nightWorkMinutes||0)]
+                        : [dateDisp, '-', '-', '-', '-', '-', '-', '-'];
+
         let x = left;
-        const lineHeight = 5.5;
-
-        const wrapped = cols.map((txt, i) => {
-            const maxW = widths[i] - 3;
-            return doc.splitTextToSize(String(txt ?? ''), maxW);
+        cells.forEach((text,i)=>{
+          doc.setFillColor(255,255,255);
+          if (i===0 && (dayOfWeek===6 || dayOfWeek===0)) doc.setFillColor(245,245,245);
+          doc.setDrawColor(150,150,150);
+          doc.rect(x, yPos, colW[i], rowH, 'FD');
+          doc.setFontSize(8);
+          doc.text(text, x + colW[i]/2, yPos + rowH/2, {align:'center', baseline:'middle'});
+          x += colW[i];
         });
-        const h = Math.max(...wrapped.map(a => a.length)) * lineHeight;
+        yPos += rowH;
 
-        if (zebra) {
-            doc.setFillColor(248, 250, 252);
-            doc.rect(left, y - 1.5, right-left, h+3, 'F');
-        }
+        if (r){ totalWork += (r.workMinutes||0); totalNight += (r.nightWorkMinutes||0); }
+      }
 
-        doc.setFontSize(9); doc.setFont(undefined, 'normal');
-        wrapped.forEach((lines, i) => {
-            let yy = y + 4;
-            lines.forEach(ln => { doc.text(ln, x + 2, yy); yy += lineHeight; });
-            x += widths[i];
-        });
+      if (yPos > pageBottom - 20){ doc.addPage(); yPos = 20; }
+      doc.setFontSize(10); doc.setFont(undefined,'bold');
+      doc.text(`Gesamt Arbeitszeit: ${fmtHM(totalWork)}`, left+tableW, yPos+5, {align:'right'});
+      doc.text(`Gesamt Nachtzeit: ${fmtHM(totalNight)}`, left+tableW, yPos+11, {align:'right'});
 
-        doc.setDrawColor(230); doc.setLineWidth(0.2);
-        doc.line(left, y + h + 1, right, y + h + 1);
-        y += h + 3;
-
-        if (y > 270) {
-            doc.addPage(); y = 40; drawHeaderRow();
-        }
+      doc.save(`Arbeitszeitnachweis-${(userName||'N/A').replace(/ /g,'_')}-${year}-${monthName}.pdf`);
+    }catch(e){
+      console.error('PDF generation error:', e);
+      alert('Fehler bei der PDF-Erstellung: ' + e.message);
     }
+  };
 
-    for (let r = 0; r < rows.length; r++) drawRow(rows[r], r % 2 === 0);
+  window.sharePDF = async function(){
+    if (!currentMonthlyData){ alert('Bitte zuerst den Bericht erstellen.'); return; }
+    if (!navigator.share){ alert('Ihr Browser unterstützt diese Funktion nicht.'); return; }
+    try{
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p','mm','a4');
+      const userName = $('#userNameInput') ? $('#userNameInput').value : 'N/A';
+      const [year, month] = currentMonthlyData.month.split('-');
+      const monthName = germanMonths[parseInt(month)-1];
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const recordsMap = new Map(currentMonthlyData.records.map(r => [r.date, r]));
 
-    if (!doc.autoTable) doc.autoTable = { previous: {} };
-    doc.autoTable.previous.finalY = y;
-}
+      // Build same as export, but share as file
+      let yPos=40; const left=15, tableW=180, pageBottom=280;
+      const headers=['Datum','Beginn','Ort','Ende','Ort','Grenzübergänge','Arbeit','Nacht'];
+      const colW=[25,15,30,15,30,35,15,15];
+      const germanFullDays=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+      const drawHeader = ()=>{ doc.setFont('Helvetica','bold'); doc.setFontSize(9); doc.setDrawColor(150,150,150); let x=left; headers.forEach((h,i)=>{doc.rect(x,yPos,colW[i],7,'S'); doc.text(h, x+colW[i]/2, yPos+4.5, {align:'center'}); x+=colW[i];}); yPos+=7; doc.setFont('Helvetica','normal'); };
+      doc.setFontSize(18); doc.setFont(undefined,'bold'); doc.text('ARBEITSZEITNACHWEIS',105,15,{align:'center'});
+      doc.setFontSize(14); doc.text(`${monthName} ${year}`,105,23,{align:'center'});
+      doc.setFontSize(12); doc.text(userName,105,31,{align:'center'});
+      drawHeader();
 
+      let totalWork=0, totalNight=0;
+      for (let day=1; day<=daysInMonth; day++){
+        const dateISO = new Date(Date.UTC(year, month-1, day)).toISOString().split('T')[0];
+        const dayOfWeek = new Date(Date.UTC(year, month-1, day)).getUTCDay();
+        const r = recordsMap.get(dateISO);
+        const dateDisp = `${String(day).padStart(2,'0')}.${String(month).padStart(2,'0')}.\n${germanFullDays[dayOfWeek]}`;
+        const crossings = (r && Array.isArray(r.crossings) && r.crossings.length)
+          ? r.crossings.map(c=>`${c.from}-${c.to} (${c.time})`).join('\n') : '-';
+        const dateLines = doc.splitTextToSize(dateDisp, colW[0]-2);
+        const sLocLines = doc.splitTextToSize(r?.startLocation || '-', colW[2]-2);
+        const eLocLines = doc.splitTextToSize(r?.endLocation || '-', colW[4]-2);
+        const crLines   = doc.splitTextToSize(crossings, colW[5]-2);
+        const rowH = Math.max(dateLines.length, sLocLines.length, eLocLines.length, crLines.length)*4.5 + 4;
+        if (yPos + rowH > pageBottom){ doc.addPage(); yPos=20; drawHeader(); }
+        const cells = r ? [dateDisp, r.startTime, r.startLocation||'-', r.endTime, r.endLocation||'-', crossings, fmtHM(r.workMinutes), fmtHM(r.nightWorkMinutes||0)]
+                        : [dateDisp, '-', '-', '-', '-', '-', '-', '-'];
+        let x=left; cells.forEach((text,i)=>{ doc.setFillColor(255,255,255); if(i===0 && (dayOfWeek===6||dayOfWeek===0)) doc.setFillColor(245,245,245); doc.rect(x,yPos,colW[i],rowH,'FD'); doc.setFontSize(8); doc.text(text, x+colW[i]/2, yPos+rowH/2, {align:'center', baseline:'middle'}); x+=colW[i]; });
+        yPos += rowH;
+        if (r){ totalWork += (r.workMinutes||0); totalNight += (r.nightWorkMinutes||0); }
+      }
+      if (yPos > pageBottom - 20){ doc.addPage(); yPos=20; }
+      doc.setFontSize(10); doc.setFont(undefined,'bold');
+      doc.text(`Gesamt Arbeitszeit: ${fmtHM(totalWork)}`, left+tableW, yPos+5, {align:'right'});
+      doc.text(`Gesamt Nachtzeit: ${fmtHM(totalNight)}`, left+tableW, yPos+11, {align:'right'});
 
-// === Global bindings for legacy onclick handlers ===
-window.initMonthlyReport      = initMonthlyReport;
-window.generateMonthlyReport  = generateMonthlyReport;
-window.generateAndProcessPDF  = generateAndProcessPDF;
-window.exportToPDF            = function(){ return generateAndProcessPDF('save'); };
-window.sharePDF               = function(){ return generateAndProcessPDF('share'); };
-
-
-// -------------------------------------------------------
-// On-page preview list (after "Riport generálása")
-// -------------------------------------------------------
-function renderMonthlyReportPreview() {
-    if (!currentMonthlyData || !Array.isArray(currentMonthlyData.records)) return;
-    const container = document.getElementById('monthlyReportContent');
-    if (!container) return;
-
-    const isDE = currentLang === 'de';
-    const H = isDE
-        ? ['Datum', 'Beginn', 'Ort', 'Ende', 'Ort', 'Grenzübergänge', 'Arbeit', 'Nacht']
-        : ['Dátum', 'Kezdés', 'Hely', 'Befejezés', 'Hely', 'Határátlépések', 'Munka', 'Éjszaka'];
-
-    // Build rows html
-    let totalWork = 0, totalNight = 0;
-    const rows = currentMonthlyData.records.map(rec => {
-        const d = new Date(`${rec.date}T00:00:00`);
-        const dayNamesHU = ['Vasárnap','Hétfő','Kedd','Szerda','Csütörtök','Péntek','Szombat'];
-        const dayNamesDE = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-        const weekday = (isDE ? dayNamesDE : dayNamesHU)[d.getDay()];
-
-        const [yy, mm, dd] = (rec.date || '').split('-');
-        const dateCell = `${dd}.${mm}.<div class="text-xs opacity-70">${weekday}</div>`;
-
-        const begin = rec.startTime || '';
-        const end   = rec.endTime || '';
-        const beginPlace = (rec.startLocation || '').toString();
-        const endPlace   = (rec.endLocation || '').toString();
-
-        const workMin  = Number(rec.workMinutes || 0);
-        const nightMin = Number(rec.nightWorkMinutes || 0);
-        totalWork  += workMin;
-        totalNight += nightMin;
-
-        let crossingsText = '-';
-        const arr = Array.isArray(rec.crossings) ? rec.crossings : (Array.isArray(rec.borderCrossings) ? rec.borderCrossings : []);
-        if (arr.length) {
-            crossingsText = arr.map(c => {
-                const fr = (c.from || c.fr || '').toString().toUpperCase();
-                const to = (c.to || '').toString().toUpperCase();
-                const t  = (c.time || '').toString();
-                return `${fr}-${to}${t ? ` (${t})` : ''}`;
-            }).join('<br>');
-        }
-
-        return `<tr class="border-b border-gray-200 dark:border-gray-700">
-            <td class="py-2 align-top">${dateCell}</td>
-            <td class="py-2 align-top">${begin || ''}</td>
-            <td class="py-2 align-top">${escapeHtml(beginPlace)}</td>
-            <td class="py-2 align-top">${end || ''}</td>
-            <td class="py-2 align-top">${escapeHtml(endPlace)}</td>
-            <td class="py-2 align-top">${crossingsText}</td>
-            <td class="py-2 align-top whitespace-nowrap">${formatAsHoursAndMinutes(workMin)}</td>
-            <td class="py-2 align-top whitespace-nowrap">${formatAsHoursAndMinutes(nightMin)}</td>
-        </tr>`;
-    }).join('');
-
-    const totalsHtml = `<div class="mt-3 text-right text-sm font-semibold">
-        ${(isDE ? 'Gesamt Arbeitszeit' : 'Összes munkaidő')}: ${formatAsHoursAndMinutes(totalWork)} &nbsp; • &nbsp;
-        ${(isDE ? 'Gesamt Nachtzeit' : 'Összes éjszaka')}: ${formatAsHoursAndMinutes(totalNight)}
-    </div>`;
-
-    container.innerHTML = `
-        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-            <table class="min-w-full text-sm">
-                <thead class="bg-gray-50 dark:bg-gray-800/60">
-                    <tr>
-                        ${H.map(h => `<th class="text-left font-semibold px-2 py-2">${h}</th>`).join('')}
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-900/40">
-                    ${rows || ''}
-                </tbody>
-            </table>
-        </div>
-        ${totalsHtml}
-    `;
-}
-
-// Tiny util
-function escapeHtml(s) {
-    return String(s || '').replace(/[&<>"']/g, m => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"\\'":"&#39;"
-    })[m]);
-}
+      const blob = doc.output('blob');
+      const fileName = `Arbeitszeitnachweis-${(userName||'N/A').replace(/ /g,'_')}-${year}-${monthName}.pdf`;
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      const shareData = { files:[file], title:`Arbeitszeitnachweis - ${monthName} ${year}`, text:`Anbei mein Arbeitszeitnachweis für ${monthName} ${year}.` };
+      if (navigator.canShare && navigator.canShare(shareData)){
+        await navigator.share(shareData);
+      } else {
+        throw new Error('Diese Datei kann nicht geteilt werden.');
+      }
+    }catch(e){
+      if (e.name==='AbortError'){ console.log('Teilen abgebrochen.'); }
+      else { console.error('Sharing error:', e); alert('Fehler beim Teilen: ' + e.message); }
+    }
+  };
+})(); 
