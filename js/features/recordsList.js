@@ -2,6 +2,94 @@
 // ===== BEJEGYZÉSEK LISTÁZÁSA (FEATURE) ================
 // =======================================================
 
+/**
+ * A "Teljes nap" fülön lévő adatok mentése vagy frissítése.
+ */
+async function saveEntry() {
+    const i18n = translations[currentLang];
+
+    // --- 1. Adatok begyűjtése az űrlapról ---
+    const date = document.getElementById('date').value;
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    const startLocation = document.getElementById('startLocation').value.trim();
+    const endLocation = document.getElementById('endLocation').value.trim();
+    const kmStart = parseFloat(document.getElementById('kmStart').value) || 0;
+    const kmEnd = parseFloat(document.getElementById('kmEnd').value) || 0;
+    const weeklyDriveStart = document.getElementById('weeklyDriveStart').value;
+    const weeklyDriveEnd = document.getElementById('weeklyDriveEnd').value;
+    const compensationTime = document.getElementById('compensationTime').value;
+    const isSplitRest = document.getElementById('toggleSplitRest').checked;
+
+    // --- 2. Alapvető validáció ---
+    if (!date || !startTime || !endTime) {
+        showCustomAlert(i18n.alertMandatoryFields, 'info');
+        return;
+    }
+    if (kmEnd > 0 && kmStart > kmEnd) {
+        showCustomAlert(i18n.alertKmEndLower, 'info');
+        return;
+    }
+    if (parseTimeToMinutes(weeklyDriveEnd) > 0 && parseTimeToMinutes(weeklyDriveStart) > parseTimeToMinutes(weeklyDriveEnd)) {
+        showCustomAlert(i18n.alertWeeklyDriveEndLower, 'info');
+        return;
+    }
+
+    // --- 3. Értékek kiszámítása ---
+    const workMinutes = calculateWorkMinutes(startTime, endTime);
+    const nightWorkMinutes = calculateNightWorkMinutes(startTime, endTime);
+    const driveMinutes = Math.max(0, parseTimeToMinutes(weeklyDriveEnd) - parseTimeToMinutes(weeklyDriveStart));
+    const kmDriven = Math.max(0, kmEnd - kmStart);
+    const compensationMinutes = parseTimeToMinutes(compensationTime);
+
+    // --- 4. Határátlépések összegyűjtése ---
+    const crossings = [];
+    document.querySelectorAll('#crossingsContainer .grid').forEach(row => {
+        const from = row.querySelector('input[placeholder="Honnan"], input[placeholder="Von"]').value.trim().toUpperCase();
+        const to = row.querySelector('input[placeholder="Hova"], input[placeholder="Nach"]').value.trim().toUpperCase();
+        const time = row.querySelector('input[type="time"]').value;
+        if (from && to && time) {
+            crossings.push({ from, to, time });
+        }
+    });
+
+    // --- 5. A 'record' objektum összeállítása ---
+    const record = {
+        id: editingId ? String(editingId) : String(Date.now()),
+        date,
+        startTime,
+        endTime,
+        startLocation,
+        endLocation,
+        kmStart,
+        kmEnd,
+        kmDriven,
+        weeklyDriveStart,
+        weeklyDriveEnd,
+        driveMinutes,
+        workMinutes: workMinutes - compensationMinutes, // Kompenzáció levonása
+        compensationMinutes,
+        nightWorkMinutes,
+        crossings,
+        isSplitRest
+    };
+
+    // --- 6. Mentés és visszajelzés ---
+    try {
+        await saveWorkRecord(record); // Ez a függvény a database.js-ben van
+        showCustomAlert(i18n.alertSaveSuccess, 'success');
+        
+        // Sikeres mentés utáni teendők
+        editingId = null; // Töröljük a szerkesztési ID-t
+        renderApp();      // Frissítjük a teljes nézetet
+        showTab('list');  // Átváltunk a lista fülre
+    } catch (error) {
+        console.error("Hiba a mentés során:", error);
+        showCustomAlert('Hiba történt a mentés során.', 'info');
+    }
+}
+
+
 // A mentett munkanapok listájának kirajzolása a HTML-be
 function renderRecords() {
     const i18n = translations[currentLang];
