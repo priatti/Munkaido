@@ -5,7 +5,7 @@
 // ====== GLOBÁLIS ÁLLAPOT (STATE) ======
 let records = [];
 let palletRecords = [];
-let editingId = null;
+let editingId = null; 
 let inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
 let uniqueLocations = [];
 let uniquePalletLocations = [];
@@ -19,8 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeFeatureToggles();
     initializePwaInstall();
     initializePalletSettings();
-    initializeAuth();
-
+    initializeAuth(); 
+    
     // Globális eseménykezelők beállítása
     document.addEventListener('click', (event) => {
         const dropdownContainer = document.getElementById('dropdown-container');
@@ -35,22 +35,38 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
-// ====== FŐ RENDERELŐ FUNKCIÓ ======
-function renderApp() {
-    applyFeatureToggles();
-    updateUniqueLocations();
-    updateUniquePalletLocations();
-    initAllAutocomplete();
+// ====== "ÉLŐ" MŰSZAK KEZELÉSE ======
 
-    renderLiveTabView();
+/**
+ * Elindít egy új munkanapot az "Indítás" fülről.
+ */
+function startLiveShift() {
+    const date = document.getElementById('liveStartDate').value;
+    const startTime = document.getElementById('liveStartTime').value;
+    const startLocation = document.getElementById('liveStartLocation').value.trim();
+    const weeklyDriveStartStr = document.getElementById('liveWeeklyDriveStart').value;
+    const kmStart = parseFloat(document.getElementById('liveStartKm').value) || 0;
+
+    if (!date || !startTime) {
+        showCustomAlert('A dátum és az idő megadása kötelező!', 'info');
+        return;
+    }
+
+    const newEntry = {
+        date,
+        startTime,
+        startLocation,
+        weeklyDriveStartStr,
+        kmStart,
+        crossings: [] // Kezdetben üres határátlépés lista
+    };
+
+    inProgressEntry = newEntry;
+    localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry));
+
+    // UI frissítése az új állapothoz
     renderStartTab();
-    renderRecords();
-    renderSummary();
-    if (document.getElementById('content-stats').offsetParent !== null) renderStats();
-    if (document.getElementById('content-tachograph').offsetParent !== null) renderTachographAnalysis();
-    if (document.getElementById('content-pallets').offsetParent !== null) renderPalletRecords();
-
-    updateAllTexts();
+    renderLiveTabView();
 }
 
 /**
@@ -89,6 +105,24 @@ function resetEntryForm() {
     updateDisplays();
 }
 
+// ====== FŐ RENDERELŐ FUNKCIÓ ======
+function renderApp() {
+    applyFeatureToggles();
+    updateUniqueLocations();
+    updateUniquePalletLocations();
+    initAllAutocomplete();
+    
+    renderLiveTabView();
+    renderStartTab();
+    renderRecords();
+    renderSummary();
+    if (document.getElementById('content-stats').offsetParent !== null) renderStats();
+    if (document.getElementById('content-tachograph').offsetParent !== null) renderTachographAnalysis();
+    if (document.getElementById('content-pallets').offsetParent !== null) renderPalletRecords();
+    
+    updateAllTexts(); 
+}
+
 // ====== NÉZETKEZELÉS (FÜLEK) ======
 function showTab(tabName) {
     currentActiveTab = tabName;
@@ -100,7 +134,7 @@ function showTab(tabName) {
     if (tabName === 'pallets') {
         renderPalletRecords(); // Most már ez a funkció tölti ki az alapértelmezett értékeket is
     }
-    if (tabName === 'report') { if (typeof initMonthlyReport === 'function') { initMonthlyReport(); } }
+    if (tabName === 'report') { if (typeof initMonthlyReport==='function') { initMonthlyReport(); } }
     if (tabName === 'list') {
         renderRecords();
     }
@@ -111,7 +145,7 @@ function showTab(tabName) {
         statsDate = new Date();
         renderStats();
     }
-    if (tabName === 'tachograph') {
+     if (tabName === 'tachograph') {
         renderTachographAnalysis();
     }
     if (tabName === 'help') {
@@ -122,7 +156,7 @@ function showTab(tabName) {
     const mainTabs = ['live', 'start', 'full-day'];
     const dropdownButton = document.getElementById('dropdown-button');
     const dropdownMenu = document.getElementById('dropdown-menu');
-
+    
     allTabs.forEach(t => t.classList.remove('tab-active'));
     dropdownButton.classList.remove('tab-active');
 
@@ -274,7 +308,7 @@ function renderStartTab() {
         progressView.classList.remove('hidden');
 
         document.getElementById('live-start-time').textContent = `${i18n.startedAt}: ${inProgressEntry.date} ${inProgressEntry.startTime}`;
-
+        
         let summaryHTML = '';
         const hasDriveData = localStorage.getItem('toggleDriveTime') === 'true' && inProgressEntry.weeklyDriveStartStr;
         const hasKmData = localStorage.getItem('toggleKm') === 'true' && inProgressEntry.kmStart > 0;
@@ -307,11 +341,11 @@ function renderStartTab() {
             summaryHTML += `</div></div>`;
         }
         summaryContainer.innerHTML = summaryHTML;
-
+        
         const liveCrossList = document.getElementById('live-crossings-list');
         const liveCrossFrom = document.getElementById('liveCrossFrom');
         if (inProgressEntry.crossings && inProgressEntry.crossings.length > 0) {
-            const crossingsHTML = inProgressEntry.crossings.map(c =>
+            const crossingsHTML = inProgressEntry.crossings.map(c => 
                 `<div class="flex items-center justify-between bg-white dark:bg-gray-700/50 p-2 rounded-md shadow-sm">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -338,7 +372,7 @@ function renderStartTab() {
     } else {
         progressView.classList.add('hidden');
         startForm.classList.remove('hidden');
-        summaryContainer.innerHTML = '';
+        summaryContainer.innerHTML = ''; 
         loadLastValues(true);
     }
 }
@@ -351,7 +385,7 @@ function renderDashboard() {
     const thisWeek = calculateSummaryForDateRange(getWeekRange(now));
     const lastWeek = calculateSummaryForDateRange(getWeekRange(now, -1));
     const thisMonth = calculateSummaryForMonth(new Date());
-
+    
     const cards = [
         { labelKey: 'dashboardDriveThisWeek', value: formatDuration(thisWeek.driveMinutes), color: 'blue' },
         { labelKey: 'dashboardWorkThisWeek', value: formatDuration(thisWeek.workMinutes), color: 'green' },
