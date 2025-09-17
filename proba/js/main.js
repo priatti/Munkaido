@@ -60,25 +60,52 @@ function proceedWithShiftStart() {
 }
 
 /**
- * Elindít egy új munkanapot, előtte automatikusan ellenőrzi a pihenőidőt.
+ * JAVÍTOTT startLiveShift függvény
+ * Most már beállítja a pendingReducedRestUsage értéket
  */
 function startLiveShift() {
     const latestRecord = getLatestRecord();
     const now = new Date();
 
+    // *** Töröljük a korábbi pending értéket minden indításkor ***
     localStorage.removeItem('pendingReducedRestUsage');
 
     if (latestRecord && latestRecord.endTime) {
         const lastEndTime = new Date(`${latestRecord.date}T${latestRecord.endTime}`);
         const restDurationHours = (now - lastEndTime) / (1000 * 60 * 60);
 
-        // Az új, központi segédfüggvényt használjuk itt is
+        // *** ÚJ: Ha a pihenő csökkentett, akkor jelöljük pending-ként ***
         if (isReducedDailyRest(restDurationHours, latestRecord)) {
             localStorage.setItem('pendingReducedRestUsage', '1');
+            console.log('Csökkentett pihenő detektálva, pending használat beállítva');
         }
     }
 
-    proceedWithShiftStart();
+    // *** Indítás folytatása az eredeti logikával ***
+    const date = document.getElementById('liveStartDate').value;
+    const startTime = document.getElementById('liveStartTime').value;
+    const startLocation = document.getElementById('liveStartLocation').value.trim();
+    const weeklyDriveStartStr = document.getElementById('liveWeeklyDriveStart').value;
+    const kmStart = parseFloat(document.getElementById('liveStartKm').value) || 0;
+
+    const newEntry = {
+        date,
+        startTime,
+        startLocation,
+        weeklyDriveStartStr,
+        kmStart,
+        crossings: []
+    };
+
+    activeShift = newEntry;
+    localStorage.setItem('activeShift', JSON.stringify(activeShift));
+
+    // *** FONTOS: UI frissítése hogy az ikonok is frissüljenek ***
+    renderStartTab();
+    renderLiveTabView();
+    
+    // Tachográf státusz újrarajzolása az új pending értékkel
+    renderTachographStatusCard();
 }
 
 /**
@@ -105,8 +132,8 @@ function addLiveCrossing() {
 }
 
 /**
- * Előkészíti a műszak befejezését: átvált a "Teljes nap" fülre
- * és kitölti az űrlapot az aktív műszak adataival.
+ * JAVÍTOTT prepareFinalizeShift függvény
+ * Törli a pending értéket amikor befejezzük a napot
  */
 function prepareFinalizeShift() {
     if (!activeShift) {
@@ -114,6 +141,7 @@ function prepareFinalizeShift() {
         return;
     }
     
+    // *** Töröljük a pending értéket, mert most már ténylegesen lezárjuk ***
     localStorage.removeItem('pendingReducedRestUsage');
 
     showTab('full-day');
@@ -136,21 +164,30 @@ function prepareFinalizeShift() {
     const endTimeInput = document.getElementById('endTime');
     endTimeInput.value = new Date().toTimeString().slice(0, 5);
     endTimeInput.focus();
+    
+    // *** UI frissítése a pending eltávolítása után ***
+    renderTachographStatusCard();
 }
 
 /**
- * Megszakítja és törli a folyamatban lévő munkanapot.
+ * JAVÍTOTT discardShift függvény
+ * Törli a pending értéket ha eldobjuk a napot
  */
 function discardShift() {
     if (!activeShift) return;
 
     const i18n = translations[currentLang];
     showCustomAlert(`${i18n.discardWorkday}?`, 'warning', () => {
+        // *** Töröljük a pending értéket, mert eldobtuk a napot ***
         localStorage.removeItem('pendingReducedRestUsage');
+        
         activeShift = null;
         localStorage.removeItem('activeShift');
         renderStartTab();
         renderLiveTabView();
+        
+        // *** UI frissítése a pending eltávolítása után ***
+        renderTachographStatusCard();
     });
 }
 
@@ -257,7 +294,6 @@ function showTab(tabName) {
 
 function toggleDropdown() { document.getElementById('dropdown-menu').classList.toggle('hidden'); }
 function closeDropdown() { document.getElementById('dropdown-menu').classList.add('hidden'); }
-
 
 // ====== SEGÉDFÜGGVÉNYEK ======
 function getSortedRecords() {
