@@ -62,9 +62,7 @@ function showTab(tabName) {
     if (tabName === 'pallets') {
         renderPalletRecords(); // Most már ez a funkció tölti ki az alapértelmezett értékeket is
     }
-    if (tabName === 'report') {
-        initMonthlyReport();
-    }
+    if (tabName === 'report') { if (typeof initMonthlyReport==='function') { initMonthlyReport(); } }
     if (tabName === 'list') {
         renderRecords();
     }

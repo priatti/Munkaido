@@ -1,4 +1,4 @@
-\
+
 // proba/js/features/workday.js
 (function () {
   'use strict';
