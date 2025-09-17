@@ -154,7 +154,8 @@
       const doc = new jsPDF('p', 'mm', 'a4');
       const selectedMonth = document.getElementById('monthSelector').value;
       const [year, month] = selectedMonth.split('-');
-      const monthName = new Date(year, parseInt(month) - 1, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+      const monthIndex = parseInt(month, 10) - 1;
+      const monthName = new Date(year, monthIndex, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
@@ -164,16 +165,13 @@
       doc.text(userName, 105, 22, { align: 'center' });
       doc.text(monthName, 105, 29, { align: 'center' });
 
-      let y = 40;
-      const pageHeight = 285;
       const headers = ['Datum', 'Beginn', 'Ort', 'Ende', 'Ort', 'Grenzübergänge', 'Arbeit', 'Nacht'];
-
       const autoTableBody = [];
       const daysInMonth = new Date(year, month, 0).getDate();
       const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 
       for (let day = 1; day <= daysInMonth; day++) {
-          const date = new Date(year, month - 1, day);
+          const date = new Date(year, monthIndex, day);
           const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const record = currentMonthRecords.find(r => r.date === dateStr);
           const dateCell = `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.\n${dayNames[date.getDay()]}`;
@@ -193,17 +191,17 @@
                   { content: formatDurationGerman(record.nightWorkMinutes || 0), styles: { halign: 'right' } }
               ]);
           } else {
-              autoTableBody.push([{ content: dateCell, styles: {}}, '', '', '', '', '', '', '']);
+              autoTableBody.push([dateCell, '', '', '', '', '', '', '']);
           }
       }
 
       doc.autoTable({
-          startY: y,
+          startY: 40,
           head: [headers],
           body: autoTableBody,
           theme: 'grid',
           headStyles: { fillColor: [230, 230, 230], textColor: 20, fontStyle: 'bold' },
-          styles: { fontSize: 8, cellPadding: 1.5 },
+          styles: { fontSize: 8, cellPadding: 1.5, valign: 'middle' },
           columnStyles: {
               0: { cellWidth: 22 }, 
               5: { cellWidth: 30 },
@@ -211,9 +209,12 @@
               7: { cellWidth: 18 }
           },
           didParseCell: function(data) {
-              if (data.section === 'body' && (date.getDay() === 0 || date.getDay() === 6)) {
-                  // Vasárnap és Szombat (getDay() 0 és 6)
-                  data.cell.styles.fillColor = '#f0f0f0';
+              // *** EZ A JAVÍTOTT RÉSZ ***
+              if (data.section === 'body') {
+                  const currentDay = new Date(year, monthIndex, data.row.index + 1).getDay();
+                  if (currentDay === 0 || currentDay === 6) { // Vasárnap (0) vagy Szombat (6)
+                      data.cell.styles.fillColor = '#f2f2f2';
+                  }
               }
           }
       });
