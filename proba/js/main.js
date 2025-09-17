@@ -13,15 +13,12 @@ let currentActiveTab = 'live';
 
 // ====== ALKALMAZÁS INDÍTÁSA ======
 document.addEventListener('DOMContentLoaded', () => {
-    // Alapfunkciók inicializálása
     initTheme();
     loadSettings();
     initializeFeatureToggles();
     initializePwaInstall();
     initializePalletSettings();
     initializeAuth();
-
-    // Globális eseménykezelők beállítása
     document.addEventListener('click', (event) => {
         const dropdownContainer = document.getElementById('dropdown-container');
         if (dropdownContainer && !dropdownContainer.contains(event.target)) {
@@ -31,26 +28,20 @@ document.addEventListener('DOMContentLoaded', () => {
             hideAutocomplete();
         }
     });
-
     setupEventListeners();
 });
 
 // ====== "ÉLŐ" MŰSZAK KEZELÉSE ======
 
 /**
- * Elindít egy új munkanapot az "Indítás" fülről.
+ * A tényleges műszakindítást végző segédfüggvény.
  */
-function startLiveShift() {
+function proceedWithShiftStart() {
     const date = document.getElementById('liveStartDate').value;
     const startTime = document.getElementById('liveStartTime').value;
     const startLocation = document.getElementById('liveStartLocation').value.trim();
     const weeklyDriveStartStr = document.getElementById('liveWeeklyDriveStart').value;
     const kmStart = parseFloat(document.getElementById('liveStartKm').value) || 0;
-
-    if (!date || !startTime) {
-        showCustomAlert('A dátum és az idő megadása kötelező!', 'info');
-        return;
-    }
 
     const newEntry = {
         date,
@@ -66,6 +57,36 @@ function startLiveShift() {
 
     renderStartTab();
     renderLiveTabView();
+}
+
+/**
+ * Elindít egy új munkanapot, előtte automatikusan ellenőrzi a pihenőidőt.
+ */
+function startLiveShift() {
+    const latestRecord = getLatestRecord();
+    const now = new Date();
+
+    // Alaphelyzetben töröljük a jelzőt
+    localStorage.removeItem('pendingReducedRestUsage');
+
+    if (latestRecord && latestRecord.endTime) {
+        const lastEndTime = new Date(`${latestRecord.date}T${latestRecord.endTime}`);
+        const restDurationHours = (now - lastEndTime) / (1000 * 60 * 60);
+        
+        const splitData = (typeof getSplitRestData === 'function') ? getSplitRestData() : {};
+        const isPreviousSplit = splitData[latestRecord.id] === true || latestRecord.isSplitRest;
+
+        // Csökkentett pihenő, ha: 9-11 óra a pihenő VAGY az előző munkanap 13+ óra volt.
+        const isReducedRest = (restDurationHours >= 9 && restDurationHours < 11) || (latestRecord.workMinutes > 13 * 60);
+
+        if (isReducedRest && !isPreviousSplit) {
+            // Nem kérdezünk, csak beállítunk egy ideiglenes jelzőt a háttértárban.
+            localStorage.setItem('pendingReducedRestUsage', '1');
+        }
+    }
+
+    // A műszakot mindenképpen elindítjuk.
+    proceedWithShiftStart();
 }
 
 /**
@@ -100,6 +121,9 @@ function prepareFinalizeShift() {
         showCustomAlert('Nincs aktív műszak a befejezéshez.', 'info');
         return;
     }
+    
+    // TAKARÍTÁS: Töröljük az ideiglenes jelzőt, mert a műszak véget ér.
+    localStorage.removeItem('pendingReducedRestUsage');
 
     showTab('full-day');
 
@@ -131,13 +155,14 @@ function discardShift() {
 
     const i18n = translations[currentLang];
     showCustomAlert(`${i18n.discardWorkday}?`, 'warning', () => {
+        // TAKARÍTÁS: Töröljük az ideiglenes jelzőt, mert a műszakot eldobtuk.
+        localStorage.removeItem('pendingReducedRestUsage');
         activeShift = null;
         localStorage.removeItem('activeShift');
         renderStartTab();
         renderLiveTabView();
     });
 }
-
 
 /**
  * Alaphelyzetbe állítja a "Teljes nap" fülön található űrlapot egy új bejegyzéshez.
@@ -254,10 +279,6 @@ function getLatestRecord() {
     return getSortedRecords()[0];
 }
 
-/**
- * Betölti az utolsó bejegyzés záró adatait az új bejegyzés űrlapjába.
- * @param {boolean} isLive - Ha true, az 'Indítás' fül mezőit tölti ki.
- */
 function loadLastValues(isLive = false) {
     const latestRecord = getLatestRecord();
     if (!latestRecord) return;
