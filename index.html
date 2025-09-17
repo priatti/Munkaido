@@ -55,47 +55,79 @@
 </div>
 </div>
 <div class="hidden space-y-4" id="content-start">
-<div id="start-new-day-form">
-<div class="p-4 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 rounded-lg space-y-3">
-<h3 class="font-semibold text-lg text-green-800 dark:text-green-200" data-translate-key="liveNewDayTitle">Új munkanap indítása</h3>
-<div class="grid grid-cols-2 gap-4">
-<div><label class="block text-sm mb-1" data-translate-key="date">Dátum</label><input class="w-full p-2 border rounded" id="liveStartDate" type="date"/></div>
-<div><label class="block text-sm mb-1" data-translate-key="time">Idő</label><input class="w-full p-2 border rounded" id="liveStartTime" onblur="formatTimeInput(this)" type="time"/></div>
-</div>
-<div class="grid grid-cols-2 gap-4">
-<div class="relative z-10"><label class="block text-sm mb-1" data-translate-key="location">Hely</label><input class="w-full p-2 border rounded" data-translate-key="cityPlaceholder" id="liveStartLocation" placeholder="Város" type="text"/></div>
-<div><label class="block text-sm mb-1" data-translate-key="weeklyDrive">Heti vezetés</label><input class="w-full p-2 border rounded" id="liveWeeklyDriveStart" onblur="formatTimeInput(this, true)" placeholder="óó:pp" type="text"/></div>
-</div>
-<div><label class="block text-sm mb-1" data-translate-key="startKm">Kezdő km</label><input class="w-full p-2 border rounded" id="liveStartKm" placeholder="0" type="number"/></div>
-<button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-base" onclick="startLiveShift()">🚀 <span data-translate-key="startWorkday">Munkanap indítás</span></button>
-</div>
-</div>
-<div class="hidden space-y-4" id="live-progress-view">
-<div class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-700 dark:text-blue-200 p-4 rounded-lg">
-<p class="font-bold" data-translate-key="workdayInProgress">Munkanap folyamatban</p>
-<p class="text-sm" id="live-start-time"></p>
-</div>
-<div id="live-start-summary"></div>
-<div class="bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
-<h3 class="font-semibold text-indigo-800 dark:text-indigo-200 mb-2" data-translate-key="newBorderCrossing">Új Határátlépés</h3>
-<div class="text-sm space-y-1 mb-3" id="live-crossings-list"></div>
-<div class="space-y-2 border-t border-indigo-200/50 pt-2">
-<div class="grid grid-cols-2 gap-2">
-<div><input class="w-full p-2 border rounded text-sm uppercase" data-translate-key="fromPlaceholder" id="liveCrossFrom" placeholder="Honnan" type="text"/></div>
-<div>
-<div class="flex">
-<input class="w-full p-2 border rounded-l text-sm uppercase" data-translate-key="toPlaceholder" id="liveCrossTo" placeholder="Hova" type="text"/>
-<button class="bg-blue-500 text-white p-2 rounded-r text-xs" data-translate-key="getCountryCodeGPS" onclick="fetchCountryCodeFor('liveCrossTo')" title="Országkód lekérése GPS alapján">📍</button>
-</div>
-</div>
-</div>
-<input class="w-full p-2 border rounded text-sm" id="liveCrossTime" onblur="formatTimeInput(this)" type="time"/>
-<button class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm" onclick="addLiveCrossing()">+ <span data-translate-key="addBorderCrossing">Határátlépés hozzáadása</span></button>
-</div>
-</div>
-<button class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-4 px-4 rounded-lg flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]" onclick="finalizeShift()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span data-translate-key="finishShift">Műszak Befejezése</span></button>
-<button class="w-full text-sm text-red-500 hover:text-red-700 mt-2" data-translate-key="discardWorkday" onclick="discardShift()">Munkanap elvetése</button>
-</div>
+    <div id="start-new-day-form">
+        <div class="p-4 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 rounded-lg space-y-3">
+            <h3 class="font-semibold text-lg text-green-800 dark:text-green-200" data-translate-key="liveNewDayTitle">Új munkanap indítása</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm mb-1" data-translate-key="date">Dátum</label>
+                    <input class="w-full p-2 border rounded" id="liveStartDate" type="date"/>
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-translate-key="time">Idő</label>
+                    <input class="w-full p-2 border rounded" id="liveStartTime" onblur="formatTimeInput(this)" type="time"/>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="relative z-10">
+                    <label class="block text-sm mb-1" data-translate-key="location">Hely</label>
+                    <input class="w-full p-2 border rounded" data-translate-key="cityPlaceholder" id="liveStartLocation" placeholder="Város" type="text"/>
+                </div>
+                <div>
+                    <label class="block text-sm mb-1" data-translate-key="weeklyDrive">Heti vezetés</label>
+                    <input class="w-full p-2 border rounded" id="liveWeeklyDriveStart" onblur="formatTimeInput(this, true)" placeholder="óó:pp" type="text"/>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm mb-1" data-translate-key="startKm">Kezdő km</label>
+                <input class="w-full p-2 border rounded" id="liveStartKm" placeholder="0" type="number"/>
+            </div>
+            <button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-base" onclick="startLiveShift()">
+                🚀 <span data-translate-key="startWorkday">Munkanap indítás</span>
+            </button>
+        </div>
+    </div>
+    
+    <div class="hidden space-y-4" id="live-progress-view">
+        <div class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-700 dark:text-blue-200 p-4 rounded-lg">
+            <p class="font-bold" data-translate-key="workdayInProgress">Munkanap folyamatban</p>
+            <p class="text-sm" id="live-start-time"></p>
+        </div>
+        <div id="live-start-summary"></div>
+        
+        <div class="bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
+            <h3 class="font-semibold text-indigo-800 dark:text-indigo-200 mb-2" data-translate-key="newBorderCrossing">Új Határátlépés</h3>
+            <div class="text-sm space-y-1 mb-3" id="live-crossings-list"></div>
+            <div class="space-y-2 border-t border-indigo-200/50 pt-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <input class="w-full p-2 border rounded text-sm uppercase" data-translate-key="fromPlaceholder" id="liveCrossFrom" placeholder="Honnan" type="text"/>
+                    </div>
+                    <div>
+                        <div class="flex">
+                            <input class="w-full p-2 border rounded-l text-sm uppercase" data-translate-key="toPlaceholder" id="liveCrossTo" placeholder="Hova" type="text"/>
+                            <button class="bg-blue-500 text-white p-2 rounded-r text-xs" data-translate-key="getCountryCodeGPS" onclick="fetchCountryCodeFor('liveCrossTo')" title="Országkód lekérése GPS alapján">📍</button>
+                        </div>
+                    </div>
+                </div>
+                <input class="w-full p-2 border rounded text-sm" id="liveCrossTime" onblur="formatTimeInput(this)" type="time"/>
+                <button class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm" onclick="addLiveCrossing()">
+                    + <span data-translate-key="addBorderCrossing">Határátlépés hozzáadása</span>
+                </button>
+            </div>
+        </div>
+        
+        <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-4 px-4 rounded-lg flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]" onclick="finalizeShift()">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            <span data-translate-key="finishShift">Műszak Befejezése</span>
+        </button>
+        
+        <button class="w-full text-sm text-red-500 hover:text-red-700 mt-2" data-translate-key="discardWorkday" onclick="discardShift()">
+            Munkanap elvetése
+        </button>
+    </div>
 </div>
 <div class="hidden space-y-4" id="content-full-day">
 <h2 class="text-xl font-bold" data-translate-key="fullDayTitle">Teljes munkanap rögzítése</h2>
@@ -200,14 +232,23 @@
 <div class="text-center text-gray-500 py-8 hidden" data-translate-key="statsNoDataPeriod" id="stats-no-data">Nincs adat a kiválasztott időszakban.</div>
 </div>
 <div class="hidden" id="content-report">
-<h2 class="text-lg font-semibold mb-4" data-translate-key="reportTitle">Havi riport</h2>
-<div class="mb-4"><label class="block text-sm font-medium mb-1" data-translate-key="reportMonthSelect">Hónap kiválasztása</label><input class="w-full p-2 border rounded-lg" id="monthSelector" type="month"/></div>
-<button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg mb-4" onclick="generateMonthlyReport()">📋 <span data-translate-key="reportGenerate">Riport generálása</span></button>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-<button class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg hidden" id="pdfExportBtn" onclick="exportToPDF()">📄 <span data-translate-key="reportDownloadPDF">PDF letöltés</span></button>
-<button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg hidden" id="pdfShareBtn" onclick="sharePDF()">📲 <span data-translate-key="reportSharePDF">PDF megosztása</span></button>
-</div>
-<div id="monthlyReportContent"></div>
+    <h2 class="text-lg font-semibold mb-4" data-translate-key="reportTitle">Havi riport</h2>
+    <div class="mb-4">
+        <label class="block text-sm font-medium mb-1" data-translate-key="reportMonthSelect">Hónap kiválasztása</label>
+        <input class="w-full p-2 border rounded-lg" id="monthSelector" type="month"/>
+    </div>
+    <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg mb-4" onclick="generateMonthlyReport()">
+        📋 <span data-translate-key="reportGenerate">Riport generálása</span>
+    </button>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+        <button class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg hidden" id="pdfExportBtn" onclick="exportToPDF()">
+            📄 <span data-translate-key="reportDownloadPDF">PDF letöltés</span>
+        </button>
+        <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg hidden" id="pdfShareBtn" onclick="sharePDF()">
+            📲 <span data-translate-key="reportSharePDF">PDF megosztása</span>
+        </button>
+    </div>
+    <div id="monthlyReportContent"></div>
 </div>
 <div class="hidden" id="content-settings">
 <h2 class="text-lg font-semibold mb-4" data-translate-key="settingsTitle">Beállítások és Adatkezelés</h2>

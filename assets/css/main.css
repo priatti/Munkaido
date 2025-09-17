@@ -285,3 +285,71 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-checkmark {
 
 /* Hide legacy version label anywhere in settings */
 #settings-version, .settings-version, [data-translate-key='settingsVersion']{ display:none !important; }
+
+
+/* ===== BEGIN: css_modal_additions (appended) ===== */
+/* Add ezt a main.css végéhez: */
+
+/* Finalize modal styles */
+#finalize-modal {
+    backdrop-filter: blur(4px);
+}
+
+#finalize-modal .bg-white {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Dark mode support for finalize modal */
+html.dark #finalize-modal .bg-white {
+    background-color: #1f2937;
+    color: #f9fafb;
+}
+
+html.dark #finalize-modal input {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+html.dark #finalize-modal input:focus {
+    border-color: #3b82f6;
+    background-color: #4b5563;
+}
+
+/* Crossing row improvements */
+.crossing-row {
+    transition: all 0.2s ease;
+}
+
+.crossing-row:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+html.dark .crossing-row:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Report table improvements */
+#monthlyReportContent table {
+    border-collapse: collapse;
+}
+
+#monthlyReportContent th,
+#monthlyReportContent td {
+    border: 1px solid #e5e7eb;
+}
+
+html.dark #monthlyReportContent th,
+html.dark #monthlyReportContent td {
+    border-color: #4b5563;
+}
+
+#monthlyReportContent thead tr {
+    background-color: #f3f4f6;
+}
+
+html.dark #monthlyReportContent thead tr {
+    background-color: #374151;
+}
+/* ===== END: css_modal_additions ===== */
