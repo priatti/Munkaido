@@ -53,6 +53,41 @@ function renderApp() {
     updateAllTexts();
 }
 
+/**
+ * Alaphelyzetbe állítja a "Teljes nap" fülön található űrlapot.
+ */
+function resetEntryForm() {
+    // Töröljük a szerkesztési ID-t, jelezve, hogy új bejegyzést rögzítünk
+    editingId = null;
+
+    // Beviteli mezők kiürítése vagy alapértelmezett értékre állítása
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('startTime').value = '';
+    document.getElementById('endTime').value = '';
+    document.getElementById('compensationTime').value = '';
+    document.getElementById('startLocation').value = '';
+    document.getElementById('endLocation').value = '';
+    document.getElementById('weeklyDriveStart').value = '';
+    document.getElementById('weeklyDriveEnd').value = '';
+    document.getElementById('kmStart').value = '';
+    document.getElementById('kmEnd').value = '';
+
+    // Határátlépések listájának kiürítése
+    document.getElementById('crossingsContainer').innerHTML = '';
+
+    // Osztott pihenő kapcsoló alaphelyzetbe állítása
+    const splitRestToggle = document.getElementById('toggleSplitRest');
+    if (splitRestToggle) {
+        splitRestToggle.checked = false;
+        // Frissítjük a kapcsoló kinézetét is
+        if (typeof updateEnhancedToggleVisuals === 'function') {
+            updateEnhancedToggleVisuals(splitRestToggle);
+        }
+    }
+    
+    // Az összesített kijelzők (munkaidő, km, stb.) frissítése/törlése
+    updateDisplays();
+}
 
 // ====== NÉZETKEZELÉS (FÜLEK) ======
 function showTab(tabName) {
