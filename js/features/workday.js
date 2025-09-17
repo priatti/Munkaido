@@ -1,215 +1,116 @@
-// =======================================================
-// ===== MUNKANAP RÖGZÍTÉSE (FEATURE) ====================
-// =======================================================
+// proba/js/features/workday.js
+(function () {
+  'use strict';
+  const now = () => new Date();
+  const pad2 = n => String(n).padStart(2, '0');
+  function fmtDateISO(d){return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
+  function fmtTimeHM(d){return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;}
+  const safeObj = v => (v && typeof v === 'object') ? v : {};
+  const safeStr = v => (v == null ? '' : String(v));
+  function parseTimeToMinutes(hhmm){if(!hhmm)return 0;const m=String(hhmm).match(/^(\d{1,2}):(\d{2})$/);if(!m)return 0;return parseInt(m[1],10)*60+parseInt(m[2],10);}
+  function diffMinutes(a,b){const A=parseTimeToMinutes(a),B=parseTimeToMinutes(b);if(!A||!B)return 0;let d=B-A; if(d<0)d+=1440; return d;}
 
-// Új munkanap indítása ("Indítás" fül)
-function startLiveShift() {
-    inProgressEntry = {
-        date: document.getElementById('liveStartDate').value,
-        startTime: document.getElementById('liveStartTime').value,
-        startLocation: document.getElementById('liveStartLocation').value.trim(),
-        weeklyDriveStartStr: document.getElementById('liveWeeklyDriveStart').value.trim(),
-        kmStart: parseFloat(document.getElementById('liveStartKm').value) || 0,
-        crossings: []
-    };
-    if (!inProgressEntry.date || !inProgressEntry.startTime) {
-        showCustomAlert(translations[currentLang].alertMandatoryFields, "info");
-        return;
-    }
-    localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry));
-    showTab('start');
-    renderLiveTabView();
-    updateAllTexts();
-}
+  // Realtime notify
+  const __recordsBC = ('BroadcastChannel' in window) ? new BroadcastChannel('munkaido-records') : null;
+  function notifyRecordsUpdated(event, payload){
+    const detail = { event, payload, t: Date.now() };
+    try{ window.dispatchEvent(new CustomEvent('records:updated',{detail})); }catch{}
+    try{ __recordsBC && __recordsBC.postMessage({ type:'records:updated', ...detail }); }catch{}
+    try{ localStorage.setItem('records_updated_ping', String(detail.t)); localStorage.removeItem('records_updated_ping'); }catch{}
+  }
 
-// Határátlépés hozzáadása a folyamatban lévő műszakhoz
-function addLiveCrossing() {
-    const from = document.getElementById('liveCrossFrom').value.trim().toUpperCase();
-    const to = document.getElementById('liveCrossTo').value.trim().toUpperCase();
-    const time = document.getElementById('liveCrossTime').value;
-    if (!from || !to || !time) {
-        showCustomAlert(translations[currentLang].alertFillAllFields, "info");
-        return;
-    }
-    inProgressEntry.crossings.push({ from, to, time });
-    localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry));
-    renderStartTab();
-    updateAllTexts();
-}
+  let activeShift = null;
+  let isFinishing = false;
 
-// A folyamatban lévő műszak befejezése (átirányít a "Teljes nap" fülre)
-function finalizeShift() {
-    showTab('full-day');
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
-    Object.keys(inProgressEntry).forEach(key => {
-        const el = document.getElementById(key.replace('Str', ''));
-        if (el) el.value = inProgressEntry[key];
-    });
-    (inProgressEntry.crossings || []).forEach(c => addCrossingRow(c.from, c.to, c.time));
-    document.getElementById('endTime').focus();
-}
+  async function saveRecord(record){
+    try{ if(window.db && typeof window.db.saveRecord==='function'){ await window.db.saveRecord(record); return true; }
+         if(window.db && typeof window.db.addRecord==='function'){ await window.db.addRecord(record); return true; } }catch(e){ console.warn('[workday] db save error', e); }
+    try{ const key='workRecords'; const raw=localStorage.getItem(key); const arr=raw?JSON.parse(raw):[]; if(Array.isArray(arr)){ arr.push(record); localStorage.setItem(key, JSON.stringify(arr)); return true; } }catch(e){ console.warn('[workday] ls save error', e); }
+    try{ const fb=window.firebase||window._firebase||null; if(fb && typeof fb.firestore==='function' && fb.auth){ const uid=fb.auth().currentUser && fb.auth().currentUser.uid; if(uid){ const fs=fb.firestore(); await fs.collection(`users/${uid}/records`).add(record); return true; } } }catch(e){ console.warn('[workday] fs save error', e); }
+    return false;
+  }
 
-// Folyamatban lévő műszak elvetése
-function discardShift() {
-    showCustomAlert(translations[currentLang].alertConfirmDelete, 'warning', () => {
-        localStorage.removeItem('inProgressEntry');
-        inProgressEntry = null;
-        renderStartTab();
-        renderLiveTabView();
-        updateAllTexts();
-    });
-}
+  function showShiftStartedPopup(shift){
+    const prev=document.getElementById('shift-start-modal'); if(prev) prev.remove();
+    const overlay=document.createElement('div'); overlay.id='shift-start-modal'; overlay.setAttribute('role','dialog');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:10000;';
+    const card=document.createElement('div'); card.style.cssText='background:#fff;color:#111;padding:16px 18px;border-radius:12px;width:min(90vw,420px);box-shadow:0 10px 30px rgba(0,0,0,.3);text-align:center;';
+    const icon=document.createElement('div'); icon.textContent='✅'; icon.style.cssText='font-size:30px;line-height:1;';
+    const title=document.createElement('div'); title.textContent='Műszak elindítva'; title.style.cssText='font-size:18px;font-weight:600;margin-top:6px;';
+    const sub=document.createElement('div'); const extra=shift.startLocation?` • ${shift.startLocation}`:''; sub.textContent=`${shift.date} • ${shift.startTime}${extra}`; sub.style.cssText='margin-top:6px;opacity:.8;font-size:14px;';
+    const ok=document.createElement('button'); ok.textContent='OK'; ok.style.cssText='margin-top:12px;padding:8px 14px;border:0;background:#2563eb;color:#fff;border-radius:10px;font-weight:600;cursor:pointer;';
+    function close(){ overlay.remove(); }
+    ok.addEventListener('click', close); overlay.addEventListener('click', e=>{ if(e.target===overlay) close(); });
+    card.append(icon,title,sub,ok); overlay.appendChild(card); document.body.appendChild(overlay);
+    setTimeout(()=>{ try{ close(); }catch{} }, 2500);
+  }
 
-// A teljes munkanap bejegyzés mentése
-async function saveEntry() {
-    const i18n = translations[currentLang];
-    const recordData = {
-        date: document.getElementById('date').value,
-        startTime: document.getElementById('startTime').value,
-        endTime: document.getElementById('endTime').value,
-        startLocation: document.getElementById('startLocation').value.trim(),
-        endLocation: document.getElementById('endLocation').value.trim(),
-        weeklyDriveStartStr: document.getElementById('weeklyDriveStart').value.trim(),
-        weeklyDriveEndStr: document.getElementById('weeklyDriveEnd').value.trim(),
-        kmStart: parseFloat(document.getElementById('kmStart').value) || 0,
-        kmEnd: parseFloat(document.getElementById('kmEnd').value) || 0,
-        compensationTime: document.getElementById('compensationTime').value.trim(),
-        isSplitRest: document.getElementById('toggleSplitRest').checked,
-        crossings: Array.from(document.querySelectorAll('#crossingsContainer .border-t')).map(row => ({
-            from: row.querySelector(`input[id^="crossFrom-"]`).value.trim().toUpperCase(),
-            to: row.querySelector(`input[id^="crossTo-"]`).value.trim().toUpperCase(),
-            time: row.querySelector(`input[id^="crossTime-"]`).value
-        })).filter(c => c.from && c.to && c.time)
-    };
+  function toast(msg){ try{ const el=document.createElement('div'); el.textContent=msg; el.style.position='fixed'; el.style.left='50%'; el.style.transform='translateX(-50%)'; el.style.bottom='16px'; el.style.background='rgba(0,0,0,.8)'; el.style.color='#fff'; el.style.padding='8px 12px'; el.style.borderRadius='8px'; el.style.zIndex=9999; document.body.appendChild(el); setTimeout(()=>el.remove(),2200);}catch{} }
 
-    if (!recordData.date || !recordData.startTime || !recordData.endTime) {
-        showCustomAlert(i18n.alertMandatoryFields, 'info');
-        return;
-    }
+  async function startShift(opts={}){
+    if(activeShift || window.activeShift){ console.warn('[workday] Már van aktív műszak.'); return; }
+    const t=now();
+    const shift={ id:`${Date.now()}-${Math.random().toString(36).slice(2)}`, date:fmtDateISO(t), startTime:fmtTimeHM(t), endTime:'',
+      startLocation:safeStr(opts.startLocation||''), endLocation:'', crossings:Array.isArray(opts.crossings)?opts.crossings:[],
+      nightWorkMinutes:0, workMinutes:0, meta:safeObj(opts.meta) };
+    activeShift=shift; window.activeShift=shift;
+    updateUIState(true);
+    try{ showShiftStartedPopup(shift);}catch{ toast('Műszak elindítva.'); }
+    notifyRecordsUpdated('start', shift);
+    console.log('[workday] Műszak indult:', shift);
+  }
 
-    const endDateTime = new Date(`${recordData.date}T${recordData.endTime}`);
-    let startDateTime = new Date(`${recordData.date}T${recordData.startTime}`);
-    if (endDateTime < startDateTime) {
-        startDateTime.setDate(startDateTime.getDate() - 1);
-    }
-    const isDateRollover = startDateTime.getDay() === 0 && endDateTime.getDay() === 1;
+  async function finalizeShift(shiftArg){
+    if(isFinishing) return; isFinishing=true;
+    const btn=document.getElementById('finishShiftBtn'); if(btn) btn.disabled=true;
+    try{
+      const base=(shiftArg && typeof shiftArg==='object')?shiftArg:(activeShift||window.activeShift);
+      if(!base){ console.warn('[workday] finalizeShift aktív műszak nélkül'); alert('Nincs aktív műszak a lezáráshoz.'); return; }
+      const meta=safeObj(base.meta); const _k=Object.keys(meta);
+      const t=now();
+      const finished={ id:safeStr(base.id)||`${Date.now()}-${Math.random().toString(36).slice(2)}`, date:safeStr(base.date)||fmtDateISO(t),
+        startTime:safeStr(base.startTime), endTime:safeStr(base.endTime)||fmtTimeHM(t),
+        startLocation:safeStr(base.startLocation), endLocation:safeStr(base.endLocation)||safeStr(meta.lastKnownEndLocation||''),
+        crossings:Array.isArray(base.crossings)?base.crossings:[], nightWorkMinutes:Number(base.nightWorkMinutes||0),
+        workMinutes:Number(base.workMinutes||0), meta };
+      if(!finished.workMinutes || finished.workMinutes<=0){ const m=diffMinutes(finished.startTime, finished.endTime); if(m>0 && m<1440) finished.workMinutes=m; }
+      const ok=await saveRecord(finished);
+      if(!ok){ alert('Nem sikerült a mentés. Próbáld újra, vagy ellenőrizd az internetkapcsolatot.'); return; }
+      notifyRecordsUpdated('finalize', finished);
+      console.log('[workday] Műszak lezárva és mentve:', finished);
+      activeShift=null; if(window.activeShift) delete window.activeShift;
+      updateUIState(false); toast('Műszak lezárva.');
+    }catch(e){ console.error('[workday] finalizeShift hiba:', e); alert('Hiba történt a lezárás során: '+e.message); }
+    finally{ isFinishing=false; if(btn) btn.disabled=false; }
+  }
 
-    const finalizeSave = async (driveMinutes) => {
-        const compensationMinutes = parseTimeToMinutes(recordData.compensationTime) || 0;
-        const grossWorkMinutes = calculateWorkMinutes(recordData.startTime, recordData.endTime);
+  function cancelShift(){
+    if(!activeShift && !window.activeShift) return;
+    activeShift=null; if(window.activeShift) delete window.activeShift;
+    updateUIState(false); notifyRecordsUpdated('cancel'); toast('Műszak megszakítva.');
+  }
 
-        const newRecord = {
-            ...recordData,
-            id: editingId || String(Date.now()),
-            workMinutes: Math.max(0, grossWorkMinutes - compensationMinutes),
-            compensationMinutes: compensationMinutes,
-            nightWorkMinutes: calculateNightWorkMinutes(recordData.startTime, recordData.endTime),
-            driveMinutes: driveMinutes,
-            kmDriven: Math.max(0, recordData.kmEnd - recordData.kmStart)
-        };
-        
-        const splitData = getSplitRestData();
-        if (newRecord.isSplitRest) {
-            splitData[newRecord.id] = true;
-        } else {
-            delete splitData[newRecord.id];
-        }
-        saveSplitRestData(splitData);
+  function updateUIState(running){
+    const startBtn=document.getElementById('startShiftBtn');
+    const finishBtn=document.getElementById('finishShiftBtn');
+    const cancelBtn=document.getElementById('cancelShiftBtn');
+    if(startBtn) startBtn.disabled=!!running;
+    if(finishBtn) finishBtn.disabled=!running;
+    if(cancelBtn) cancelBtn.disabled=!running;
+    const badge=document.getElementById('shiftStatus');
+    if(badge){ badge.textContent=running?'Folyamatban':'Nincs aktív műszak'; badge.classList.toggle('text-green-600', !!running); badge.classList.toggle('text-gray-500', !running); }
+  }
 
-        await saveWorkRecord(newRecord);
-        showCustomAlert(i18n.alertSaveSuccess, 'success', () => {
-            if (inProgressEntry && editingId === null) {
-                localStorage.removeItem('inProgressEntry');
-                inProgressEntry = null;
-            }
-            editingId = null;
-            showTab('list');
-        });
-    };
+  function bindDefaultButtons(){
+    const startBtn=document.getElementById('startShiftBtn');
+    const finishBtn=document.getElementById('finishShiftBtn');
+    const cancelBtn=document.getElementById('cancelShiftBtn');
+    if(startBtn && !startBtn.__bound){ startBtn.addEventListener('click', ()=>startShift(), {passive:true}); startBtn.__bound=true; }
+    if(finishBtn && !finishBtn.__bound){ finishBtn.addEventListener('click', ()=>finalizeShift(), {passive:true}); finishBtn.__bound=true; }
+    if(cancelBtn && !cancelBtn.__bound){ cancelBtn.addEventListener('click', ()=>cancelShift(), {passive:true}); cancelBtn.__bound=true; }
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', bindDefaultButtons); } else { bindDefaultButtons(); }
 
-    if (isDateRollover) {
-        const tachoIcon = `<svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
-        showCustomPrompt(i18n.alertRolloverTitle, i18n.alertRolloverPrompt, i18n.alertRolloverPlaceholder, tachoIcon, async (driveTimeInput) => {
-            if (driveTimeInput) {
-                const manualMinutes = parseTimeToMinutes(driveTimeInput);
-                if (manualMinutes >= 0) {
-                    await finalizeSave(manualMinutes);
-                }
-            }
-        });
-    } else {
-        if (recordData.kmEnd > 0 && recordData.kmEnd < recordData.kmStart) {
-            showCustomAlert(i18n.alertKmEndLower, 'info');
-            return;
-        }
-        if (parseTimeToMinutes(recordData.weeklyDriveEndStr) > 0 && parseTimeToMinutes(recordData.weeklyDriveEndStr) < parseTimeToMinutes(recordData.weeklyDriveStartStr)) {
-            showCustomAlert(i18n.alertWeeklyDriveEndLower, 'info');
-            return;
-        }
-
-        const calculatedDriveMinutes = Math.max(0, parseTimeToMinutes(recordData.weeklyDriveEndStr) - parseTimeToMinutes(recordData.weeklyDriveStartStr));
-        
-        if (calculatedDriveMinutes === 0 || (recordData.kmEnd > 0 && recordData.kmEnd - recordData.kmStart === 0)) {
-            showCustomAlert(i18n.alertConfirmZeroValues, 'warning', async () => {
-                await finalizeSave(calculatedDriveMinutes);
-            });
-        } else {
-            await finalizeSave(calculatedDriveMinutes);
-        }
-    }
-}
-
-// Új határátlépés sor hozzáadása a "Teljes nap" űrlaphoz
-function addCrossingRow(from = '', to = '', time = '') {
-    const i18n = translations[currentLang];
-    const container = document.getElementById('crossingsContainer');
-    const lastToInput = container.querySelector('input[id^="crossTo-"]:last-of-type');
-    const newFrom = from || (lastToInput ? lastToInput.value.toUpperCase() : '');
-    const index = Date.now();
-    const newRow = document.createElement('div');
-    newRow.className = 'border-t pt-3 mt-2 space-y-2';
-    newRow.innerHTML = `<div class="grid grid-cols-2 gap-2"><div><input type="text" id="crossFrom-${index}" value="${newFrom}" placeholder="${i18n.fromPlaceholder}" class="w-full p-2 border rounded text-sm uppercase"></div><div><div class="flex"><input type="text" id="crossTo-${index}" value="${to}" placeholder="${i18n.toPlaceholder}" class="w-full p-2 border rounded-l text-sm uppercase"><button type="button" onclick="fetchCountryCodeFor('crossTo-${index}')" class="bg-blue-500 text-white p-2 rounded-r text-xs" title="${i18n.getCountryCodeGPS}">📍</button></div></div></div><div class="grid grid-cols-2 gap-2"><input type="time" id="crossTime-${index}" value="${time}" onblur="formatTimeInput(this)" class="w-full p-2 border rounded text-sm"><button onclick="this.closest('.border-t').remove()" class="bg-red-500 text-white p-2 rounded text-sm hover:bg-red-600">${i18n.delete}</button></div>`;
-    container.appendChild(newRow);
-}
-
-// "Teljes nap" űrlap alaphelyzetbe állítása
-function resetEntryForm() {
-    ['date', 'startTime', 'endTime', 'startLocation', 'endLocation', 'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd', 'compensationTime'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    const splitRestToggle = document.getElementById('toggleSplitRest');
-    if(splitRestToggle) {
-        splitRestToggle.checked = false;
-        updateEnhancedToggleVisuals(splitRestToggle); // ENHANCED: Új vizuális kezelés
-    }
-    document.getElementById('crossingsContainer').innerHTML = '';
-    editingId = null;
-    updateDisplays();
-}
-
-// Utolsó mentett értékek betöltése az űrlapba
-function loadLastValues(forLiveForm = false) {
-    const lastRecord = getLatestRecord();
-    const now = new Date();
-    if (forLiveForm) {
-        document.getElementById('liveStartDate').value = now.toISOString().split('T')[0];
-        document.getElementById('liveStartTime').value = now.toTimeString().slice(0, 5);
-        if (lastRecord) {
-            document.getElementById('liveStartLocation').value = lastRecord.endLocation || '';
-            document.getElementById('liveWeeklyDriveStart').value = lastRecord.weeklyDriveEndStr || '';
-            document.getElementById('liveStartKm').value = lastRecord.kmEnd || '';
-        } else {
-             document.getElementById('liveStartLocation').value = '';
-             document.getElementById('liveWeeklyDriveStart').value = '';
-             document.getElementById('liveStartKm').value = '';
-        }
-    } else {
-        document.getElementById('date').value = now.toISOString().split('T')[0];
-        if (lastRecord) {
-            document.getElementById('weeklyDriveStart').value = lastRecord.weeklyDriveEndStr || '';
-            document.getElementById('kmStart').value = lastRecord.kmEnd || '';
-            document.getElementById('startLocation').value = lastRecord.endLocation || '';
-        }
-    }
-}
+  const api={ startShift, finalizeShift, cancelShift };
+  if(typeof window!=='undefined'){ window.startShift=window.startShift||startShift; window.finalizeShift=finalizeShift; window.cancelShift=window.cancelShift||cancelShift; window.workday=Object.assign(window.workday||{}, api); }
+})();
