@@ -21,21 +21,24 @@ function getTachographStatus() {
     let reducedRestsInCycle = 0;
     for (let i = recordsSorted.length - 1; i > 0; i--) {
         const previousRecord = recordsSorted[i - 1];
-        const currentRecord = recordsSorted[i];
-        
         const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
-        const currentStart = new Date(`${currentRecord.date}T${currentRecord.startTime}`);
+        const currentStart = new Date(`${recordsSorted[i].date}T${recordsSorted[i].startTime}`);
         const restHours = (currentStart - prevEnd) / (1000 * 60 * 60);
 
         if (restHours >= 24) break;
         
         const isSplit = splitData[previousRecord.id] === true || previousRecord.isSplitRest;
 
-        if (restHours >= 9 && restHours < 11 && !isSplit) {
+        if ((restHours >= 9 && restHours < 11 && !isSplit) || (previousRecord.workMinutes > 13 * 60 && !isSplit)) {
             reducedRestsInCycle++;
         }
     }
-    const remainingRests9h = Math.max(0, 3 - reducedRestsInCycle);
+    let remainingRests9h = Math.max(0, 3 - reducedRestsInCycle);
+    
+    // Figyelembe vesszük az ideiglenes jelzőt a frissen indított műszakhoz
+    const pendingUsage = parseInt(localStorage.getItem('pendingReducedRestUsage') || '0', 10);
+    remainingRests9h -= pendingUsage;
+
 
     // 2. Vezetési idők (56h / 90h)
     const currentWeekDriveMinutes = recordsInWeek.reduce((sum, r) => sum + (r.driveMinutes || 0), 0);
@@ -69,17 +72,13 @@ function getTachographStatus() {
 
     return {
         remainingDrives10h,
-        remainingRests9h,
+        remainingRests9h: Math.max(0, remainingRests9h),
         currentWeekDriveMinutes,
         twoWeekDriveMinutes,
         weeklyRestDeadline
     };
 }
 
-
-/**
- * Kirajzolja a teljes, egységes "Heti Státusz" kártyát.
- */
 function renderTachographStatusCard() {
     const i18n = translations[currentLang];
     const liveContainer = document.getElementById('live-allowance-display');
@@ -218,9 +217,6 @@ function handleTachographToggle(checkbox, recordId) {
     renderTachographStatusCard();
 }
 
-/**
- * VISSZAÁLLÍTOTT FUNKCIÓ: A részletes, napokra bontott elemzés kirajzolása.
- */
 function renderTachographAnalysis() {
     const i18n = translations[currentLang];
     const container = document.getElementById('tachograph-list');
@@ -334,7 +330,6 @@ function renderTachographAnalysis() {
         </div>`;
     }).join('');
 }
-
 
 function getSplitRestData() { return JSON.parse(localStorage.getItem('splitRestData') || '{}'); }
 function saveSplitRestData(data) { localStorage.setItem('splitRestData', JSON.stringify(data)); }
