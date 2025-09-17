@@ -24,7 +24,8 @@
   }
 
   /**
-   * Összegyűjti az összes releváns tachográf adatot a jelenlegi állapotról.
+   * JAVÍTOTT getTachographStatus függvény
+   * Most már figyelembe veszi a pending (függőben lévő) csökkentett pihenő használatot is
    */
   function getTachographStatus() {
       const recordsSorted = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
@@ -37,6 +38,8 @@
       const remainingDrives10h = Math.max(0, 2 - extendedDrivesThisWeek);
 
       let reducedRestsInCycle = 0;
+      
+      // Végigmegyünk a korábban lezárt napok pihenőidein
       for (let i = recordsSorted.length - 1; i > 0; i--) {
           const previousRecord = recordsSorted[i - 1];
           const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
@@ -49,10 +52,13 @@
               reducedRestsInCycle++;
           }
       }
-      let remainingRests9h = Math.max(0, 3 - reducedRestsInCycle);
-      
+
+      // *** ÚJ RÉSZ: Pending (függőben lévő) pihenő használat figyelembevétele ***
       const pendingUsage = parseInt(localStorage.getItem('pendingReducedRestUsage') || '0', 10);
-      remainingRests9h -= pendingUsage;
+      
+      // *** JAVÍTOTT LOGIKA: Az összes reduced rest számát korábban már kiszámoltuk, 
+      // most csak hozzáadjuk a pending értéket ***
+      let remainingRests9h = Math.max(0, 3 - reducedRestsInCycle - pendingUsage);
 
       const currentWeekDriveMinutes = recordsInWeek.reduce((sum, r) => sum + (r.driveMinutes || 0), 0);
       const { start: lastWeekStart, end: lastWeekEnd } = getWeekRange(now, -1);
@@ -323,11 +329,37 @@
   function getSplitRestData() { return JSON.parse(localStorage.getItem('splitRestData') || '{}'); }
   function saveSplitRestData(data) { localStorage.setItem('splitRestData', JSON.stringify(data)); }
 
+  /**
+   * DEBUG SEGÉDFÜGGVÉNY
+   * Konzolra írja a jelenlegi pihenő státuszt
+   */
+  function debugTachoStatus() {
+      const pending = localStorage.getItem('pendingReducedRestUsage') || '0';
+      const status = getTachographStatus();
+      console.log('=== TACHOGRÁF DEBUG ===');
+      console.log('Pending reduced rest usage:', pending);
+      console.log('Remaining 9h rests:', status.remainingRests9h);
+      console.log('Remaining 10h drives:', status.remainingDrives10h);
+      console.log('=======================');
+  }
+
+  /**
+   * TESZTELÉSI SEGÉDFÜGGVÉNY
+   * Manuálisan beállíthatod a pending értéket teszteléshez
+   */
+  function setPendingReducedRest(value) {
+      localStorage.setItem('pendingReducedRestUsage', String(value));
+      renderTachographStatusCard();
+      console.log(`Pending reduced rest set to: ${value}`);
+  }
+
   // Globálisan elérhetővé tesszük a szükséges függvényeket
   window.isReducedDailyRest = isReducedDailyRest;
   window.renderTachographStatusCard = renderTachographStatusCard;
   window.renderTachoHelperCards = renderTachoHelperCards;
   window.renderTachographAnalysis = renderTachographAnalysis;
   window.handleTachographToggle = handleTachographToggle;
+  window.debugTachoStatus = debugTachoStatus;
+  window.setPendingReducedRest = setPendingReducedRest;
 
 })();
