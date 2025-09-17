@@ -130,7 +130,6 @@ function discardShift() {
     if (!activeShift) return;
 
     const i18n = translations[currentLang];
-    // A fordítási kulcs a 'discardWorkday', adjunk hozzá egy kérdőjelet
     showCustomAlert(`${i18n.discardWorkday}?`, 'warning', () => {
         activeShift = null;
         localStorage.removeItem('activeShift');
@@ -141,12 +140,14 @@ function discardShift() {
 
 
 /**
- * Alaphelyzetbe állítja a "Teljes nap" fülön található űrlapot.
+ * Alaphelyzetbe állítja a "Teljes nap" fülön található űrlapot egy új bejegyzéshez.
  */
 function resetEntryForm() {
     editingId = null;
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
-    document.getElementById('startTime').value = '';
+    
+    // Az űrlap mezőinek kiürítése vagy alapértelmezett értékre állítása
+    document.getElementById('date').value = new Date().toISOString().split('T')[0]; // Dátumot beállítjuk mára
+    document.getElementById('startTime').value = ''; // Időt üresen hagyjuk
     document.getElementById('endTime').value = '';
     document.getElementById('compensationTime').value = '';
     document.getElementById('startLocation').value = '';
@@ -255,38 +256,38 @@ function getLatestRecord() {
 
 /**
  * Betölti az utolsó bejegyzés záró adatait az új bejegyzés űrlapjába.
- * @param {boolean} isLive - Ha true, a 'live' prefixű mezőket tölti ki (Indítás fül).
+ * @param {boolean} isLive - Ha true, az 'Indítás' fül mezőit tölti ki.
  */
 function loadLastValues(isLive = false) {
     const latestRecord = getLatestRecord();
-    if (!latestRecord) return;
-
-    const prefix = isLive ? 'live' : '';
-    const startLocationInput = document.getElementById(`${prefix}StartLocation`);
-    if (startLocationInput && latestRecord.endLocation) {
-        startLocationInput.value = latestRecord.endLocation;
-    }
-
-    const kmStartInput = document.getElementById(isLive ? 'liveStartKm' : 'kmStart');
-    if (kmStartInput && latestRecord.kmEnd > 0) {
-        kmStartInput.value = latestRecord.kmEnd;
-    }
-
-    const weeklyDriveInput = document.getElementById(isLive ? 'liveWeeklyDriveStart' : 'weeklyDriveStart');
-    if (weeklyDriveInput && latestRecord.weeklyDriveEnd) {
-        weeklyDriveInput.value = latestRecord.weeklyDriveEnd;
-    }
+    if (!latestRecord) return; // Ha nincs még bejegyzés, nincs mit tenni.
 
     if (isLive) {
-        const dateInput = document.getElementById('liveStartDate');
-        const timeInput = document.getElementById('liveStartTime');
+        // --- "INDÍTÁS" FÜL LOGIKÁJA ---
         const now = new Date();
-        if (dateInput) {
-            dateInput.value = now.toISOString().split('T')[0];
+        document.getElementById('liveStartDate').value = now.toISOString().split('T')[0];
+        document.getElementById('liveStartTime').value = now.toTimeString().slice(0, 5);
+        if (latestRecord.endLocation) {
+            document.getElementById('liveStartLocation').value = latestRecord.endLocation;
         }
-        if (timeInput) {
-            timeInput.value = now.toTimeString().slice(0, 5);
+        if (latestRecord.kmEnd) {
+            document.getElementById('liveStartKm').value = latestRecord.kmEnd;
         }
+        if (latestRecord.weeklyDriveEnd) {
+            document.getElementById('liveWeeklyDriveStart').value = latestRecord.weeklyDriveEnd;
+        }
+    } else {
+        // --- "TELJES NAP" FÜL LOGIKÁJA ---
+        if (latestRecord.endLocation) {
+            document.getElementById('startLocation').value = latestRecord.endLocation;
+        }
+        if (latestRecord.kmEnd) {
+            document.getElementById('kmStart').value = latestRecord.kmEnd;
+        }
+        if (latestRecord.weeklyDriveEnd) {
+            document.getElementById('weeklyDriveStart').value = latestRecord.weeklyDriveEnd;
+        }
+        // A kezdési időt itt szándékosan nem töltjük ki, mert azt a felhasználónak kell megadnia.
     }
 }
 
