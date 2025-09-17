@@ -15,8 +15,8 @@
       window.SENTRY_OPTIONS = { release: "9.00" };
     </script>
 <script crossorigin="anonymous" src="https://js-de.sentry-cdn.com/fbd6c74b8f2150cffb3f052ed6e84740.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 <link href="assets/css/main.css" rel="stylesheet"/>
 </meta></head>
 <body class="bg-gray-100 dark:bg-gray-900">
@@ -425,23 +425,11 @@
 </div>
 </div>
 </div>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-analytics.js"></script>
-<script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyDGgG3y0ppl4639bzjzKA7Yq8BmSkhR-LU",
-        authDomain: "munkaido-3cc44.firebaseapp.com",
-        projectId: "munkaido-3cc44",
-        storageBucket: "munkaido-3cc44.firebasestorage.app",
-        messagingSenderId: "706081294435",
-        appId: "1:706081294435:web:c8ae57cbe45477de415056",
-        measurementId: "G-7XKCPHZNN2"
-      };
-      firebase.initializeApp(firebaseConfig);
-      firebase.analytics();
-    </script>
+
+
+
+
+
 
 
 
@@ -494,6 +482,9 @@
     firebase.initializeApp(firebaseConfig);
     firebase.analytics();
 </script>
+<script src="js/services/database.js"></script>
+<script src="js/services/pwa.js"></script>
+
 
 <!-- Service Worker -->
 <script>
@@ -517,9 +508,6 @@
 <script src="js/ui/appInfoFooter.js"></script>
 
 <!-- Szolgáltatások -->
-<script src="js/services/database.js"></script>
-<script src="js/services/pwa.js"></script>
-
 <!-- Alapvető funkciók -->
 <script src="js/features/workday.js"></script>
 
