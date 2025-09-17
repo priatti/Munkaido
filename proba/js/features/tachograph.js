@@ -328,5 +328,6 @@
   // Globálisan elérhetővé tesszük a szükséges függvényeket
   window.isReducedDailyRest = isReducedDailyRest;
   window.renderTachographStatusCard = renderTachographStatusCard;
+  window.renderTachoHelperCards = renderTachoHelperCards;
 
 })();
