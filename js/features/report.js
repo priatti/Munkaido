@@ -1,4 +1,4 @@
-// report.js — VÉGLEGES, NÉMET FORMÁTUMÚ PDF GENERÁLÓ
+// report.js — JAVÍTOTT, TELJES VERZIÓ
 (function () {
   'use-strict';
 
@@ -33,9 +33,15 @@
     return arr.filter(r => r.date && r.date.startsWith(ym));
   }
 
-  /**
-   * Speciális német formátum: "11 25p"
-   */
+  function formatDuration(minutes) {
+    if (typeof window.formatDuration === 'function') {
+        return window.formatDuration(minutes);
+    }
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes % 60);
+    return `${h}ó ${m}p`;
+  }
+
   function formatDurationGerman(minutes) {
     if (minutes === null || typeof minutes === 'undefined' || minutes < 0) minutes = 0;
     const h = Math.floor(minutes / 60);
@@ -44,8 +50,62 @@
   }
 
 
-  // === PDF GENERÁLÓ LOGIKA ===
+  // === FŐ FUNKCIÓK ===
 
+  /**
+   * Kirajzolja a havi riportot HTML táblázatként a felületre.
+   * @param {Array} monthRecords - A kiválasztott hónap bejegyzései
+   */
+  function renderMonthlyReport(monthRecords) {
+    const container = document.getElementById('monthlyReportContent');
+    if (!container) return;
+
+    const pdfBtn = document.getElementById('pdfExportBtn');
+    const shareBtn = document.getElementById('pdfShareBtn');
+
+    if (!monthRecords || monthRecords.length === 0) {
+      container.innerHTML = `<p class="text-center text-gray-500 py-4">${t('noEntries')}</p>`;
+      if (pdfBtn) pdfBtn.classList.add('hidden');
+      if (shareBtn) shareBtn.classList.add('hidden');
+      return;
+    }
+
+    monthRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    let tableHtml = `
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+          <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
+            <tr>
+              <th scope="col" class="py-3 px-4">${t('date')}</th>
+              <th scope="col" class="py-3 px-4">${t('entryWorkTime')}</th>
+              <th scope="col" class="py-3 px-4">${t('entryDriveTime')}</th>
+              <th scope="col" class="py-3 px-4">${t('entryDistance')}</th>
+              <th scope="col" class="py-3 px-4">${t('entryDeparture')} / ${t('entryArrival')}</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    monthRecords.forEach(r => {
+      tableHtml += `
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+          <td class="py-4 px-4 font-semibold">${r.date}</td>
+          <td class="py-4 px-4">${formatDuration(r.workMinutes)}</td>
+          <td class="py-4 px-4">${formatDuration(r.driveMinutes)}</td>
+          <td class="py-4 px-4">${r.kmDriven} km</td>
+          <td class="py-4 px-4 text-xs">${r.startTime} (${r.startLocation || 'N/A'})<br>${r.endTime} (${r.endLocation || 'N/A'})</td>
+        </tr>
+      `;
+    });
+
+    tableHtml += '</tbody></table></div>';
+    container.innerHTML = tableHtml;
+
+    if (pdfBtn) pdfBtn.classList.remove('hidden');
+    if (shareBtn) shareBtn.classList.remove('hidden');
+  }
+  
   /**
    * Létrehoz egy PDF dokumentumot a szigorú német formátum alapján.
    * @param {string} action - 'save' (mentés) vagy 'share' (megosztás)
@@ -67,9 +127,8 @@
 
       const selectedYm = getSelectedYearMonth();
       const year = parseInt(selectedYm.slice(0, 4), 10);
-      const monthIndex = parseInt(selectedYm.slice(5, 7), 10) - 1; // 0-based index
+      const monthIndex = parseInt(selectedYm.slice(5, 7), 10) - 1;
 
-      // --- 1. Fejléc ---
       doc.setFont(undefined, 'bold');
       doc.setFontSize(16);
       doc.text('ARBEITSZEITNACHWEIS', 105, 15, { align: 'center' });
@@ -78,21 +137,10 @@
       doc.text(`${germanMonths[monthIndex]} ${year}`, 105, 22, { align: 'center' });
       doc.text(userName, 105, 29, { align: 'center' });
 
-      // --- 2. Táblázat ---
       let y = 40;
       const pageBottom = 280;
-      const xPos = {
-        datum: 14,
-        beginn: 38,
-        ort1: 52,
-        ende: 80,
-        ort2: 94,
-        grenz: 125,
-        arbeit: 168,
-        nacht: 188
-      };
+      const xPos = { datum: 14, beginn: 38, ort1: 52, ende: 80, ort2: 94, grenz: 125, arbeit: 168, nacht: 188 };
 
-      // Táblázat fejléc kirajzolása
       function drawTableHeader() {
         doc.setFont(undefined, 'bold');
         doc.setFontSize(9);
@@ -109,7 +157,6 @@
         doc.line(14, y, 200, y);
         y += 6;
       }
-
       drawTableHeader();
 
       const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
@@ -125,7 +172,7 @@
         const crossingsText = (record && record.crossings && record.crossings.length > 0)
           ? record.crossings.map(c => `${c.from}-${c.to} (${c.time})`).join('\n')
           : '';
-        const crossingsLines = doc.splitTextToSize(crossingsText, 30); // Szöveg tördelése
+        const crossingsLines = doc.splitTextToSize(crossingsText, 30);
         const rowHeight = Math.max(10, crossingsLines.length * 4 + 2);
 
         if (y + rowHeight > pageBottom) {
@@ -152,8 +199,7 @@
         doc.line(14, y - 2, 200, y - 2);
       }
 
-      // --- 3. Összesítés ---
-      y += 5; // Térköz az összesítés előtt
+      y += 5;
        if (y > pageBottom - 20) {
           doc.addPage();
           y = 20;
@@ -166,7 +212,6 @@
       y += 5;
       doc.text(`Gesamt Nachtzeit: ${formatDurationGerman(totalNightMinutes)}`, 14, y);
 
-      // --- 4. Mentés vagy Megosztás ---
       const fileName = `Arbeitszeitnachweis_${userName.replace(/ /g, '_')}_${selectedYm}.pdf`;
 
       if (action === 'save') {
@@ -179,7 +224,6 @@
           showCustomAlert(t('alertShareNotSupported'), 'info');
         }
       }
-
     } catch (error) {
       console.error("PDF generálási hiba:", error);
       showCustomAlert(`${t('errorPdfGeneration')} ${error.message}`, 'info');
@@ -188,10 +232,19 @@
 
   // === ESEMÉNYKEZELŐK ÉS INICIALIZÁLÁS ===
   function generateMonthlyReport() {
-    const all = getAllRecords();
-    const selectedYm = getSelectedYearMonth();
-    currentMonthRecords = filterMonthly(all, selectedYm);
-    renderMonthlyReport(currentMonthRecords); // Ez csak a HTML nézetet frissíti
+    try {
+      const all = getAllRecords();
+      const selectedYm = getSelectedYearMonth();
+      currentMonthRecords = filterMonthly(all, selectedYm);
+      
+      renderMonthlyReport(currentMonthRecords);
+
+      console.info('[REPORT_V9] összesen:', all.length, '— hónap:', currentMonthRecords.length, 'ym:', selectedYm);
+    } catch (e) {
+      console.error('[REPORT_V9] hiba:', e);
+      const container = document.getElementById('monthlyReportContent');
+      if (container) container.innerHTML = `<p class="text-center text-red-500 py-4">Hiba történt a riport generálása közben.</p>`;
+    }
   }
   
   function initMonthlyReport() {
@@ -216,15 +269,4 @@
   window.exportToPDF = () => generatePDF('save');
   window.sharePDF = () => generatePDF('share');
 
-  // Segédfüggvény a `formatDuration`-höz, ha a HTML nézethez kell
-  if (typeof window.formatDuration !== 'function') {
-    window.formatDuration = function(minutes) {
-      var h = Math.floor(minutes / 60);
-      var m = Math.round(minutes % 60);
-      var lang = (typeof currentLang !== 'undefined' && currentLang === 'de') ? 'de' : 'hu';
-      var h_unit = lang === 'de' ? 'Std' : 'ó';
-      var m_unit = lang === 'de' ? 'Min' : 'p';
-      return `${h}${h_unit} ${m}${m_unit}`;
-    }
-  }
 })();
