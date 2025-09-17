@@ -91,6 +91,9 @@
       };
   }
 
+  /**
+   * Kirajzolja a teljes, egységes "Heti Státusz" kártyát.
+   */
   function renderTachographStatusCard() {
       const i18n = translations[currentLang];
       const liveContainer = document.getElementById('live-allowance-display');
@@ -322,7 +325,8 @@
   function getSplitRestData() { return JSON.parse(localStorage.getItem('splitRestData') || '{}'); }
   function saveSplitRestData(data) { localStorage.setItem('splitRestData', JSON.stringify(data)); }
 
-  // ÚJ SOR: Globálisan elérhetővé tesszük a segédfüggvényt
+  // Globálisan elérhetővé tesszük a szükséges függvényeket
   window.isReducedDailyRest = isReducedDailyRest;
+  window.renderTachographStatusCard = renderTachographStatusCard;
 
 })();
