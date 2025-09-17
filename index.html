@@ -88,7 +88,7 @@
                                 <div>
                                     <div class="flex">
                                         <input type="text" id="liveCrossTo" data-translate-key="toPlaceholder" placeholder="Hova" class="w-full p-2 border rounded-l text-sm uppercase">
-                                        <button onclick="fetchCountryCodeFor('liveCrossTo')" class="bg-blue-500 text-white p-2 rounded-r text-xs" data-translate-key="getCountryCodeGPS" title="Országkód lekérése GPS alapján">📍</button>
+                                        <button onclick="fetchCountryCodeFor('liveCrossTo')" class="bg-blue-500 text-white p-2 rounded-r text-xs" data-translate-key="getCountryCodeGPS">📍</button>
                                     </div>
                                 </div>
                             </div>
@@ -115,7 +115,7 @@
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="relative z-10"><label class="block text-xs mb-1" data-translate-key="startLocation">Kezdés helye</label><input type="text" id="startLocation" class="w-full p-2 border rounded text-sm" data-translate-key="cityPlaceholder" placeholder="Város"></div>
-                        <div class="relative z-10"><label class="block text-xs mb-1" data-translate-key="endLocation">Befejezés helye</label><div class="flex"><input type="text" id="endLocation" class="w-full p-2 border rounded-l text-sm" data-translate-key="cityPlaceholder" placeholder="Város"><button onclick="fetchLocation('endLocation')" class="bg-blue-500 text-white p-2 rounded-r text-xs" data-translate-key="getLocationGPS" title="Helyszín lekérése GPS alapján">📍</button></div></div>
+                        <div class="relative z-10"><label class="block text-xs mb-1" data-translate-key="endLocation">Befejezés helye</label><div class="flex"><input type="text" id="endLocation" class="w-full p-2 border rounded-l text-sm" data-translate-key="cityPlaceholder" placeholder="Város"><button onclick="fetchLocation('endLocation')" class="bg-blue-500 text-white p-2 rounded-r text-xs" data-translate-key="getLocationGPS">📍</button></div></div>
                     </div>
                     <div id="workTimeDisplay" class="text-sm text-green-700 dark:text-green-300"></div><div id="nightWorkDisplay" class="text-sm text-purple-700 dark:text-purple-400"></div>
                 </div>
@@ -387,7 +387,7 @@
                             <label class="block text-sm mb-1" data-translate-key="palletsGivenLabel">Leadott 🚛➡️</label>
                             <input type="number" id="palletGiven" class="w-full p-2 border rounded-md" placeholder="0">
                         </div>
-                        <button id="pallet-1to1-btn" class="p-2 h-10 border rounded-md" data-translate-key="pallets1to1Button" title="Mennyiségek szinkronizálása">1:1</button>
+                        <button id="pallet-1to1-btn" class="p-2 h-10 border rounded-md" data-translate-key="pallets1to1Button">1:1</button>
                         <div>
                             <label class="block text-sm mb-1" data-translate-key="palletsTakenLabel">Felvett 🚛⬅️</label>
                             <input type="number" id="palletTaken" class="w-full p-2 border rounded-md" placeholder="0">
@@ -493,5 +493,76 @@
             });
         }
     </script>
+
+  <!-- Live overview auto-refresh -->
+  <script src="js/features/overview-live-refresh.js"></script>
+
+  <!-- Inline helpers: toast + Teljes munkanap mentése -->
+  <style>
+    #app-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+      background:rgba(17,17,17,.9);color:#fff;padding:12px 16px;border-radius:12px;
+      font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9999;display:none}
+    #app-toast.show{display:block;animation:fadeInOut 2.4s ease both}
+    @keyframes fadeInOut{0%{opacity:0;transform:translate(-50%,10px)}10%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,6px)}}
+  </style>
+  <div id="app-toast" role="status" aria-live="polite"></div>
+  <script>
+    (function(){
+      function showToast(msg){
+        try{
+          var el=document.getElementById('app-toast');
+          if(!el){ return alert(msg); }
+          el.textContent = msg;
+          el.classList.remove('show');
+          void el.offsetWidth;
+          el.classList.add('show');
+          setTimeout(function(){ el.classList.remove('show'); }, 2500);
+        }catch(e){ console.warn(e); }
+      }
+      function pingOverview(){
+        try{
+          window.dispatchEvent(new Event('records:updated'));
+          if('BroadcastChannel' in window){
+            var bc=new BroadcastChannel('munkaido-records');
+            bc.postMessage({type:'records:updated', at: Date.now()});
+          }
+          localStorage.setItem('records_updated_ping', String(Date.now()));
+        }catch(e){}
+      }
+      window.saveEntry = function saveEntry(){
+        var dateEl=document.getElementById('date');
+        var stEl=document.getElementById('startTime');
+        var etEl=document.getElementById('endTime');
+        var slEl=document.getElementById('startLocation');
+        var elEl=document.getElementById('endLocation');
+        if(!dateEl){ return showToast('Hiányzó dátum mező.'); }
+        var date = dateEl.value || new Date().toISOString().slice(0,10);
+        var startTime = (stEl && stEl.value) || '00:00';
+        var endTime   = (etEl && etEl.value) || '23:59';
+        function toMin(t){ var m=(t||'').match(/^(\d{1,2}):(\d{2})$/); if(!m) return 0; return (+m[1])*60+(+m[2]); }
+        var diff = toMin(endTime)-toMin(startTime); if(diff<=0) diff += 1440;
+        var opts = {
+          date: date,
+          startTime: startTime,
+          endTime: endTime,
+          startLocation: slEl?slEl.value:'',
+          endLocation: elEl?elEl.value:'',
+          workMinutes: diff
+        };
+        try{
+          if(window.addFullDay){ window.addFullDay(opts); }
+          else if(window.workday && typeof window.workday.addFullDay==='function'){ window.workday.addFullDay(opts); }
+          else { throw new Error('addFullDay API nem érhető el'); }
+          showToast('Teljes munkanap elmentve.');
+          pingOverview();
+          // opcionálisan visszaugrás az Áttekintésre
+          if(typeof window.showTab === 'function'){ window.showTab('live'); }
+        }catch(e){
+          console.error(e);
+          showToast('Mentés sikertelen: ' + e.message);
+        }
+      };
+    })();
+  </script>
+
 </body>
-</html>
