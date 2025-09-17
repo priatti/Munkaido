@@ -287,7 +287,7 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-checkmark {
 #settings-version, .settings-version, [data-translate-key='settingsVersion']{ display:none !important; }
 
 
-/* ===== BEGIN: proper_modal_css (appended) ===== */
+/* ===== BEGIN: proper_modal_css (round2) ===== */
 /* ===== JAVÍTOTT MODAL STÍLUSOK - PROGRAM ARCULATÁHOZ ===== */
 /* Add ezt a main.css végéhez: */
 
@@ -480,4 +480,4 @@ html.dark #finalize-modal .autocomplete-item:hover {
         transform: scale(1.05);
     }
 }
-/* ===== END: proper_modal_css ===== */
+/* ===== END: proper_modal_css (round2) ===== */

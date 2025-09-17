@@ -1,188 +1,62 @@
-// =======================================================
-// ===== PONTOS PDF RIPORT A MINTA SZERINT ==============
-// =======================================================
+// report.js — v9.1 (ES5-safe)
+(function () {
 
-function generateMonthlyReport() {
-    const i18n = translations[currentLang];
-    const monthSelector = document.getElementById('monthSelector');
-    const selectedMonth = monthSelector ? monthSelector.value : '';
-    
-    if (!selectedMonth) {
-        showCustomAlert('Kérlek válassz egy hónapot!', 'info');
-        return;
-    }
-    
-    // Szűrjük ki a kiválasztott hónaphoz tartozó bejegyzéseket
-    const monthRecords = records.filter(record => {
-        return record.date && record.date.startsWith(selectedMonth);
-    });
-    
-    if (monthRecords.length === 0) {
-        showCustomAlert(i18n.noEntries || 'Nincs bejegyzés a kiválasztott hónapban.', 'info');
-        return;
-    }
-    
-    // Riport tartalom generálása
-    renderMonthlyReportContent(monthRecords, selectedMonth);
-    
-    // PDF gombok megjelenítése
-    const pdfExportBtn = document.getElementById('pdfExportBtn');
-    const pdfShareBtn = document.getElementById('pdfShareBtn');
-    if (pdfExportBtn) pdfExportBtn.classList.remove('hidden');
-    if (pdfShareBtn) pdfShareBtn.classList.remove('hidden');
-    
-    showCustomAlert(i18n.reportPrepared || 'Riport elkészült!', 'success');
-}
+  function formatDurationForPDF(minutes) {
+      if (typeof minutes !== 'number' || minutes < 0) return '00:00';
+      
+      const h = Math.floor(minutes / 60);
+      const m = Math.round(minutes % 60);
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  }
 
-function renderMonthlyReportContent(monthRecords, selectedMonth) {
-    const i18n = translations[currentLang];
-    const container = document.getElementById('monthlyReportContent');
-    const userName = document.getElementById('userNameInput').value || 'N/A';
-    
-    if (!container) return;
-    
-    // Hónap név formázása
-    const [year, month] = selectedMonth.split('-');
-    const monthName = new Date(year, parseInt(month) - 1, 1).toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'hu-HU', { 
-        year: 'numeric', 
-        month: 'long' 
-    });
-    
-    // Összesítő adatok számítása
-    const totals = monthRecords.reduce((acc, record) => {
-        acc.workMinutes += record.workMinutes || 0;
-        acc.driveMinutes += record.driveMinutes || 0;
-        acc.nightWorkMinutes += record.nightWorkMinutes || 0;
-        acc.kmDriven += record.kmDriven || 0;
-        acc.days += 1;
-        return acc;
-    }, { workMinutes: 0, driveMinutes: 0, nightWorkMinutes: 0, kmDriven: 0, days: 0 });
-    
-    // Rendezés dátum szerint
-    const sortedRecords = [...monthRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    container.innerHTML = `
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-4 mb-4">
-            <h3 class="text-xl font-bold text-center mb-4">${currentLang === 'de' ? 'ARBEITSZEITNACHWEIS' : 'MUNKAIDŐ KIMUTATÁS'}</h3>
-            <div class="text-center mb-4">
-                <p class="text-lg font-semibold">${monthName}</p>
-                <p class="text-gray-600 dark:text-gray-400">${userName}</p>
-            </div>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg">
-                <div class="text-center">
-                    <p class="font-bold text-2xl text-blue-600">${totals.days}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Munkanapok</p>
-                </div>
-                <div class="text-center">
-                    <p class="font-bold text-2xl text-green-600">${formatDuration(totals.workMinutes)}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Munkaidő</p>
-                </div>
-                <div class="text-center">
-                    <p class="font-bold text-2xl text-purple-600">${formatDuration(totals.nightWorkMinutes)}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Éjszakai</p>
-                </div>
-                <div class="text-center">
-                    <p class="font-bold text-2xl text-blue-700">${formatDuration(totals.driveMinutes)}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Vezetés</p>
-                </div>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm border-collapse border">
-                    <thead>
-                        <tr class="bg-gray-100 dark:bg-gray-700">
-                            <th class="border p-2 text-left">Datum</th>
-                            <th class="border p-2 text-left">Beginn</th>
-                            <th class="border p-2 text-left">Ort</th>
-                            <th class="border p-2 text-left">Ende</th>
-                            <th class="border p-2 text-left">Ort</th>
-                            <th class="border p-2 text-left">Grenzübergänge</th>
-                            <th class="border p-2 text-right">Arbeit</th>
-                            <th class="border p-2 text-right">Nacht</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${generateMonthTable(sortedRecords, year, month)}
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="mt-4 text-right font-bold">
-                <p>Gesamt Arbeitszeit: ${formatDuration(totals.workMinutes)}</p>
-                <p>Gesamt Nachtzeit: ${formatDuration(totals.nightWorkMinutes)}</p>
-            </div>
-        </div>
-    `;
-}
-
-function generateMonthTable(records, year, month) {
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU';
-    const dayNames = currentLang === 'de' ? 
-        ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'] :
-        ['Vasárnap', 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat'];
-    
-    let html = '';
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${month.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        const dayOfWeek = new Date(dateStr + 'T00:00:00').getDay();
-        const dayName = dayNames[dayOfWeek];
-        
-        const record = records.find(r => r.date === dateStr);
-        
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const rowClass = isWeekend ? 'bg-red-50 dark:bg-red-900/20' : '';
-        
-        html += `<tr class="${rowClass}">`;
-        
-        // Dátum és nap
-        html += `<td class="border p-2 font-semibold">
-            ${day.toString().padStart(2, '0')}.${month.padStart(2, '0')}.<br>
-            <span class="text-xs text-gray-600">${dayName}</span>
-        </td>`;
-        
-        if (record) {
-            // Van bejegyzés
-            const startTime = record.startTime || '-';
-            const endTime = record.endTime || '-';
-            const startLocation = (record.startLocation || '').substring(0, 20);
-            const endLocation = (record.endLocation || '').substring(0, 20);
-            
-            // Határátlépések formázása
-            let crossingsText = '-';
-            if (record.crossings && record.crossings.length > 0) {
-                crossingsText = record.crossings.map(c => `${c.from}-${c.to} (${c.time})`).join('<br>');
-            }
-            
-            html += `
-                <td class="border p-2 text-center">${startTime}</td>
-                <td class="border p-2">${startLocation}</td>
-                <td class="border p-2 text-center">${endTime}</td>
-                <td class="border p-2">${endLocation}</td>
-                <td class="border p-2 text-xs">${crossingsText}</td>
-                <td class="border p-2 text-right font-mono">${formatDuration(record.workMinutes || 0)}</td>
-                <td class="border p-2 text-right font-mono">${formatDuration(record.nightWorkMinutes || 0)}</td>
-            `;
-        } else {
-            // Nincs bejegyzés
-            html += `
-                <td class="border p-2 text-center">-</td>
-                <td class="border p-2">-</td>
-                <td class="border p-2 text-center">-</td>
-                <td class="border p-2">-</td>
-                <td class="border p-2">-</td>
-                <td class="border p-2 text-center">-</td>
-                <td class="border p-2 text-center">-</td>
-            `;
-        }
-        
-        html += '</tr>';
-    }
-    
-    return html;
-}
+  'use strict';
+  function t(key) {
+    var isDe = (typeof currentLang !== 'undefined' && currentLang === 'de') || (document.documentElement.lang === 'de');
+    var dict = {
+      noEntries: isDe ? 'Keine Einträge im gewählten Monat gefunden.' : 'A kiválasztott hónapban nincs bejegyzés.',
+      count:     isDe ? 'Einträge gefunden: ' : 'Találatok száma: ',
+      month:     isDe ? 'Monat' : 'Hónap'
+    };
+    return dict[key] || key;
+  }
+  function getAllRecords() {
+    try {
+      if (typeof records !== 'undefined' && Array.isArray(records) && records.length) return records;
+      if (typeof window !== 'undefined' && Array.isArray(window.records) && window.records.length) return window.records;
+    } catch (e) {}
+    try {
+      var raw = localStorage.getItem('workRecords') || localStorage.getItem('records');
+      if (raw) { var parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed; }
+    } catch (e) {}
+    return [];
+  }
+  function pad2(n){return (n<10?'0':'')+n;}
+  function normalizeYmFromDate(anyDate){
+    if (anyDate && typeof anyDate.getFullYear==='function'){return anyDate.getFullYear()+'-'+pad2(anyDate.getMonth()+1);}
+    var s=String(anyDate||'').trim(); if(!s) return '';
+    var m=s.match(/^\s*(\d{4})\D+(\d{1,2})(?:\D+\d{1,2})?\s*$/); if(m) return m[1]+'-'+pad2(parseInt(m[2],10));
+    m=s.match(/^\s*(\d{4})\.\s*(\d{1,2})\.(?:\s*\d{1,2}\.?)?\s*$/); if(m) return m[1]+'-'+pad2(parseInt(m[2],10));
+    m=s.match(/^\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\s*$/); if(m) return m[3]+'-'+pad2(parseInt(m[2],10));
+    var n=Number(s); if(!isNaN(n) && n>1e9){ var d1=new Date(n); if(!isNaN(d1)) return d1.getFullYear()+'-'+pad2(d1.getMonth()+1); }
+    var d2=new Date(s); if(!isNaN(d2)) return d2.getFullYear()+'-'+pad2(d2.getMonth()+1);
+    return '';
+  }
+  function getSelectedYearMonth(){
+    var el=document.querySelector('#reportMonth, input[type="month"]');
+    var raw=el?(el.value||el.getAttribute('value')||el.textContent||''):'';
+    if(!raw){ var d=new Date(); raw=d.getFullYear()+'-'+pad2(d.getMonth()+1); }
+    var ym=normalizeYmFromDate(raw);
+    if(!ym){ var m=raw.match(/(\d{4}).*?(\d{1,2})/); if(m) ym=m[1]+'-'+pad2(parseInt(m[2],10)); }
+    return {y:ym.slice(0,4), m:ym.slice(5,7), ym:ym};
+  }
+  function pickRecordDate(r){ if(!r) return ''; return r.date||r.day||r.dt||r.startedAt||r.startDate||r.workdayDate||''; }
+  function filterMonthly(arr,ym){ var out=[]; for(var i=0;i<arr.length;i++){ var d=pickRecordDate(arr[i]); if(normalizeYmFromDate(d)===ym) out.push(arr[i]); } return out; }
+  function renderCount(n){ var out=document.getElementById('reportOutput')||document.querySelector('#reportOutput, #report-output'); if(!out) return; out.textContent=(n>0)?(t('count')+n):t('noEntries'); }
+  function generateMonthlyReport(){ try{ var all=getAllRecords(); var sel=getSelectedYearMonth(); var month=filterMonthly(all,sel.ym); renderCount(month.length); window.__report_debug__={total:all.length,month:month.length,ym:sel.ym}; console.info('[REPORT_V9] összes:',all.length,'— hónap:',month.length,'ym:',sel.ym);}catch(e){ console.error('[REPORT_V9] hiba:',e); renderCount(0);} }
+  function initMonthlyReport(){ renderCount(0); }
+  window.initMonthlyReport=window.initMonthlyReport||initMonthlyReport;
+  window.generateMonthlyReport=window.generateMonthlyReport||generateMonthlyReport;
+})();
 
 async function exportToPDF() {
     const i18n = translations[currentLang];
@@ -258,6 +132,16 @@ async function exportToPDF() {
             if (yPos > pageHeight - 20) {
                 doc.addPage();
                 yPos = 30;
+                
+                // Fejléc újra rajzolása új oldalon
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                headers.forEach((header, i) => {
+                    doc.rect(colX[i], yPos - 8, colWidths[i], 8);
+                    doc.text(header, colX[i] + colWidths[i]/2, yPos - 3, { align: 'center' });
+                });
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
             }
             
             const dateStr = `${year}-${month.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
@@ -306,13 +190,13 @@ async function exportToPDF() {
                     doc.text('-', colX[5] + colWidths[5]/2, yPos + 7, { align: 'center' });
                 }
                 
-                // Arbeit
+                // Arbeit - PDF formátumban
                 doc.rect(colX[6], yPos, colWidths[6], rowHeight);
-                doc.text(formatDuration(record.workMinutes || 0), colX[6] + colWidths[6] - 1, yPos + 7, { align: 'right' });
+                doc.text(formatDurationForPDF(record.workMinutes || 0), colX[6] + colWidths[6] - 1, yPos + 7, { align: 'right' });
                 
-                // Nacht
+                // Nacht - PDF formátumban
                 doc.rect(colX[7], yPos, colWidths[7], rowHeight);
-                doc.text(formatDuration(record.nightWorkMinutes || 0), colX[7] + colWidths[7] - 1, yPos + 7, { align: 'right' });
+                doc.text(formatDurationForPDF(record.nightWorkMinutes || 0), colX[7] + colWidths[7] - 1, yPos + 7, { align: 'right' });
                 
             } else {
                 // Üres nap
@@ -334,42 +218,17 @@ async function exportToPDF() {
         
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
-        doc.text(`Gesamt Arbeitszeit: ${formatDuration(totalWork)}`, 195, yPos, { align: 'right' });
-        doc.text(`Gesamt Nachtzeit: ${formatDuration(totalNight)}`, 195, yPos + 8, { align: 'right' });
+        doc.text(`Gesamt Arbeitszeit: ${formatDurationForPDF(totalWork)}`, 195, yPos, { align: 'right' });
+        doc.text(`Gesamt Nachtzeit: ${formatDurationForPDF(totalNight)}`, 195, yPos + 8, { align: 'right' });
         
         // PDF mentése
         const fileName = `Arbeitszeitnachweis_${userName.replace(/ /g, "_")}_${selectedMonth}.pdf`;
         doc.save(fileName);
         
+        console.log('PDF successfully generated');
+        
     } catch (error) {
         console.error('PDF generation error:', error);
         showCustomAlert(`${i18n.errorPdfGeneration || 'Hiba a PDF készítése során:'} ${error.message}`, 'info');
-    }
-}
-
-async function sharePDF() {
-    const i18n = translations[currentLang];
-    
-    if (!navigator.share) {
-        showCustomAlert(i18n.alertShareNotSupported || 'A böngésző nem támogatja a megosztást', 'info');
-        return;
-    }
-    
-    try {
-        // Először generáljuk a PDF-et, majd osszuk meg
-        await exportToPDF();
-    } catch (error) {
-        console.error('Share error:', error);
-        showCustomAlert(`${i18n.errorSharing || 'Hiba a megosztás során:'} ${error.message}`, 'info');
-    }
-}
-
-// Inicializálás
-function initMonthlyReport() {
-    const monthSelector = document.getElementById('monthSelector');
-    if (monthSelector && !monthSelector.value) {
-        const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        monthSelector.value = currentMonth;
     }
 }

@@ -1,3 +1,370 @@
+// ===== HIÁNYZÓ FÜGGVÉNYEK JAVÍTÁSA =====
+// Add ezt a main.js fájl ELEJÉRE (a DOMContentLoaded előtt):
+
+// ===== ALAPVETŐ MUNKAIDŐ FÜGGVÉNYEK =====
+
+// Űrlap visszaállítása - JAVÍTOTT
+function resetEntryForm() {
+    console.log('resetEntryForm called');
+    editingId = null;
+    
+    // Ellenőrizzük, hogy léteznek-e az elemek
+    const elements = [
+        'date', 'startTime', 'endTime', 'startLocation', 'endLocation',
+        'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd', 'compensationTime'
+    ];
+    
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = '';
+        }
+    });
+    
+    // Határátlépések törlése
+    const crossingsContainer = document.getElementById('crossingsContainer');
+    if (crossingsContainer) {
+        crossingsContainer.innerHTML = '';
+    }
+    
+    // Osztott pihenő checkbox
+    const splitRestToggle = document.getElementById('toggleSplitRest');
+    if (splitRestToggle) {
+        splitRestToggle.checked = false;
+        updateEnhancedToggleVisuals(splitRestToggle);
+    }
+}
+
+// Élő munkanap indítása - JAVÍTOTT
+async function startLiveShift() {
+    console.log('startLiveShift called');
+    const i18n = translations[currentLang];
+    
+    const date = document.getElementById('liveStartDate')?.value;
+    const time = document.getElementById('liveStartTime')?.value;
+    const location = document.getElementById('liveStartLocation')?.value?.trim() || '';
+    const weeklyDriveStart = document.getElementById('liveWeeklyDriveStart')?.value || '';
+    const kmStart = parseFloat(document.getElementById('liveStartKm')?.value) || 0;
+    
+    if (!date || !time) {
+        showCustomAlert(i18n.alertMandatoryFields || 'Dátum és idő megadása kötelező!', 'info');
+        return;
+    }
+    
+    // Új munkanap objektum létrehozása
+    const newEntry = {
+        id: String(Date.now()),
+        date,
+        startTime: time,
+        endTime: '',
+        startLocation: location,
+        endLocation: '',
+        weeklyDriveStartStr: weeklyDriveStart,
+        kmStart: kmStart,
+        crossings: []
+    };
+    
+    // Helyi tárolásba mentés
+    localStorage.setItem('inProgressEntry', JSON.stringify(newEntry));
+    inProgressEntry = newEntry;
+    
+    // UI frissítése
+    renderStartTab();
+    showTab('start');
+    
+    showCustomAlert('Munkanap sikeresen elindítva!', 'success');
+}
+
+// Élő határátlépés hozzáadása - JAVÍTOTT
+function addLiveCrossing() {
+    console.log('addLiveCrossing called');
+    
+    const fromElement = document.getElementById('liveCrossFrom');
+    const toElement = document.getElementById('liveCrossTo');
+    const timeElement = document.getElementById('liveCrossTime');
+    
+    if (!fromElement || !toElement || !timeElement) {
+        console.error('Live crossing elements not found');
+        return;
+    }
+    
+    const from = fromElement.value.trim().toUpperCase();
+    const to = toElement.value.trim().toUpperCase();
+    const time = timeElement.value;
+    
+    if (!from || !to || !time) {
+        showCustomAlert('Kérlek töltsd ki az összes mezőt!', 'info');
+        return;
+    }
+    
+    if (!inProgressEntry) {
+        showCustomAlert('Nincs aktív munkanap!', 'info');
+        return;
+    }
+    
+    // Crossing hozzáadása
+    if (!inProgressEntry.crossings) {
+        inProgressEntry.crossings = [];
+    }
+    inProgressEntry.crossings.push({ from, to, time });
+    localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry));
+    
+    // UI frissítése
+    renderStartTab();
+    
+    showCustomAlert('Határátlépés hozzáadva!', 'success');
+}
+
+// Műszak befejezése - JAVÍTOTT
+async function finalizeShift() {
+    console.log('finalizeShift called');
+    const i18n = translations[currentLang];
+    
+    if (!inProgressEntry) {
+        showCustomAlert('Nincs aktív munkanap a befejezéshez!', 'info');
+        return;
+    }
+    
+    // Modal megnyitása a befejezési adatok bekéréséhez
+    showFinalizationModal();
+}
+
+// Műszak elvetése - JAVÍTOTT
+function discardShift() {
+    console.log('discardShift called');
+    showCustomAlert('Biztosan eldobod a folyamatban lévő munkanapot?', 'warning', () => {
+        localStorage.removeItem('inProgressEntry');
+        inProgressEntry = null;
+        renderStartTab();
+        showCustomAlert('Munkanap elvetve.', 'info');
+    });
+}
+
+// Teljes nap munkanap mentése - JAVÍTOTT
+async function saveEntry() {
+    console.log('saveEntry called');
+    const i18n = translations[currentLang];
+    
+    try {
+        // Elemek ellenőrzése
+        const dateElement = document.getElementById('date');
+        const startTimeElement = document.getElementById('startTime');
+        const endTimeElement = document.getElementById('endTime');
+        
+        if (!dateElement || !startTimeElement || !endTimeElement) {
+            console.error('Required form elements not found');
+            showCustomAlert('Űrlap elemek hiányoznak!', 'info');
+            return;
+        }
+        
+        const date = dateElement.value;
+        const startTime = startTimeElement.value;
+        const endTime = endTimeElement.value;
+        const startLocation = document.getElementById('startLocation')?.value?.trim() || '';
+        const endLocation = document.getElementById('endLocation')?.value?.trim() || '';
+        const weeklyDriveStart = document.getElementById('weeklyDriveStart')?.value || '';
+        const weeklyDriveEnd = document.getElementById('weeklyDriveEnd')?.value || '';
+        const kmStart = parseFloat(document.getElementById('kmStart')?.value) || 0;
+        const kmEnd = parseFloat(document.getElementById('kmEnd')?.value) || 0;
+        const compensationTime = document.getElementById('compensationTime')?.value || '';
+        const splitRestToggle = document.getElementById('toggleSplitRest');
+        const isSplitRest = splitRestToggle ? splitRestToggle.checked : false;
+
+        // Validáció
+        if (!date || !startTime || !endTime) {
+            showCustomAlert(i18n.alertMandatoryFields || 'A dátum és munkaidő megadása kötelező!', 'info');
+            return;
+        }
+
+        if (localStorage.getItem('toggleKm') === 'true' && kmEnd < kmStart) {
+            showCustomAlert(i18n.alertKmEndLower || 'A záró kilométer nem lehet kevesebb, mint a kezdő!', 'info');
+            return;
+        }
+
+        if (localStorage.getItem('toggleDriveTime') === 'true' && weeklyDriveStart && weeklyDriveEnd) {
+            const startMinutes = parseTimeToMinutes(weeklyDriveStart);
+            const endMinutes = parseTimeToMinutes(weeklyDriveEnd);
+            if (endMinutes < startMinutes) {
+                showCustomAlert(i18n.alertWeeklyDriveEndLower || 'A heti vezetési idő a nap végén nem lehet kevesebb!', 'info');
+                return;
+            }
+        }
+
+        // Számítások
+        const workMinutes = calculateWorkMinutes(startTime, endTime);
+        const compensationMinutes = compensationTime ? parseTimeToMinutes(compensationTime) : 0;
+        const netWorkMinutes = Math.max(0, workMinutes - compensationMinutes);
+        const nightWorkMinutes = calculateNightWorkMinutes(startTime, endTime);
+        const driveMinutes = (weeklyDriveStart && weeklyDriveEnd) ? 
+            Math.max(0, parseTimeToMinutes(weeklyDriveEnd) - parseTimeToMinutes(weeklyDriveStart)) : 0;
+        const kmDriven = Math.max(0, kmEnd - kmStart);
+
+        // Határátlépések összegyűjtése
+        const crossings = [];
+        const crossingRows = document.querySelectorAll('#crossingsContainer .crossing-row');
+        crossingRows.forEach(row => {
+            const from = row.querySelector('.crossing-from')?.value?.trim()?.toUpperCase();
+            const to = row.querySelector('.crossing-to')?.value?.trim()?.toUpperCase();
+            const time = row.querySelector('.crossing-time')?.value;
+            if (from && to && time) {
+                crossings.push({ from, to, time });
+            }
+        });
+
+        // Vasárnap-hétfő átfordulás ellenőrzése
+        const startDate = new Date(date + 'T' + startTime);
+        const endTimeDate = new Date(date + 'T' + endTime);
+        if (endTimeDate < startDate) {
+            endTimeDate.setDate(endTimeDate.getDate() + 1);
+        }
+        
+        let finalDriveMinutes = driveMinutes;
+        const isRollover = startDate.getDay() === 0 && endTimeDate.getDay() === 1;
+        
+        if (isRollover && driveMinutes > 0) {
+            // Rollover esetén kérjük be a teljes vezetési időt
+            const totalDriveTime = await new Promise(resolve => {
+                const icon = `<svg class="w-10 h-10 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                showCustomPrompt(
+                    i18n.alertRolloverTitle || 'Áthúzódó műszak',
+                    i18n.alertRolloverPrompt || 'Add meg a teljes vezetési időt:',
+                    i18n.alertRolloverPlaceholder || 'óó:pp',
+                    icon,
+                    (input) => {
+                        const minutes = parseTimeToMinutes(input);
+                        resolve(minutes > 0 ? minutes : driveMinutes);
+                    }
+                );
+            });
+            finalDriveMinutes = totalDriveTime;
+        }
+
+        // Rekord objektum létrehozása
+        const record = {
+            id: editingId || String(Date.now()),
+            date,
+            startTime,
+            endTime,
+            startLocation,
+            endLocation,
+            workMinutes: netWorkMinutes,
+            compensationMinutes,
+            nightWorkMinutes,
+            driveMinutes: finalDriveMinutes,
+            kmDriven,
+            crossings,
+            weeklyDriveStartStr: weeklyDriveStart,
+            weeklyDriveEndStr: weeklyDriveEnd,
+            kmStart,
+            kmEnd,
+            isSplitRest
+        };
+
+        // Mentés
+        await saveWorkRecord(record);
+
+        // Osztott pihenő adat mentése
+        if (isSplitRest) {
+            const splitData = getSplitRestData();
+            splitData[record.id] = true;
+            saveSplitRestData(splitData);
+        }
+
+        // UI visszaállítás
+        resetEntryForm();
+        renderApp();
+        showTab('list');
+        
+        showCustomAlert(i18n.alertSaveSuccess || 'Bejegyzés sikeresen mentve!', 'success');
+
+    } catch (error) {
+        console.error('Save error:', error);
+        showCustomAlert('Hiba történt a mentés során: ' + error.message, 'info');
+    }
+}
+
+// Határátlépés sor hozzáadása - JAVÍTOTT
+function addCrossingRow(from = '', to = '', time = '') {
+    console.log('addCrossingRow called');
+    const container = document.getElementById('crossingsContainer');
+    if (!container) {
+        console.error('crossingsContainer not found');
+        return;
+    }
+    
+    const rowId = 'crossing-' + Date.now();
+    const currentTime = time || new Date().toTimeString().slice(0, 5);
+    
+    const rowHTML = `
+        <div class="crossing-row flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg" id="${rowId}">
+            <input type="text" class="crossing-from flex-1 p-2 border rounded text-sm uppercase" placeholder="Honnan" value="${from}">
+            <span class="text-gray-400">→</span>
+            <div class="flex flex-1">
+                <input type="text" class="crossing-to flex-1 p-2 border rounded-l text-sm uppercase" placeholder="Hova" value="${to}">
+                <button type="button" class="bg-blue-500 text-white p-2 rounded-r text-xs" onclick="fetchCountryCodeFor('${rowId}')">📍</button>
+            </div>
+            <input type="time" class="crossing-time p-2 border rounded text-sm" value="${currentTime}" onblur="formatTimeInput(this)">
+            <button type="button" class="text-red-500 hover:text-red-700 p-1" onclick="removeCrossingRow('${rowId}')">🗑️</button>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', rowHTML);
+}
+
+// Határátlépés sor törlése - JAVÍTOTT
+function removeCrossingRow(rowId) {
+    console.log('removeCrossingRow called:', rowId);
+    const row = document.getElementById(rowId);
+    if (row) {
+        row.remove();
+    }
+}
+
+// ===== GLOBÁLIS HOZZÁFÉRÉS BIZTOSÍTÁSA =====
+// Minden funkció globálisan elérhető legyen
+
+window.resetEntryForm = resetEntryForm;
+window.startLiveShift = startLiveShift;
+window.addLiveCrossing = addLiveCrossing;
+window.finalizeShift = finalizeShift;
+window.discardShift = discardShift;
+window.saveEntry = saveEntry;
+window.addCrossingRow = addCrossingRow;
+window.removeCrossingRow = removeCrossingRow;
+
+// Enhanced toggle visual frissítés
+window.updateEnhancedToggleVisuals = function(checkbox) {
+    if (!checkbox) return;
+    
+    const container = checkbox.closest('.enhanced-toggle-container');
+    if (!container) return;
+    
+    const checkmark = container.querySelector('.enhanced-toggle-checkmark');
+    
+    if (checkbox.checked) {
+        container.classList.add('active');
+        if (checkmark) {
+            checkmark.classList.remove('hidden');
+        }
+    } else {
+        container.classList.remove('active');
+        if (checkmark) {
+            checkmark.classList.add('hidden');
+        }
+    }
+};
+
+// Split rest data kezelő függvények
+window.getSplitRestData = function() {
+    return JSON.parse(localStorage.getItem('splitRestData') || '{}');
+};
+
+window.saveSplitRestData = function(data) {
+    localStorage.setItem('splitRestData', JSON.stringify(data));
+};
+
+console.log('All missing functions have been defined and exported to window object');
+
 // =======================================================
 // ===== ALKALMAZÁS FŐ VEZÉRLŐJE (main.js) ================
 // =======================================================
@@ -316,13 +683,22 @@ function setupEventListeners() {
 }
 
 
-// ===== BEGIN: proper_finalize_modal (appended) =====
-// ===== JAVÍTOTT BEFEJEZÉSI MODAL - PROGRAM ARCULATÁHOZ ILLESZKEDŐ =====
+// ===== BEGIN: finalize_modal_complete (appended) =====
+// ===== TELJES BEFEJEZÉSI MODAL INTEGRÁCIÓ =====
+// Add ezt a main.js fájlba a hiányzó függvények után:
 
+// Modal megjelenítése - JAVÍTOTT
 function showFinalizationModal() {
+    console.log('showFinalizationModal called');
     const i18n = translations[currentLang];
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    // Ellenőrizzük, hogy van-e már modal
+    const existingModal = document.getElementById('finalize-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
     
     // A program arculatához illeszkedő modal HTML
     const modalHTML = `
@@ -357,7 +733,7 @@ function showFinalizationModal() {
                             📍 Befejezés helye
                         </label>
                         <div class="flex">
-                            <input type="text" id="finalizeEndLocation" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Város" data-translate-key="cityPlaceholder">
+                            <input type="text" id="finalizeEndLocation" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Város">
                             <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-r-lg border border-blue-500 transition-colors" onclick="fetchLocation('finalizeEndLocation')" title="Helyszín lekérése GPS alapján">
                                 📍
                             </button>
@@ -406,9 +782,11 @@ function showFinalizationModal() {
     setTimeout(() => {
         const modal = document.getElementById('finalize-modal');
         const box = modal.querySelector('div > div');
-        modal.classList.remove('opacity-0');
-        box.classList.remove('scale-95');
-        box.classList.add('scale-100');
+        if (modal && box) {
+            modal.classList.remove('opacity-0');
+            box.classList.remove('scale-95');
+            box.classList.add('scale-100');
+        }
     }, 10);
     
     // Értékek előtöltése
@@ -418,7 +796,7 @@ function showFinalizationModal() {
         const kmEndInput = document.getElementById('finalizeKmEnd');
         
         // GPS hely előtöltése utolsó határátlépésből
-        if (endLocationInput && inProgressEntry.crossings && inProgressEntry.crossings.length > 0) {
+        if (endLocationInput && inProgressEntry && inProgressEntry.crossings && inProgressEntry.crossings.length > 0) {
             endLocationInput.value = inProgressEntry.crossings[inProgressEntry.crossings.length - 1].to;
         }
         
@@ -442,27 +820,35 @@ function showFinalizationModal() {
         }
         
         // Autocomplete inicializálás
-        initAutocomplete(endLocationInput, uniqueLocations);
+        if (endLocationInput && typeof initAutocomplete === 'function') {
+            initAutocomplete(endLocationInput, uniqueLocations || []);
+        }
         
     }, 100);
 }
 
+// Modal háttérre kattintás kezelése
 function handleModalBackdropClick(event) {
+    console.log('handleModalBackdropClick called');
     // Modal csak akkor záródjon be, ha pontosan a háttérre kattintunk
     if (event.target.id === 'finalize-modal') {
         closeFinalizeModal();
     }
 }
 
+// Modal bezárása
 function closeFinalizeModal() {
+    console.log('closeFinalizeModal called');
     const modal = document.getElementById('finalize-modal');
     if (modal) {
         const box = modal.querySelector('div > div');
         
         // Animáció
         modal.classList.add('opacity-0');
-        box.classList.remove('scale-100');
-        box.classList.add('scale-95');
+        if (box) {
+            box.classList.remove('scale-100');
+            box.classList.add('scale-95');
+        }
         
         setTimeout(() => {
             modal.remove();
@@ -470,18 +856,33 @@ function closeFinalizeModal() {
     }
 }
 
+// Befejezés teljesítése
 async function completeFinalizeShift() {
+    console.log('completeFinalizeShift called');
     const i18n = translations[currentLang];
     
     try {
-        const endTime = document.getElementById('finalizeEndTime').value;
-        const endLocation = document.getElementById('finalizeEndLocation').value.trim();
-        const weeklyDriveEnd = document.getElementById('finalizeWeeklyDriveEnd')?.value || '';
-        const kmEnd = parseFloat(document.getElementById('finalizeKmEnd')?.value) || 0;
+        const endTimeElement = document.getElementById('finalizeEndTime');
+        const endLocationElement = document.getElementById('finalizeEndLocation');
+        const weeklyDriveElement = document.getElementById('finalizeWeeklyDriveEnd');
+        const kmEndElement = document.getElementById('finalizeKmEnd');
+        
+        if (!endTimeElement) {
+            throw new Error('Befejezési idő mező nem található');
+        }
+        
+        const endTime = endTimeElement.value;
+        const endLocation = endLocationElement?.value?.trim() || '';
+        const weeklyDriveEnd = weeklyDriveElement?.value || '';
+        const kmEnd = parseFloat(kmEndElement?.value) || 0;
         
         if (!endTime) {
             showCustomAlert('Befejezés ideje kötelező!', 'info');
             return;
+        }
+        
+        if (!inProgressEntry) {
+            throw new Error('Nincs aktív munkanap');
         }
         
         // Munkaidő számítása
@@ -551,152 +952,43 @@ async function completeFinalizeShift() {
         };
         
         // Mentés
-        await saveWorkRecord(completedRecord);
+        if (typeof saveWorkRecord === 'function') {
+            await saveWorkRecord(completedRecord);
+        } else {
+            console.error('saveWorkRecord function not available');
+            throw new Error('Mentési funkció nem elérhető');
+        }
         
         // Helyi tárolás törlése
         localStorage.removeItem('inProgressEntry');
         inProgressEntry = null;
         
         // UI frissítése
-        renderApp();
-        showTab('live');
+        if (typeof renderApp === 'function') {
+            renderApp();
+        }
+        if (typeof showTab === 'function') {
+            showTab('live');
+        }
         
         showCustomAlert(i18n.alertSaveSuccess || 'Munkanap sikeresen befejezve!', 'success');
         
     } catch (error) {
         console.error('Finalize error:', error);
         showCustomAlert('Hiba történt a befejezés során: ' + error.message, 'info');
+        
+        // Modal bezárása hiba esetén is
+        closeFinalizeModal();
     }
 }
-// ===== END: proper_finalize_modal =====
 
-// ===== BEGIN: modal_integration_fix (appended) =====
-// ===== MODAL INTEGRÁCIÓ JAVÍTÁSA - Add a main.js végéhez =====
-
-// Globális funkciók exportálása
+// ===== GLOBÁLIS HOZZÁFÉRÉS BIZTOSÍTÁSA =====
 window.showFinalizationModal = showFinalizationModal;
 window.handleModalBackdropClick = handleModalBackdropClick;
 window.closeFinalizeModal = closeFinalizeModal;
 window.completeFinalizeShift = completeFinalizeShift;
 
-// Enhanced toggle kezelés javítása minden toggle-ra - PATCH
-function updateEnhancedToggleVisuals(checkbox) {
-    if (!checkbox) return;
-    
-    const container = checkbox.closest('.enhanced-toggle-container');
-    if (!container) return;
-    
-    const checkmark = container.querySelector('.enhanced-toggle-checkmark');
-    
-    if (checkbox.checked) {
-        // Aktív állapot
-        container.classList.add('active');
-        if (checkmark) {
-            checkmark.classList.remove('hidden');
-        }
-    } else {
-        // Inaktív állapot
-        container.classList.remove('active');
-        if (checkmark) {
-            checkmark.classList.add('hidden');
-        }
-    }
-}
-
-// Javított formatDuration függvény HH:MM formátumhoz
-function formatDurationHHMM(minutes) {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-}
-
-// Javított formatDuration - PDF-hez is használható
-function formatDuration(minutes) {
-    if (typeof minutes !== 'number' || minutes < 0) return '0ó 0p';
-    
-    const h = Math.floor(minutes / 60);
-    const m = Math.round(minutes % 60);
-    
-    // Ha HH:MM formátumra van szükség (pl. PDF esetén)
-    if (window.isPDFGeneration) {
-        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-    }
-    
-    const h_unit = currentLang === 'de' ? 'Std' : 'ó';
-    const m_unit = currentLang === 'de' ? 'Min' : 'p';
-    return `${h}${h_unit} ${m}${m_unit}`;
-}
-
-// PDF specifikus formatDuration
-function formatDurationForPDF(minutes) {
-    if (typeof minutes !== 'number' || minutes < 0) return '00:00';
-    
-    const h = Math.floor(minutes / 60);
-    const m = Math.round(minutes % 60);
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-}
-
-// Frissített loadLastValues függvény
-function loadLastValues(isLiveMode = false) {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    
-    if (isLiveMode) {
-        // Live mód esetén
-        const dateInput = document.getElementById('liveStartDate');
-        const timeInput = document.getElementById('liveStartTime');
-        const locationInput = document.getElementById('liveStartLocation');
-        const driveInput = document.getElementById('liveWeeklyDriveStart');
-        const kmInput = document.getElementById('liveStartKm');
-        
-        if (dateInput && !dateInput.value) {
-            dateInput.value = today;
-        }
-        if (timeInput && !timeInput.value) {
-            timeInput.value = currentTime;
-        }
-        
-        // Utolsó bejegyzés adatainak betöltése
-        const lastRecord = getLatestRecord();
-        if (lastRecord) {
-            if (locationInput && !locationInput.value && lastRecord.endLocation) {
-                locationInput.value = lastRecord.endLocation;
-            }
-            if (driveInput && !driveInput.value && lastRecord.weeklyDriveEndStr) {
-                driveInput.value = lastRecord.weeklyDriveEndStr;
-            }
-            if (kmInput && !kmInput.value && lastRecord.kmEnd) {
-                kmInput.value = lastRecord.kmEnd;
-            }
-        }
-    } else {
-        // Teljes nap mód esetén
-        const dateInput = document.getElementById('date');
-        if (dateInput && !dateInput.value) {
-            dateInput.value = today;
-        }
-        
-        const lastRecord = getLatestRecord();
-        if (lastRecord) {
-            const startLocationInput = document.getElementById('startLocation');
-            const driveStartInput = document.getElementById('weeklyDriveStart');
-            const kmStartInput = document.getElementById('kmStart');
-            
-            if (startLocationInput && !startLocationInput.value && lastRecord.endLocation) {
-                startLocationInput.value = lastRecord.endLocation;
-            }
-            if (driveStartInput && !driveStartInput.value && lastRecord.weeklyDriveEndStr) {
-                driveStartInput.value = lastRecord.weeklyDriveEndStr;
-            }
-            if (kmStartInput && !kmStartInput.value && lastRecord.kmEnd) {
-                kmStartInput.value = lastRecord.kmEnd;
-            }
-        }
-    }
-}
-
-// Keyboard event handlers a modalhoz
+// ===== KEYBOARD EVENTS =====
 document.addEventListener('keydown', function(e) {
     const modal = document.getElementById('finalize-modal');
     if (modal && !modal.classList.contains('hidden')) {
@@ -708,105 +1000,5 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Input validáció javítása
-function validateFinalizationInputs() {
-    const endTime = document.getElementById('finalizeEndTime');
-    const endLocation = document.getElementById('finalizeEndLocation');
-    
-    let isValid = true;
-    
-    // Idő ellenőrzése
-    if (endTime && !endTime.value) {
-        endTime.classList.add('border-red-500');
-        isValid = false;
-    } else if (endTime) {
-        endTime.classList.remove('border-red-500');
-    }
-    
-    // Hely ellenőrzése (opcionális, de ha van, ne legyen túl rövid)
-    if (endLocation && endLocation.value.length > 0 && endLocation.value.length < 2) {
-        endLocation.classList.add('border-yellow-500');
-    } else if (endLocation) {
-        endLocation.classList.remove('border-yellow-500');
-    }
-    
-    return isValid;
-}
-
-// Real-time validáció hozzáadása
-document.addEventListener('input', function(e) {
-    if (e.target.id === 'finalizeEndTime' || e.target.id === 'finalizeEndLocation') {
-        validateFinalizationInputs();
-    }
-});
-
-// Hibakezelés javítása
-window.addEventListener('error', function(e) {
-    console.error('Global error:', e.error);
-    
-    // Ha modal nyitva van és hiba történik, zárjuk be
-    const modal = document.getElementById('finalize-modal');
-    if (modal) {
-        closeFinalizeModal();
-        showCustomAlert('Váratlan hiba történt. Próbáld újra!', 'info');
-    }
-});
-
-// Enhanced toggle inicializálás minden esetben
-document.addEventListener('DOMContentLoaded', function() {
-    // Minden enhanced toggle inicializálása
-    document.querySelectorAll('.enhanced-toggle-container').forEach(container => {
-        const checkbox = container.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-            updateEnhancedToggleVisuals(checkbox);
-            
-            // Event listener hozzáadása ha még nincs
-            if (!checkbox.hasEnhancedListener) {
-                checkbox.addEventListener('change', function() {
-                    updateEnhancedToggleVisuals(this);
-                });
-                checkbox.hasEnhancedListener = true;
-            }
-        }
-    });
-});
-
-// Export functions
-window.formatDurationForPDF = formatDurationForPDF;
-window.formatDurationHHMM = formatDurationHHMM;
-window.validateFinalizationInputs = validateFinalizationInputs;
-// ===== END: modal_integration_fix =====
-
-// ===== BEGIN: finalizeShift glue override =====
-(function(){
-  try {
-    const originalFinalize = window.finalizeShift;
-    window.finalizeShift = function() {
-      if (typeof showFinalizationModal === 'function') {
-        try { showFinalizationModal(); return; } catch(e) { console.warn('showFinalizationModal failed, falling back:', e); }
-      }
-      if (typeof originalFinalize === 'function') {
-        return originalFinalize.apply(this, arguments);
-      }
-    };
-    document.addEventListener('DOMContentLoaded', function(){
-      var btn = document.getElementById('finishShiftBtn');
-      if (btn && !btn.__modalBound) {
-        btn.onclick = function(){ window.finalizeShift(); };
-        btn.__modalBound = true;
-      }
-    });
-  } catch(e){ console.warn('finalize glue error', e); }
-})();
-// ===== END: finalizeShift glue override =====
-
-// ===== BEGIN: hide settings version in settings menu =====
-document.addEventListener('DOMContentLoaded', function(){
-  try {
-    document.querySelectorAll('[data-translate-key="settingsVersion"]').forEach(function(el){
-      var blk = el.closest('.bg-gray-50, .bg-blue-50, .bg-white, .rounded-lg');
-      if (blk) { blk.remove(); } else { el.remove(); }
-    });
-  } catch(e){ /* noop */ }
-});
-// ===== END: hide settings version in settings menu =====
+console.log('Finalization modal functions loaded and exported to window'); 
+// ===== END: finalize_modal_complete =====
