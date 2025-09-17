@@ -286,198 +286,25 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-checkmark {
 /* Hide legacy version label anywhere in settings */
 #settings-version, .settings-version, [data-translate-key='settingsVersion']{ display:none !important; }
 
-
-/* ===== BEGIN: proper_modal_css (round2) ===== */
-/* ===== JAVÍTOTT MODAL STÍLUSOK - PROGRAM ARCULATÁHOZ ===== */
-/* Add ezt a main.css végéhez: */
-
-/* Finalize modal - program arculatához illeszkedő */
-#finalize-modal {
-    backdrop-filter: blur(4px);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+.progress-bar {
+    width: 100%;
+    background-color: #e5e7eb; /* light gray */
+    border-radius: 9999px;
+    height: 0.75rem;
+    overflow: hidden;
 }
 
-#finalize-modal.show {
-    opacity: 1;
+.progress-bar-fill {
+    background-color: #3b82f6; /* blue */
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+    border-radius: 9999px;
 }
 
-#finalize-modal .bg-white {
-    box-shadow: 
-        0 25px 50px -12px rgba(0, 0, 0, 0.25),
-        0 0 0 1px rgba(255, 255, 255, 0.05);
-    transform: scale(0.95);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+html.dark .progress-bar {
+    background-color: #4b5563; /* dark gray */
 }
 
-#finalize-modal .scale-100 {
-    transform: scale(1) !important;
+html.dark .progress-bar-fill {
+    background-color: #60a5fa; /* light blue */
 }
-
-/* Dark mode support */
-html.dark #finalize-modal .bg-white {
-    background-color: #1f2937;
-    color: #f9fafb;
-    border: 1px solid #374151;
-}
-
-html.dark #finalize-modal input {
-    background-color: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
-}
-
-html.dark #finalize-modal input:focus {
-    border-color: #3b82f6;
-    background-color: #4b5563;
-    ring: 2px solid #3b82f6;
-}
-
-html.dark #finalize-modal input::placeholder {
-    color: #9ca3af;
-}
-
-/* Szín-specifikus inputok dark módban */
-html.dark #finalize-modal #finalizeWeeklyDriveEnd {
-    background-color: #312e81;
-    border-color: #4338ca;
-}
-
-html.dark #finalize-modal #finalizeWeeklyDriveEnd:focus {
-    background-color: #3730a3;
-    border-color: #6366f1;
-}
-
-html.dark #finalize-modal #finalizeKmEnd {
-    background-color: #7c2d12;
-    border-color: #ea580c;
-}
-
-html.dark #finalize-modal #finalizeKmEnd:focus {
-    background-color: #9a3412;
-    border-color: #f97316;
-}
-
-/* Gombok hover effektei */
-#finalize-modal button {
-    transition: all 0.2s ease;
-}
-
-#finalize-modal button:hover {
-    transform: translateY(-1px);
-}
-
-#finalize-modal button:active {
-    transform: translateY(0);
-}
-
-/* GPS gomb specifikus stílusok */
-#finalize-modal .bg-blue-500:hover {
-    background-color: #2563eb;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-/* Színes szekciók javítása */
-#finalize-modal .bg-gray-50 {
-    border: 1px solid #e5e7eb;
-    transition: all 0.2s ease;
-}
-
-#finalize-modal .bg-gray-50:hover {
-    border-color: #d1d5db;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-html.dark #finalize-modal .bg-gray-50 {
-    background-color: #374151;
-    border-color: #4b5563;
-}
-
-html.dark #finalize-modal .bg-gray-50:hover {
-    border-color: #6b7280;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Indigo szekció */
-#finalize-modal .bg-indigo-50 {
-    border: 1px solid #c7d2fe;
-}
-
-html.dark #finalize-modal .bg-indigo-50 {
-    background-color: #312e81;
-    border-color: #4338ca;
-}
-
-/* Orange szekció */
-#finalize-modal .bg-orange-50 {
-    border: 1px solid #fed7aa;
-}
-
-html.dark #finalize-modal .bg-orange-50 {
-    background-color: #7c2d12;
-    border-color: #ea580c;
-}
-
-/* Responsive javítások */
-@media (max-width: 480px) {
-    #finalize-modal .w-11/12 {
-        width: 95%;
-    }
-    
-    #finalize-modal .p-6 {
-        padding: 1rem;
-    }
-    
-    #finalize-modal .space-y-4 > * + * {
-        margin-top: 0.75rem;
-    }
-}
-
-/* Autocomplete lista a modalban */
-#finalize-modal .autocomplete-list {
-    z-index: 60;
-    max-height: 120px;
-    border: 1px solid #d1d5db;
-    border-top: none;
-    border-radius: 0 0 0.5rem 0.5rem;
-}
-
-html.dark #finalize-modal .autocomplete-list {
-    background-color: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
-}
-
-html.dark #finalize-modal .autocomplete-item:hover {
-    background-color: #4b5563;
-}
-
-/* Input focus state javítása */
-#finalize-modal input:focus {
-    outline: none;
-    ring: 2px;
-    ring-color: #3b82f6;
-    ring-opacity: 0.5;
-}
-
-/* Label ikonok */
-#finalize-modal label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* Fejléc ikon animáció */
-#finalize-modal .w-16.h-16 {
-    animation: modalIconPulse 2s ease-in-out infinite;
-}
-
-@keyframes modalIconPulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-}
-/* ===== END: proper_modal_css (round2) ===== */
