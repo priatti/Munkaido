@@ -156,7 +156,7 @@ const translations = {
         settingsDownloadData: "Adatok letöltése",
         settingsImportTitle: "Adatok importálása",
         settingsImportDesc: "Tölts vissza egy korábban lementett adatfájlt. Figyelem: ez felülírja a jelenlegi adatokat!",
-        settingsUploadData: "Adatok visszatöltése",
+        settingsUploadData: "Adatok visszöltése",
         settingsAboutCreator: "Készítette: Princz Attila",
         slogan: "Egy kamionos, aki appot készít.",
         settingsVersion: "Verzió:",
@@ -234,6 +234,7 @@ const translations = {
         palletTypeExists: "Ez a típus már létezik!",
         palletTypeNameEmpty: "A típusnév nem lehet üres!",
         // Üzenetek
+        alertConfirmReducedRest: "Figyelem: a pihenőidőd kevesebb, mint 11 óra volt. Ez csökkentett napi pihenőnek számít, és fel fog használni egyet a heti 3 keretből. Biztosan elindítod a műszakot?",
         alertRolloverTitle: "Áthúzódó műszak",
         alertRolloverPrompt: "Észleltük, hogy a műszakod a hétvégén áthúzódott (vasárnapi indulás, hétfői érkezés). Kérjük, add meg a műszak <strong>teljes vezetési idejét</strong> a tachográf alapján:",
         alertRolloverPlaceholder: "Vezetési idő (óó:pp)",
@@ -550,6 +551,7 @@ const translations = {
         palletTypeExists: "Dieser Typ existiert bereits!",
         palletTypeNameEmpty: "Der Typname darf nicht leer sein!",
         // Meldungen
+        alertConfirmReducedRest: "Achtung: Ihre Ruhezeit betrug weniger als 11 Stunden. Dies zählt als reduzierte tägliche Ruhezeit und verbraucht eine Ihrer 3 wöchentlichen Gelegenheiten. Möchten Sie die Schicht wirklich starten?",
         alertRolloverTitle: "Schicht über das Wochenende",
         alertRolloverPrompt: "Wir haben festgestellt, dass Ihre Schicht über das Wochenende ging (Start am Sonntag, Ende am Montag). Bitte geben Sie die **gesamte Lenkzeit** für diese Schicht gemäß dem Tachographen ein:",
         alertRolloverPlaceholder: "Lenkzeit (hh:mm)",
