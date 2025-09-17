@@ -6,7 +6,8 @@
 let records = [];
 let palletRecords = [];
 let editingId = null; 
-let inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
+// JAVÍTVA: 'inProgressEntry' helyett 'activeShift' a következetességért
+let activeShift = JSON.parse(localStorage.getItem('activeShift') || 'null');
 let uniqueLocations = [];
 let uniquePalletLocations = [];
 let currentActiveTab = 'live';
@@ -61,8 +62,9 @@ function startLiveShift() {
         crossings: [] // Kezdetben üres határátlépés lista
     };
 
-    inProgressEntry = newEntry;
-    localStorage.setItem('inProgressEntry', JSON.stringify(inProgressEntry));
+    // JAVÍTVA: a helyes változót és localStorage kulcsot használjuk
+    activeShift = newEntry;
+    localStorage.setItem('activeShift', JSON.stringify(activeShift));
 
     // UI frissítése az új állapothoz
     renderStartTab();
@@ -297,22 +299,23 @@ function renderLiveTabView() {
 
 function renderStartTab() {
     const i18n = translations[currentLang];
-    inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
+    // JAVÍTVA: a helyes localStorage kulcsot használjuk
+    activeShift = JSON.parse(localStorage.getItem('activeShift') || 'null');
 
     const startForm = document.getElementById('start-new-day-form');
     const progressView = document.getElementById('live-progress-view');
     const summaryContainer = document.getElementById('live-start-summary');
 
-    if (inProgressEntry) {
+    if (activeShift) {
         startForm.classList.add('hidden');
         progressView.classList.remove('hidden');
 
-        document.getElementById('live-start-time').textContent = `${i18n.startedAt}: ${inProgressEntry.date} ${inProgressEntry.startTime}`;
+        document.getElementById('live-start-time').textContent = `${i18n.startedAt}: ${activeShift.date} ${activeShift.startTime}`;
         
         let summaryHTML = '';
-        const hasDriveData = localStorage.getItem('toggleDriveTime') === 'true' && inProgressEntry.weeklyDriveStartStr;
-        const hasKmData = localStorage.getItem('toggleKm') === 'true' && inProgressEntry.kmStart > 0;
-        const hasLocationData = inProgressEntry.startLocation && inProgressEntry.startLocation.trim() !== '';
+        const hasDriveData = localStorage.getItem('toggleDriveTime') === 'true' && activeShift.weeklyDriveStartStr;
+        const hasKmData = localStorage.getItem('toggleKm') === 'true' && activeShift.kmStart > 0;
+        const hasLocationData = activeShift.startLocation && activeShift.startLocation.trim() !== '';
 
         if (hasDriveData || hasKmData || hasLocationData) {
             summaryHTML += `<div class="p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg space-y-2">
@@ -322,19 +325,19 @@ function renderStartTab() {
             if (hasLocationData) {
                 summaryHTML += `<div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1">
                                     <span class="text-gray-500 dark:text-gray-400">${i18n.liveStartLocationLabel}</span>
-                                    <span class="font-semibold">${inProgressEntry.startLocation}</span>
+                                    <span class="font-semibold">${activeShift.startLocation}</span>
                                 </div>`;
             }
             if (hasDriveData) {
                 summaryHTML += `<div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1">
                                     <span class="text-gray-500 dark:text-gray-400">${i18n.liveStartDriveLabel}</span>
-                                    <span class="font-semibold">${inProgressEntry.weeklyDriveStartStr}</span>
+                                    <span class="font-semibold">${activeShift.weeklyDriveStartStr}</span>
                                 </div>`;
             }
             if (hasKmData) {
                 summaryHTML += `<div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1">
                                     <span class="text-gray-500 dark:text-gray-400">${i18n.liveStartKmLabel}</span>
-                                    <span class="font-semibold">${inProgressEntry.kmStart} km</span>
+                                    <span class="font-semibold">${activeShift.kmStart} km</span>
                                 </div>`;
             }
 
@@ -344,8 +347,8 @@ function renderStartTab() {
         
         const liveCrossList = document.getElementById('live-crossings-list');
         const liveCrossFrom = document.getElementById('liveCrossFrom');
-        if (inProgressEntry.crossings && inProgressEntry.crossings.length > 0) {
-            const crossingsHTML = inProgressEntry.crossings.map(c => 
+        if (activeShift.crossings && activeShift.crossings.length > 0) {
+            const crossingsHTML = activeShift.crossings.map(c => 
                 `<div class="flex items-center justify-between bg-white dark:bg-gray-700/50 p-2 rounded-md shadow-sm">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -360,7 +363,7 @@ function renderStartTab() {
                                         <h4 class="font-bold text-indigo-800 dark:text-indigo-200 text-sm mb-2">${i18n.recordedCrossings}</h4>
                                         <div class="space-y-2">${crossingsHTML}</div>
                                     </div>`;
-            liveCrossFrom.value = inProgressEntry.crossings.slice(-1)[0].to;
+            liveCrossFrom.value = activeShift.crossings.slice(-1)[0].to;
         } else {
             liveCrossList.innerHTML = '';
             const lastRecordWithCrossing = getSortedRecords().find(r => r.crossings && r.crossings.length > 0);
