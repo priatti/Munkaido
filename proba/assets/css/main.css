@@ -288,23 +288,23 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-checkmark {
 
 .progress-bar {
     width: 100%;
-    background-color: #e5e7eb; /* light gray */
+    background-color: #e5e7eb;
     border-radius: 9999px;
     height: 0.75rem;
     overflow: hidden;
 }
 
 .progress-bar-fill {
-    background-color: #3b82f6; /* blue */
+    background-color: #3b82f6;
     height: 100%;
     transition: width 0.3s ease-in-out;
     border-radius: 9999px;
 }
 
 html.dark .progress-bar {
-    background-color: #4b5563; /* dark gray */
+    background-color: #4b5563;
 }
 
 html.dark .progress-bar-fill {
-    background-color: #60a5fa; /* light blue */
+    background-color: #60a5fa;
 }
