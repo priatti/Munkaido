@@ -1,342 +1,475 @@
 // =======================================================
-// ===== TACHOGRÁF ELEMZŐ (FEATURE) ======================
+// ===== ALKALMAZÁS FŐ VEZÉRLŐJE (main.js) ================
 // =======================================================
 
-/**
- * Összegyűjti az összes releváns tachográf adatot a jelenlegi állapotról.
- * @returns {object} Egy objektum, ami a teljes státuszt tartalmazza.
- */
-function getTachographStatus() {
-    const recordsSorted = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
-    const now = new Date();
+// ====== GLOBÁLIS ÁLLAPOT (STATE) ======
+let records = [];
+let palletRecords = [];
+let editingId = null;
+let activeShift = JSON.parse(localStorage.getItem('activeShift') || 'null');
+let uniqueLocations = [];
+let uniquePalletLocations = [];
+let currentActiveTab = 'live';
 
-    // 1. Heti keretek (10h vezetés, 9h csökkentett pihenő)
-    const { start: weekStart } = getWeekRange(now);
-    const weekStartStr = toISODate(weekStart);
-    const recordsInWeek = records.filter(r => r.date >= weekStartStr);
-    const extendedDrivesThisWeek = recordsInWeek.filter(r => r.driveMinutes > 540).length;
-    const remainingDrives10h = Math.max(0, 2 - extendedDrivesThisWeek);
+// ====== ALKALMAZÁS INDÍTÁSA ======
+document.addEventListener('DOMContentLoaded', () => {
+    // Alapfunkciók inicializálása
+    initTheme();
+    loadSettings();
+    initializeFeatureToggles();
+    initializePwaInstall();
+    initializePalletSettings();
+    initializeAuth();
 
-    let reducedRestsInCycle = 0;
-    for (let i = recordsSorted.length - 1; i > 0; i--) {
-        const prevEnd = new Date(`${recordsSorted[i-1].date}T${recordsSorted[i-1].endTime}`);
-        const currentStart = new Date(`${recordsSorted[i].date}T${recordsSorted[i].startTime}`);
-        const restHours = (currentStart - prevEnd) / (1000 * 60 * 60);
-        if (restHours >= 24) break; // Megvan a heti pihenő, ciklus vége
-        if (restHours >= 9 && restHours < 11) reducedRestsInCycle++;
-    }
-    const remainingRests9h = Math.max(0, 3 - reducedRestsInCycle);
-
-    // 2. Vezetési idők (56h / 90h)
-    const currentWeekDriveMinutes = recordsInWeek.reduce((sum, r) => sum + (r.driveMinutes || 0), 0);
-    
-    const { start: lastWeekStart, end: lastWeekEnd } = getWeekRange(now, -1);
-    const lastWeekDriveMinutes = records
-        .filter(r => r.date >= toISODate(lastWeekStart) && r.date <= toISODate(lastWeekEnd))
-        .reduce((sum, r) => sum + (r.driveMinutes || 0), 0);
-    const twoWeekDriveMinutes = currentWeekDriveMinutes + lastWeekDriveMinutes;
-
-    // 3. Heti pihenő esedékessége (6x24h)
-    let lastWeeklyRestEnd = null;
-    for (let i = recordsSorted.length - 1; i > 0; i--) {
-        const prevEnd = new Date(`${recordsSorted[i-1].date}T${recordsSorted[i-1].endTime}`);
-        const currentStart = new Date(`${recordsSorted[i].date}T${recordsSorted[i].startTime}`);
-        const restHours = (currentStart - prevEnd) / (1000 * 60 * 60);
-        if (restHours >= 24) {
-            lastWeeklyRestEnd = currentStart;
-            break;
+    // Globális eseménykezelők beállítása
+    document.addEventListener('click', (event) => {
+        const dropdownContainer = document.getElementById('dropdown-container');
+        if (dropdownContainer && !dropdownContainer.contains(event.target)) {
+            closeDropdown();
         }
-    }
-    // Ha nincs heti pihenő, az első rögzített nap végét vesszük alapul
-    if (!lastWeeklyRestEnd && recordsSorted.length > 0) {
-        const firstRecord = recordsSorted[0];
-        lastWeeklyRestEnd = new Date(`${firstRecord.date}T${firstRecord.endTime}`);
-    }
-    
-    let weeklyRestDeadline = null;
-    if (lastWeeklyRestEnd) {
-        weeklyRestDeadline = new Date(lastWeeklyRestEnd.getTime() + 6 * 24 * 60 * 60 * 1000);
-    }
+        if (!event.target.closest('.autocomplete-list')) {
+            hideAutocomplete();
+        }
+    });
 
-    return {
-        remainingDrives10h,
-        remainingRests9h,
-        currentWeekDriveMinutes,
-        twoWeekDriveMinutes,
-        weeklyRestDeadline
-    };
-}
+    setupEventListeners();
+});
 
+// ====== "ÉLŐ" MŰSZAK KEZELÉSE ======
 
 /**
- * Kirajzolja a teljes, egységes "Heti Státusz" kártyát.
+ * Elindít egy új munkanapot az "Indítás" fülről.
  */
-function renderTachographStatusCard() {
-    const i18n = translations[currentLang];
-    const liveContainer = document.getElementById('live-allowance-display');
-    const tachoContainer = document.getElementById('tacho-allowance-display');
-    if (!liveContainer || !tachoContainer) return;
+function startLiveShift() {
+    const date = document.getElementById('liveStartDate').value;
+    const startTime = document.getElementById('liveStartTime').value;
+    const startLocation = document.getElementById('liveStartLocation').value.trim();
+    const weeklyDriveStartStr = document.getElementById('liveWeeklyDriveStart').value;
+    const kmStart = parseFloat(document.getElementById('liveStartKm').value) || 0;
 
-    const status = getTachographStatus();
-
-    // 1. Heti keretek (ikonok)
-    let driveIcons = '';
-    for (let i = 0; i < 2; i++) {
-        driveIcons += (i < status.remainingDrives10h) ? createAvailableIcon(10) : createUsedIcon(10);
-    }
-    let restIcons = '';
-    for (let i = 0; i < 3; i++) {
-        restIcons += (i < status.remainingRests9h) ? createAvailableIcon(9) : createUsedIcon(9);
-    }
-
-    // 2. Vezetési idők (progress bar-ok)
-    const percent56h = Math.min(100, (status.currentWeekDriveMinutes / (56 * 60)) * 100);
-    const percent90h = Math.min(100, (status.twoWeekDriveMinutes / (90 * 60)) * 100);
-
-    // 3. Heti pihenő esedékessége (visszaszámláló)
-    let deadlineText = i18n.summaryNoData;
-    if (status.weeklyRestDeadline) {
-        const now = new Date();
-        const diffMinutes = (status.weeklyRestDeadline - now) / 60000;
-        if (diffMinutes < 0) {
-            deadlineText = `<span class="text-red-500 font-bold">Lejárt!</span>`;
-        } else {
-            const days = Math.floor(diffMinutes / 1440);
-            const hours = Math.floor((diffMinutes % 1440) / 60);
-            deadlineText = `${days} nap ${hours} óra`;
-        }
-    }
-
-    const html = `
-    <div class="bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3 space-y-3">
-        <h3 class="font-semibold text-gray-800 dark:text-gray-100">🗓️ Heti Státusz</h3>
-        
-        <div class="grid grid-cols-2 gap-3 text-center">
-            <div class="p-2 bg-blue-50 dark:bg-blue-900/50 rounded-lg">
-                <p class="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">${i18n.tachoAllowanceDrive10h}</p>
-                <div class="flex justify-center gap-2">${driveIcons.replace(/45/g, '35')}</div>
-            </div>
-            <div class="p-2 bg-orange-50 dark:bg-orange-900/50 rounded-lg">
-                <p class="text-xs font-medium text-orange-800 dark:text-orange-200 mb-1">${i18n.tachoAllowanceReducedRest}</p>
-                <div class="flex justify-center gap-2">${restIcons.replace(/45/g, '35')}</div>
-            </div>
-        </div>
-
-        <div class="space-y-2 text-sm">
-            <div>
-                <div class="flex justify-between mb-1">
-                    <span class="font-medium">Vezetés (ezen a héten)</span>
-                    <span>${formatDuration(status.currentWeekDriveMinutes)} / 56ó</span>
-                </div>
-                <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percent56h}%;"></div></div>
-            </div>
-            <div>
-                <div class="flex justify-between mb-1">
-                    <span class="font-medium">Vezetés (két hét)</span>
-                    <span>${formatDuration(status.twoWeekDriveMinutes)} / 90ó</span>
-                </div>
-                <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percent90h}%;"></div></div>
-            </div>
-        </div>
-        
-        <div class="text-sm border-t dark:border-gray-700 pt-2 flex justify-between items-center">
-            <span class="font-medium">Következő heti pihenő esedékes:</span>
-            <span class="font-bold text-lg">${deadlineText}</span>
-        </div>
-    </div>`;
-
-    liveContainer.innerHTML = html;
-    tachoContainer.innerHTML = html;
-}
-
-// SVG ikon generálása a rendelkezésre álló keretekhez
-function createAvailableIcon(number) {
-    return `<svg width="45" height="45" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" stroke-width="6" stroke="#16a34a" fill="#f0fdf4" /><text x="50" y="50" font-family="Arial" font-size="45" font-weight="bold" fill="#15803d" text-anchor="middle" dy=".3em">${number}</text></svg>`;
-}
-
-// SVG ikon generálása az elhasznált keretekhez
-function createUsedIcon(number) {
-    return `<svg width="45" height="45" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" stroke-width="6" stroke="#ef4444" fill="#fef2f2" /><text x="50" y="50" font-family="Arial" font-size="45" font-weight="bold" fill="#dc2626" text-anchor="middle" dy=".3em">${number}</text><line x1="20" y1="20" x2="80" y2="80" stroke="#b91c1c" stroke-width="8" stroke-linecap="round" /></svg>`;
-}
-
-// A tachográf segédkártyák (legkorábbi indulás / legkésőbbi pihenő) megjelenítése
-function renderTachoHelperCards() {
-    const container = document.getElementById('tacho-helper-display');
-    if (!container) return;
-
-    const i18n = translations[currentLang];
-    activeShift = JSON.parse(localStorage.getItem('activeShift') || 'null');
-
-    if (activeShift) { // Ha műszak van folyamatban
-        const status = getTachographStatus();
-        const startDate = new Date(`${activeShift.date}T${activeShift.startTime}`);
-        const latestRestStart11h = new Date(startDate.getTime() + 13 * 60 * 60 * 1000);
-        
-        let htmlContent = '';
-        if (status.remainingRests9h > 0) {
-            const latestRestStart9h = new Date(startDate.getTime() + 15 * 60 * 60 * 1000);
-            htmlContent = `<div class="bg-indigo-50 dark:bg-indigo-900/50 p-3 rounded-lg"><h3 class="font-semibold text-indigo-800 dark:text-indigo-200 text-base">${i18n.latestRestStartTitle}</h3><div class="text-sm"><strong>${i18n.with11hRestLatest}</strong> <div class="font-bold text-lg">${formatDateTime(latestRestStart11h)}</div></div><div class="text-sm"><strong>${i18n.with9hRestLatest}</strong> <div class="font-bold text-lg text-indigo-600 dark:text-indigo-300">${formatDateTime(latestRestStart9h)}</div></div></div>`;
-        } else {
-            htmlContent = `<div class="bg-yellow-50 dark:bg-yellow-900/50 p-3 rounded-lg"><h3 class="font-semibold text-yellow-800 dark:text-yellow-200 text-base">${i18n.latestRestStartTitle}</h3><div class="text-sm"><strong>${i18n.with11hRestLatest}</strong> <div class="font-bold text-lg">${formatDateTime(latestRestStart11h)}</div></div><p class="text-sm text-red-600 dark:text-red-400 font-semibold p-2 bg-red-100 dark:bg-red-900/50 rounded mt-2">${i18n.noMoreReducedRestsWarning}</p></div>`;
-        }
-        container.innerHTML = htmlContent;
-    } else { // Ha nincs műszak folyamatban
-        const lastRecord = getLatestRecord();
-        if (!lastRecord || !lastRecord.endTime) { container.innerHTML = ''; return; }
-        
-        const status = getTachographStatus();
-        const endDate = new Date(`${lastRecord.date}T${lastRecord.endTime}`);
-        const startTime11h = new Date(endDate.getTime() + 11 * 60 * 60 * 1000);
-
-        let htmlContent = '';
-        if (status.remainingRests9h > 0) {
-            const startTime9h = new Date(endDate.getTime() + 9 * 60 * 60 * 1000);
-            htmlContent = `<div class="bg-indigo-50 dark:bg-indigo-900/50 p-3 rounded-lg"><h3 class="font-semibold text-indigo-800 dark:text-indigo-200 text-base">${i18n.earliestStartTitle}</h3><div class="text-sm"><strong>${i18n.with9hRest}</strong> ${i18n.reducedLabel} <div class="font-bold text-lg text-indigo-600 dark:text-indigo-300">${formatDateTime(startTime9h)}</div></div><div class="text-sm"><strong>${i18n.with11hRest}</strong> ${i18n.regularLabel} <div class="font-bold text-lg">${formatDateTime(startTime11h)}</div></div><p class="text-xs text-gray-500 italic pt-2 mt-2 border-t dark:border-gray-700">${i18n.earliestStartWarning}</p></div>`;
-        } else {
-             htmlContent = `<div class="bg-yellow-50 dark:bg-yellow-900/50 p-3 rounded-lg"><h3 class="font-semibold text-yellow-800 dark:text-yellow-200 text-base">${i18n.earliestStartTitle}</h3><p class="text-sm mt-1">${i18n.noMoreReducedRests}</p><div class="text-sm mt-2"><strong>${i18n.with11hRest}</strong> ${i18n.regularLabel} <div class="font-bold text-lg">${formatDateTime(startTime11h)}</div></div><p class="text-xs text-gray-500 italic pt-2 mt-2 border-t dark:border-gray-700">${i18n.earliestStartWarning}</p></div>`;
-        }
-        container.innerHTML = htmlContent;
-    }
-}
-
-function handleTachographToggle(checkbox, recordId) {
-    const data = getSplitRestData();
-    if (checkbox.checked) {
-        data[recordId] = true;
-    } else {
-        delete data[recordId];
-    }
-    saveSplitRestData(data);
-    
-    updateEnhancedToggleVisuals(checkbox);
-    
-    renderTachographAnalysis();
-    renderTachographStatusCard();
-}
-
-function renderTachographAnalysis() {
-    const i18n = translations[currentLang];
-    const container = document.getElementById('tachograph-list');
-    if (!container) return;
-
-    const titleElement = document.querySelector('#content-tachograph h2');
-    if (titleElement && !document.getElementById('tacho-warning-banner')) {
-        const warningBanner = document.createElement('div');
-        warningBanner.id = 'tacho-warning-banner';
-        warningBanner.className = 'bg-yellow-50 dark:bg-yellow-900/50 border-l-4 border-yellow-400 text-yellow-700 dark:text-yellow-300 p-3 rounded-md mb-4 text-sm';
-        warningBanner.innerHTML = i18n.tachoDevWarning;
-        titleElement.after(warningBanner);
-    }
-
-    const sortedRecords = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
-    
-    if (sortedRecords.length < 1) {
-        container.innerHTML = `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>`;
+    if (!date || !startTime) {
+        showCustomAlert('A dátum és az idő megadása kötelező!', 'info');
         return;
     }
 
-    const splitRestData = getSplitRestData();
-    let analysisResults = [];
-    let reducedDailyRestCounter = 0;
-    let extendedDrivingInWeekCounter = {};
+    const newEntry = {
+        date,
+        startTime,
+        startLocation,
+        weeklyDriveStartStr,
+        kmStart,
+        crossings: []
+    };
 
-    for (let i = 0; i < sortedRecords.length; i++) {
-        const currentRecord = sortedRecords[i];
-        const previousRecord = i > 0 ? sortedRecords[i - 1] : null;
+    activeShift = newEntry;
+    localStorage.setItem('activeShift', JSON.stringify(activeShift));
 
-        let restAnalysis;
-        if (previousRecord) {
-            const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
-            const currentStart = new Date(`${currentRecord.date}T${currentRecord.startTime}`);
-            const restDurationMinutes = Math.round((currentStart - prevEnd) / 60000);
-            const restDurationHours = restDurationMinutes / 60;
-            const isSplitRest = splitRestData[previousRecord.id] === true || previousRecord.isSplitRest;
-            const prevWorkDurationHours = previousRecord.workMinutes / 60;
-
-            if (restDurationHours >= 45) {
-                restAnalysis = { text: `${i18n.tachoWeeklyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-700 text-white' };
-                reducedDailyRestCounter = 0;
-            } else if (restDurationHours >= 24) {
-                restAnalysis = { text: `${i18n.tachoReducedWeeklyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-700 text-white' };
-                reducedDailyRestCounter = 0;
-            } else if (isSplitRest) {
-                restAnalysis = { text: `${i18n.tachoSplitRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-200 text-green-800' };
-            } else if (restDurationHours >= 11 && prevWorkDurationHours <= 13) {
-                restAnalysis = { text: `${i18n.tachoRegularDailyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-500 text-white' };
-                reducedDailyRestCounter = 0;
-            } else if (restDurationHours >= 9) {
-                reducedDailyRestCounter++;
-                const isForcedReduced = prevWorkDurationHours > 13;
-                const reason = isForcedReduced ? ` ${i18n.tachoReason13h}` : '';
-                let colorClass, countText;
-                switch (reducedDailyRestCounter) {
-                    case 1: colorClass = 'bg-yellow-200 text-yellow-800'; countText = '1.'; break;
-                    case 2: colorClass = 'bg-yellow-400 text-black'; countText = '2.'; break;
-                    case 3: colorClass = 'bg-orange-400 text-black'; countText = '3.'; break;
-                    default: colorClass = 'bg-red-500 text-white'; countText = `${reducedDailyRestCounter}.`; break;
-                }
-                restAnalysis = { text: `${countText} ${i18n.tachoReducedDailyRest}${reason} (${formatDuration(restDurationMinutes)})`, colorClass: colorClass };
-            } else {
-                 restAnalysis = { text: `${i18n.tachoIrregularRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-red-500 text-white' };
-            }
-        } else {
-            restAnalysis = { text: 'Első rögzített nap', colorClass: 'bg-gray-200 text-gray-800' };
-            reducedDailyRestCounter = 0;
-        }
-
-        const driveMinutes = currentRecord.driveMinutes || 0;
-        const driveHours = driveMinutes / 60;
-        let driveAnalysis;
-        
-        if (driveMinutes <= 0) {
-            driveAnalysis = { text: i18n.tachoNoDriveTime, colorClass: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' };
-        } else if (driveHours > 10) {
-            driveAnalysis = { text: `${i18n.tachoIrregularDrive} (${formatDuration(driveMinutes)})`, colorClass: 'bg-red-500 text-white' };
-        } else if (driveHours > 9) {
-            const weekId = getWeekIdentifier(new Date(currentRecord.date));
-            extendedDrivingInWeekCounter[weekId] = (extendedDrivingInWeekCounter[weekId] || 0) + 1;
-            const countInWeek = extendedDrivingInWeekCounter[weekId];
-            const irregularText = countInWeek > 2 ? '(szabálytalan) ' : '';
-            driveAnalysis = { text: `${countInWeek}. ${irregularText}${i18n.tachoIncreasedDrive} (${formatDuration(driveMinutes)})`, colorClass: countInWeek > 2 ? 'bg-red-500 text-white' : 'bg-blue-400 text-white' };
-        } else {
-            driveAnalysis = { text: `${i18n.tachoNormalDrive} (${formatDuration(driveMinutes)})`, colorClass: 'bg-gray-300 text-gray-800' };
-        }
-
-        analysisResults.push({ record: currentRecord, rest: restAnalysis, drive: driveAnalysis, isSplit: splitRestData[currentRecord.id] === true || currentRecord.isSplitRest });
-    }
-
-    container.innerHTML = analysisResults.reverse().map(res => {
-        const d = new Date(res.record.date + 'T00:00:00');
-        const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU';
-        const dateString = d.toLocaleDateString(locale, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-        const borderColorClass = res.rest.colorClass.split(' ')[0].replace('bg-', 'border-');
-
-        return `
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border-l-4 ${borderColorClass}">
-            <div class="flex justify-between items-start mb-3">
-                <p class="font-bold text-base text-gray-800 dark:text-gray-100">${dateString}</p>
-                <div class="enhanced-toggle-container ${res.isSplit ? 'active' : ''}" onclick="document.getElementById('split-${res.record.id}').click()">
-                   <div class="enhanced-toggle-text">
-                       <span class="text-sm">${i18n.tachoSplitRest}</span>
-                       <span class="enhanced-toggle-checkmark ${res.isSplit ? '' : 'hidden'}">✓</span>
-                   </div>
-                   <input type="checkbox" id="split-${res.record.id}" onchange="handleTachographToggle(this, '${res.record.id}')" ${res.isSplit ? 'checked' : ''} class="sr-only">
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                <div class="p-2 rounded ${res.rest.colorClass}">
-                    <p class="font-semibold">${i18n.tachoRestBeforeShift}</p>
-                    <p>${res.rest.text}</p>
-                </div>
-                <div class="p-2 rounded ${res.drive.colorClass}">
-                    <p class="font-semibold">${i18n.tachoDailyDriveTime}</p>
-                    <p>${res.drive.text}</p>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
+    renderStartTab();
+    renderLiveTabView();
 }
 
-// Segédfüggvények az osztott pihenő adatok mentéséhez/betöltéséhez
-function getSplitRestData() { return JSON.parse(localStorage.getItem('splitRestData') || '{}'); }
-function saveSplitRestData(data) { localStorage.setItem('splitRestData', JSON.stringify(data)); }
+/**
+ * Hozzáad egy határátlépést a folyamatban lévő műszakhoz.
+ */
+function addLiveCrossing() {
+    const from = document.getElementById('liveCrossFrom').value.trim().toUpperCase();
+    const to = document.getElementById('liveCrossTo').value.trim().toUpperCase();
+    const time = document.getElementById('liveCrossTime').value;
+
+    if (!from || !to || !time) {
+        showCustomAlert('Kérlek tölts ki minden mezőt a határátlépéshez!', 'info');
+        return;
+    }
+
+    if (!activeShift) {
+        showCustomAlert('Nincs aktív műszak, amihez hozzá lehetne adni a határátlépést.', 'info');
+        return;
+    }
+
+    activeShift.crossings.push({ from, to, time });
+    localStorage.setItem('activeShift', JSON.stringify(activeShift));
+    renderStartTab();
+}
+
+/**
+ * Előkészíti a műszak befejezését: átvált a "Teljes nap" fülre
+ * és kitölti az űrlapot az aktív műszak adataival.
+ */
+function prepareFinalizeShift() {
+    if (!activeShift) {
+        showCustomAlert('Nincs aktív műszak a befejezéshez.', 'info');
+        return;
+    }
+
+    showTab('full-day');
+
+    document.getElementById('date').value = activeShift.date;
+    document.getElementById('startTime').value = activeShift.startTime;
+    document.getElementById('startLocation').value = activeShift.startLocation;
+    document.getElementById('kmStart').value = activeShift.kmStart || '';
+    document.getElementById('weeklyDriveStart').value = activeShift.weeklyDriveStartStr || '';
+
+    const crossingsContainer = document.getElementById('crossingsContainer');
+    crossingsContainer.innerHTML = '';
+    if (activeShift.crossings && activeShift.crossings.length > 0) {
+        activeShift.crossings.forEach(c => addCrossingRow(c.from, c.to, c.time));
+    }
+
+    activeShift = null;
+    localStorage.removeItem('activeShift');
+
+    const endTimeInput = document.getElementById('endTime');
+    endTimeInput.value = new Date().toTimeString().slice(0, 5);
+    endTimeInput.focus();
+}
+
+/**
+ * Megszakítja és törli a folyamatban lévő munkanapot.
+ */
+function discardShift() {
+    if (!activeShift) return;
+
+    const i18n = translations[currentLang];
+    showCustomAlert(`${i18n.discardWorkday}?`, 'warning', () => {
+        activeShift = null;
+        localStorage.removeItem('activeShift');
+        renderStartTab();
+        renderLiveTabView();
+    });
+}
+
+
+/**
+ * Alaphelyzetbe állítja a "Teljes nap" fülön található űrlapot egy új bejegyzéshez.
+ */
+function resetEntryForm() {
+    editingId = null;
+    
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('startTime').value = '';
+    document.getElementById('endTime').value = '';
+    document.getElementById('compensationTime').value = '';
+    document.getElementById('startLocation').value = '';
+    document.getElementById('endLocation').value = '';
+    document.getElementById('weeklyDriveStart').value = '';
+    document.getElementById('weeklyDriveEnd').value = '';
+    document.getElementById('kmStart').value = '';
+    document.getElementById('kmEnd').value = '';
+    document.getElementById('crossingsContainer').innerHTML = '';
+
+    const splitRestToggle = document.getElementById('toggleSplitRest');
+    if (splitRestToggle) {
+        splitRestToggle.checked = false;
+        if (typeof updateEnhancedToggleVisuals === 'function') {
+            updateEnhancedToggleVisuals(splitRestToggle);
+        }
+    }
+    updateDisplays();
+}
+
+// ====== FŐ RENDERELŐ FUNKCIÓ ======
+function renderApp() {
+    applyFeatureToggles();
+    updateUniqueLocations();
+    updateUniquePalletLocations();
+    initAllAutocomplete();
+    renderLiveTabView();
+    renderStartTab();
+    renderRecords();
+    renderSummary();
+    if (document.getElementById('content-stats').offsetParent !== null) renderStats();
+    if (document.getElementById('content-tachograph').offsetParent !== null) renderTachographAnalysis();
+    if (document.getElementById('content-pallets').offsetParent !== null) renderPalletRecords();
+    updateAllTexts();
+}
+
+// ====== NÉZETKEZELÉS (FÜLEK) ======
+function showTab(tabName) {
+    currentActiveTab = tabName;
+
+    if (tabName === 'full-day' && !editingId) {
+        resetEntryForm();
+        loadLastValues();
+    }
+    if (tabName === 'pallets') {
+        renderPalletRecords();
+    }
+    if (tabName === 'report') { if (typeof initMonthlyReport === 'function') { initMonthlyReport(); } }
+    if (tabName === 'list') {
+        renderRecords();
+    }
+    if (tabName === 'summary') {
+        renderSummary();
+    }
+    if (tabName === 'stats') {
+        statsDate = new Date();
+        renderStats();
+    }
+    if (tabName === 'tachograph') {
+        renderTachographStatusCard();
+        renderTachographAnalysis();
+    }
+    if (tabName === 'help') {
+        renderHelp();
+    }
+
+    const allTabs = document.querySelectorAll('.tab');
+    const mainTabs = ['live', 'start', 'full-day'];
+    const dropdownButton = document.getElementById('dropdown-button');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+
+    allTabs.forEach(t => t.classList.remove('tab-active'));
+    dropdownButton.classList.remove('tab-active');
+
+    if (mainTabs.includes(tabName)) {
+        const tabButton = document.getElementById(`tab-${tabName}`);
+        if (tabButton) tabButton.classList.add('tab-active');
+        dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`;
+    } else {
+        dropdownButton.classList.add('tab-active');
+        const selectedTitleEl = dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`);
+        if (selectedTitleEl) {
+            const selectedTitle = selectedTitleEl.getAttribute('data-translate-key') ? translations[currentLang][selectedTitleEl.getAttribute('data-translate-key')] : selectedTitleEl.textContent;
+            dropdownButton.innerHTML = `${selectedTitle} ▼`;
+        }
+    }
+
+    document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden'));
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
+    closeDropdown();
+    updateAllTexts();
+}
+
+function toggleDropdown() { document.getElementById('dropdown-menu').classList.toggle('hidden'); }
+function closeDropdown() { document.getElementById('dropdown-menu').classList.add('hidden'); }
+
+
+// ====== SEGÉDFÜGGVÉNYEK ======
+function getSortedRecords() {
+    return [...(records || [])].sort((a, b) => new Date(`${b.date}T${b.startTime}`) - new Date(`${a.date}T${a.startTime}`));
+}
+
+function getLatestRecord() {
+    if (!records || records.length === 0) return null;
+    return getSortedRecords()[0];
+}
+
+/**
+ * Betölti az utolsó bejegyzés záró adatait az új bejegyzés űrlapjába.
+ * @param {boolean} isLive - Ha true, az 'Indítás' fül mezőit tölti ki.
+ */
+function loadLastValues(isLive = false) {
+    const latestRecord = getLatestRecord();
+    if (!latestRecord) return;
+
+    if (isLive) {
+        const now = new Date();
+        document.getElementById('liveStartDate').value = now.toISOString().split('T')[0];
+        document.getElementById('liveStartTime').value = now.toTimeString().slice(0, 5);
+        if (latestRecord.endLocation) {
+            document.getElementById('liveStartLocation').value = latestRecord.endLocation;
+        }
+        if (latestRecord.kmEnd) {
+            document.getElementById('liveStartKm').value = latestRecord.kmEnd;
+        }
+        if (latestRecord.weeklyDriveEnd) {
+            document.getElementById('liveWeeklyDriveStart').value = latestRecord.weeklyDriveEnd;
+        }
+    } else {
+        if (latestRecord.endLocation) {
+            document.getElementById('startLocation').value = latestRecord.endLocation;
+        }
+        if (latestRecord.kmEnd) {
+            document.getElementById('kmStart').value = latestRecord.kmEnd;
+        }
+        if (latestRecord.weeklyDriveEnd) {
+            document.getElementById('weeklyDriveStart').value = latestRecord.weeklyDriveEnd;
+        }
+    }
+}
+
+function updateUniqueLocations() {
+    const locations = new Set(records.map(r => r.startLocation).concat(records.map(r => r.endLocation)));
+    uniqueLocations = Array.from(locations).filter(Boolean).sort();
+}
+
+function updateUniquePalletLocations() {
+    const locations = new Set(palletRecords.map(r => r.location));
+    uniquePalletLocations = Array.from(locations).filter(Boolean).sort();
+}
+
+function updateDisplays() {
+    const i18n = translations[currentLang];
+    const workMinutes = calculateWorkMinutes(document.getElementById('startTime').value, document.getElementById('endTime').value);
+    document.getElementById('workTimeDisplay').textContent = workMinutes > 0 ? `${i18n.workTimeDisplay}: ${formatDuration(workMinutes)}` : '';
+    const nightMinutes = calculateNightWorkMinutes(document.getElementById('startTime').value, document.getElementById('endTime').value);
+    document.getElementById('nightWorkDisplay').textContent = nightMinutes > 0 ? `${i18n.nightWorkDisplay}: ${formatDuration(nightMinutes)}` : '';
+    const driveMinutes = Math.max(0, parseTimeToMinutes(document.getElementById('weeklyDriveEnd').value) - parseTimeToMinutes(document.getElementById('weeklyDriveStart').value));
+    document.getElementById('driveTimeDisplay').textContent = driveMinutes > 0 ? `${i18n.driveTimeTodayDisplay}: ${formatDuration(driveMinutes)}` : '';
+    const kmDriven = Math.max(0, (parseFloat(document.getElementById('kmEnd').value) || 0) - (parseFloat(document.getElementById('kmStart').value) || 0));
+    document.getElementById('kmDisplay').textContent = kmDriven > 0 ? `${i18n.kmDrivenDisplay}: ${kmDriven} km` : '';
+}
+
+async function runNightWorkRecalculation() {
+    if (localStorage.getItem('nightWorkRecalculated_v20_05')) { return; }
+    const i18n = translations[currentLang];
+    console.log(i18n.logRecalculatingNightWork);
+    let updatedCount = 0;
+    const updatedRecords = records.map(record => {
+        const newNightWorkMinutes = calculateNightWorkMinutes(record.startTime, record.endTime);
+        if (record.nightWorkMinutes !== newNightWorkMinutes) {
+            record.nightWorkMinutes = newNightWorkMinutes;
+            updatedCount++;
+        }
+        return record;
+    });
+    records = updatedRecords;
+    if (currentUser) {
+        const batch = db.batch();
+        records.forEach(record => {
+            const docRef = db.collection('users').doc(currentUser.uid).collection('records').doc(String(record.id));
+            batch.update(docRef, { nightWorkMinutes: record.nightWorkMinutes });
+        });
+        await batch.commit();
+    } else {
+        localStorage.setItem('workRecords', JSON.stringify(records));
+    }
+    localStorage.setItem('nightWorkRecalculated_v20_05', 'true');
+    console.log(`${updatedCount} ${i18n.logEntriesUpdated}`);
+}
+
+function renderLiveTabView() {
+    renderTachographStatusCard();
+    renderTachoHelperCards();
+    renderDashboard();
+}
+
+function renderStartTab() {
+    const i18n = translations[currentLang];
+    activeShift = JSON.parse(localStorage.getItem('activeShift') || 'null');
+
+    const startForm = document.getElementById('start-new-day-form');
+    const progressView = document.getElementById('live-progress-view');
+    const summaryContainer = document.getElementById('live-start-summary');
+
+    if (activeShift) {
+        startForm.classList.add('hidden');
+        progressView.classList.remove('hidden');
+
+        document.getElementById('live-start-time').textContent = `${i18n.startedAt}: ${activeShift.date} ${activeShift.startTime}`;
+        let summaryHTML = '';
+        const hasDriveData = localStorage.getItem('toggleDriveTime') === 'true' && activeShift.weeklyDriveStartStr;
+        const hasKmData = localStorage.getItem('toggleKm') === 'true' && activeShift.kmStart > 0;
+        const hasLocationData = activeShift.startLocation && activeShift.startLocation.trim() !== '';
+
+        if (hasDriveData || hasKmData || hasLocationData) {
+            summaryHTML += `<div class="p-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg space-y-2">
+                                <h3 class="font-semibold text-gray-800 dark:text-gray-100">${i18n.liveShiftDetailsTitle}</h3>
+                                <div class="space-y-1 text-sm">`;
+
+            if (hasLocationData) {
+                summaryHTML += `<div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1">
+                                    <span class="text-gray-500 dark:text-gray-400">${i18n.liveStartLocationLabel}</span>
+                                    <span class="font-semibold">${activeShift.startLocation}</span>
+                                </div>`;
+            }
+            if (hasDriveData) {
+                summaryHTML += `<div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1">
+                                    <span class="text-gray-500 dark:text-gray-400">${i18n.liveStartDriveLabel}</span>
+                                    <span class="font-semibold">${activeShift.weeklyDriveStartStr}</span>
+                                </div>`;
+            }
+            if (hasKmData) {
+                summaryHTML += `<div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-1">
+                                    <span class="text-gray-500 dark:text-gray-400">${i18n.liveStartKmLabel}</span>
+                                    <span class="font-semibold">${activeShift.kmStart} km</span>
+                                </div>`;
+            }
+            summaryHTML += `</div></div>`;
+        }
+        summaryContainer.innerHTML = summaryHTML;
+
+        const liveCrossList = document.getElementById('live-crossings-list');
+        const liveCrossFrom = document.getElementById('liveCrossFrom');
+        if (activeShift.crossings && activeShift.crossings.length > 0) {
+            const crossingsHTML = activeShift.crossings.map(c =>
+                `<div class="flex items-center justify-between bg-white dark:bg-gray-700/50 p-2 rounded-md shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        <span class="font-mono font-bold text-indigo-800 dark:text-indigo-200">${c.from}</span>
+                        <span class="text-gray-400">→</span>
+                        <span class="font-mono font-bold text-indigo-800 dark:text-indigo-200">${c.to}</span>
+                    </div>
+                    <span class="text-sm font-mono text-gray-600 dark:text-gray-400">${c.time}</span>
+                </div>`
+            ).join('');
+            liveCrossList.innerHTML = `<div class="bg-indigo-50 dark:bg-indigo-900/50 p-3 rounded-lg">
+                                        <h4 class="font-bold text-indigo-800 dark:text-indigo-200 text-sm mb-2">${i18n.recordedCrossings}</h4>
+                                        <div class="space-y-2">${crossingsHTML}</div>
+                                    </div>`;
+            liveCrossFrom.value = activeShift.crossings.slice(-1)[0].to;
+        } else {
+            liveCrossList.innerHTML = '';
+            const lastRecordWithCrossing = getSortedRecords().find(r => r.crossings && r.crossings.length > 0);
+            liveCrossFrom.value = lastRecordWithCrossing ? lastRecordWithCrossing.crossings.slice(-1)[0].to : '';
+        }
+        document.getElementById('liveCrossTo').value = '';
+        document.getElementById('liveCrossTime').value = new Date().toTimeString().slice(0, 5);
+    } else {
+        progressView.classList.add('hidden');
+        startForm.classList.remove('hidden');
+        summaryContainer.innerHTML = '';
+        loadLastValues(true);
+    }
+}
+
+function renderDashboard() {
+    const i18n = translations[currentLang];
+    const container = document.getElementById('dashboard-cards');
+    if (!container) return;
+    const now = new Date();
+    const thisWeek = calculateSummaryForDateRange(getWeekRange(now));
+    const lastWeek = calculateSummaryForDateRange(getWeekRange(now, -1));
+    const thisMonth = calculateSummaryForMonth(new Date());
+
+    const cards = [
+        { labelKey: 'dashboardDriveThisWeek', value: formatDuration(thisWeek.driveMinutes), color: 'blue' },
+        { labelKey: 'dashboardWorkThisWeek', value: formatDuration(thisWeek.workMinutes), color: 'green' },
+        { labelKey: 'dashboardDistanceThisMonth', value: `${thisMonth.kmDriven} km`, color: 'orange' },
+        { labelKey: 'dashboardDistanceLastWeek', value: `${lastWeek.kmDriven} km`, color: 'indigo' }
+    ];
+
+    container.innerHTML = cards.map(card => `
+        <div class="bg-${card.color}-50 dark:bg-${card.color}-900/50 border border-${card.color}-200 dark:border-${card.color}-800 rounded-lg p-3 text-center">
+            <p class="text-xs text-${card.color}-700 dark:text-${card.color}-200 font-semibold">${i18n[card.labelKey]}</p>
+            <p class="text-lg font-bold text-${card.color}-800 dark:text-${card.color}-100 mt-1">${card.value}</p>
+        </div>
+    `).join('');
+}
+
+function setupEventListeners() {
+    // Általános űrlap mezők figyelése
+    ['startTime', 'endTime', 'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd', 'compensationTime'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateDisplays);
+    });
+
+    // Statisztika gombjainak figyelése
+    document.getElementById('stats-view-daily').onclick = () => setStatsView('daily');
+    document.getElementById('stats-view-monthly').onclick = () => setStatsView('monthly');
+    document.getElementById('stats-view-yearly').onclick = () => setStatsView('yearly');
+    document.getElementById('stats-prev').onclick = () => navigateStats(-1);
+    document.getElementById('stats-next').onclick = () => navigateStats(1);
+
+    // Beállítások figyelése
+    document.getElementById('autoExportSelector').addEventListener('change', (e) => {
+        const i18n = translations[currentLang];
+        localStorage.setItem('autoExportFrequency', e.target.value);
+        if (e.target.value !== 'never') {
+            localStorage.setItem('lastAutoExportDate', new Date().toISOString());
+            showCustomAlert(i18n.autoBackupOn, 'success');
+        } else {
+            showCustomAlert(i18n.autoBackupOff, 'info');
+        }
+    });
+}
