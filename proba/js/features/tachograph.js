@@ -3,13 +3,35 @@
 // =======================================================
 
 /**
+ * Segédfüggvény, ami megállapítja, hogy egy adott pihenőidő csökkentett napi pihenőnek számít-e.
+ * @param {number} restHours - A pihenő hossza órában.
+ * @param {object} precedingRecord - A pihenőt közvetlenül megelőző munkanap bejegyzése.
+ * @returns {boolean} - Igaz, ha csökkentett napi pihenőnek minősül.
+ */
+function isReducedDailyRest(restHours, precedingRecord) {
+    if (!precedingRecord) return false;
+
+    const splitData = getSplitRestData();
+    const isSplit = splitData[precedingRecord.id] === true || precedingRecord.isSplitRest;
+
+    // Ha osztott pihenő része, sosem lehet csökkentett.
+    if (isSplit) return false;
+
+    // Két eset van, amikor csökkentettnek számít:
+    // 1. A pihenő 9 és 11 óra közötti.
+    const isDurationReduced = restHours >= 9 && restHours < 11;
+    // 2. Az előző munkanap 13 óránál hosszabb volt (ez kényszeríti a csökkentett pihenőt, ha a pihenő nem éri el a 11 órát).
+    const isWorkdayForced = precedingRecord.workMinutes > 13 * 60;
+
+    return isDurationReduced || isWorkdayForced;
+}
+
+/**
  * Összegyűjti az összes releváns tachográf adatot a jelenlegi állapotról.
- * @returns {object} Egy objektum, ami a teljes státuszt tartalmazza.
  */
 function getTachographStatus() {
     const recordsSorted = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
     const now = new Date();
-    const splitData = getSplitRestData();
 
     // 1. Heti keretek (10h vezetés, 9h csökkentett pihenő)
     const { start: weekStart } = getWeekRange(now);
@@ -27,22 +49,19 @@ function getTachographStatus() {
 
         if (restHours >= 24) break;
         
-        const isSplit = splitData[previousRecord.id] === true || previousRecord.isSplitRest;
-
-        if ((restHours >= 9 && restHours < 11 && !isSplit) || (previousRecord.workMinutes > 13 * 60 && !isSplit)) {
+        // Az új, központi segédfüggvényt használjuk
+        if (isReducedDailyRest(restHours, previousRecord)) {
             reducedRestsInCycle++;
         }
     }
     let remainingRests9h = Math.max(0, 3 - reducedRestsInCycle);
     
-    // Figyelembe vesszük az ideiglenes jelzőt a frissen indított műszakhoz
     const pendingUsage = parseInt(localStorage.getItem('pendingReducedRestUsage') || '0', 10);
     remainingRests9h -= pendingUsage;
 
 
     // 2. Vezetési idők (56h / 90h)
     const currentWeekDriveMinutes = recordsInWeek.reduce((sum, r) => sum + (r.driveMinutes || 0), 0);
-    
     const { start: lastWeekStart, end: lastWeekEnd } = getWeekRange(now, -1);
     const lastWeekDriveMinutes = records
         .filter(r => r.date >= toISODate(lastWeekStart) && r.date <= toISODate(lastWeekEnd))
@@ -61,8 +80,7 @@ function getTachographStatus() {
         }
     }
     if (!lastWeeklyRestEnd && recordsSorted.length > 0) {
-        const firstRecord = recordsSorted[0];
-        lastWeeklyRestEnd = new Date(`${firstRecord.date}T${firstRecord.endTime}`);
+        lastWeeklyRestEnd = new Date(`${recordsSorted[0].date}T${recordsSorted[0].endTime}`);
     }
     
     let weeklyRestDeadline = null;
@@ -79,6 +97,10 @@ function getTachographStatus() {
     };
 }
 
+
+/**
+ * Kirajzolja a teljes, egységes "Heti Státusz" kártyát.
+ */
 function renderTachographStatusCard() {
     const i18n = translations[currentLang];
     const liveContainer = document.getElementById('live-allowance-display');
@@ -330,6 +352,7 @@ function renderTachographAnalysis() {
         </div>`;
     }).join('');
 }
+
 
 function getSplitRestData() { return JSON.parse(localStorage.getItem('splitRestData') || '{}'); }
 function saveSplitRestData(data) { localStorage.setItem('splitRestData', JSON.stringify(data)); }
