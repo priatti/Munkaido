@@ -329,5 +329,6 @@
   window.isReducedDailyRest = isReducedDailyRest;
   window.renderTachographStatusCard = renderTachographStatusCard;
   window.renderTachoHelperCards = renderTachoHelperCards;
+  window.renderTachographAnalysis = renderTachographAnalysis;
 
 })();
