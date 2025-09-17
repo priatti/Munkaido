@@ -1,4 +1,4 @@
-\
+
 // proba/js/features/report.js
 (function(){
   const $ = (sel) => document.querySelector(sel);

@@ -1,4 +1,4 @@
-\
+
 // proba/js/features/overview-live-refresh.js
 (function () {
   'use strict';
