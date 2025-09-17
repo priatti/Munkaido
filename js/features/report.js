@@ -1,3 +1,4 @@
+\
 // proba/js/features/report.js
 (function(){
   const $ = (sel) => document.querySelector(sel);
@@ -5,35 +6,38 @@
 
   const germanMonths = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
   const germanFullDays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-
   function fmtHM(mins){ mins=Math.max(0,Math.round(mins||0)); const h=Math.floor(mins/60), m=mins%60; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
-  function parseHM(str){ if(!str) return 0; const m=String(str).trim().match(/^(\d{1,2})[:h]?(\d{0,2})$/); if(!m) return 0; return parseInt(m[1],10)*60+(m[2]?parseInt(m[2],10):0); }
+
   function toISODateLoose(s){
-    if(!s) return null; s=String(s).trim();
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-    let m=s.match(/^(\d{4})[.\/-]\s*(\d{1,2})[.\/-]\s*(\d{1,2})$/);
+    if(!s && s!==0) return null;
+    if (s instanceof Date) return s.toISOString().slice(0,10);
+    if (typeof s === 'number' && isFinite(s)) return new Date(s).toISOString().slice(0,10);
+    if (s && typeof s.toDate === 'function'){ try{ return s.toDate().toISOString().slice(0,10);}catch(_){ } }
+    s = String(s).trim();
+    if (/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return s;
+    let m=s.match(/^(\\d{4})[.\\/\\-]\\s*(\\d{1,2})[.\\/\\-]\\s*(\\d{1,2})$/);
     if(m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
-    m=s.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+    m=s.match(/^(\\d{1,2})[.\\/\\-](\\d{1,2})[.\\/\\-](\\d{4})$/);
     if(m) return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+    m=s.match(/^(\\d{4})-(\\d{2})-(\\d{2})[T ]/);
+    if(m) return `${m[1]}-${m[2]}-${m[3]}`;
     return null;
   }
-
   function looksLikeRecord(r){
-    return r && typeof r==='object' && (r.date || r.day || r.key) && (r.startTime || r.start) && (r.endTime || r.end);
+    return r && typeof r==='object' && (r.date || r.day || r.key || r.ts) && (r.startTime || r.start) && (r.endTime || r.end);
   }
   function normalizeRecord(r){
-    const date = toISODateLoose(r.date || r.day || r.key) || (r.date || r.day || r.key);
+    const dateIso = toISODateLoose(r.date) || toISODateLoose(r.day) || toISODateLoose(r.key) || toISODateLoose(r.ts);
     const startTime = r.startTime || r.start || '';
     const endTime   = r.endTime || r.end || '';
-    const workMinutes  = ('workMinutes' in r) ? Number(r.workMinutes) : (('workTime' in r)? parseHM(r.workTime) : 0);
+    const workMinutes  = ('workMinutes' in r) ? Number(r.workMinutes) : (('workTime' in r)? Number(r.workTime) : 0);
     const nightWorkMinutes = Number(r.nightWorkMinutes || r.night || 0);
     const startLocation = r.startLocation || r.from || r.startLoc || '';
     const endLocation   = r.endLocation || r.to || r.endLoc || '';
     const crossings = Array.isArray(r.crossings) ? r.crossings : (Array.isArray(r.borderCrossings)? r.borderCrossings : []);
-    return { id: String(r.id || r.key || Date.now()+Math.random()), date, startTime, endTime, startLocation, endLocation, workMinutes, nightWorkMinutes, crossings };
+    return { id: String(r.id || r.key || Date.now()+Math.random()), date: dateIso, startTime, endTime, startLocation, endLocation, workMinutes, nightWorkMinutes, crossings };
   }
 
-  // ---- Collectors ----
   async function collectFromWindow(){
     if (Array.isArray(window.records) && window.records.length){
       return window.records.map(normalizeRecord);
@@ -68,14 +72,14 @@
       if (Array.isArray(node)){ node.forEach(walk); return; }
       if (typeof node === 'object'){
         for (const [k,v] of Object.entries(node)){
-          if (/^\d{4}-\d{2}-\d{2}$/.test(k) && v && typeof v==='object'){
+          if (/^\\d{4}-\\d{2}-\\d{2}$/.test(k) && v && typeof v==='object'){
             const rec = Object.assign({date:k}, v); if (looksLikeRecord(rec)) out.push(normalizeRecord(rec));
           }
         }
         for (const [k,v] of Object.entries(node)){
-          if (/^\d{4}-\d{2}$/.test(k) && v && typeof v==='object'){
+          if (/^\\d{4}-\\d{2}$/.test(k) && v && typeof v==='object'){
             for (const [dk,dv] of Object.entries(v)){
-              if (/^\d{2}$/.test(dk) && dv && typeof dv==='object'){
+              if (/^\\d{2}$/.test(dk) && dv && typeof dv==='object'){
                 const rec = Object.assign({date:`${k}-${dk}`}, dv); if (looksLikeRecord(rec)) out.push(normalizeRecord(rec));
               }
             }
@@ -127,37 +131,27 @@
       const fs = (typeof fb.firestore === 'function') ? fb.firestore() : (fb.firestore || null);
       if (!fs || !fs.collection) return out;
       const paths = [`users/${uid}/records`,`users/${uid}/workdays`,`users/${uid}/days`,`users/${uid}/entries`,`records/${uid}/items`,`workdays/${uid}/items`];
-      const [y,m] = selectedMonth.split('-'); const start=`${y}-${m}-01`; const end=`${y}-${m}-31`;
-      async function getAllDocs(path){
-        try{
-          const ref=fs.collection(path); let snap;
-          try{ snap=await ref.where('date','>=',start).where('date','<=',end).get(); }
-          catch(e){ snap=await ref.get(); }
-          const arr=[]; snap.forEach(d=>arr.push({id:d.id,...d.data()})); return arr;
-        }catch(_){ return []; }
-      }
       for (const p of paths){
-        const arr = await getAllDocs(p);
-        for (const r of arr){
-          if (!r || !r.date) continue;
-          if (!String(r.date).startsWith(selectedMonth)) continue;
-          out.push(normalizeRecord(r));
-        }
-        if (out.length) break;
+        try{
+          const snap = await fs.collection(p).get();
+          const arr = []; snap.forEach(d=>arr.push({id:d.id, ...d.data()}));
+          arr.forEach(r=>{
+            const dateIso = toISODateLoose(r.date) || toISODateLoose(r.day) || toISODateLoose(r.key);
+            if (dateIso && dateIso.startsWith(selectedMonth)) out.push(normalizeRecord(r));
+          });
+          if (out.length) break;
+        }catch(_){}
       }
     }catch(_){}
     return out;
   }
-
   async function collectRecords(selectedMonth){
     const w = await collectFromWindow(); if (w.length) return w;
     const ls = [...collectFromLocalStorageFlat(), ...collectFromLocalStorageDeep()]; if (ls.length) return ls;
     const idb = await collectFromIndexedDB(); if (idb.length) return idb;
-    const fsd = await collectFromFirestore(selectedMonth); if (fsd.length) return fsd;
-    return [];
+    const fsd = await collectFromFirestore(selectedMonth); return fsd;
   }
 
-  // ----- UI API -----
   window.initMonthlyReport = function(){
     const inp = $('#monthSelector'); if (inp) inp.value = new Date().toISOString().slice(0,7);
     const cont = $('#monthlyReportContent'); if (cont) cont.innerHTML = '';
@@ -190,7 +184,6 @@
     if (navigator.share){ const sh = $('#pdfShareBtn'); if (sh) sh.classList.remove('hidden'); }
   };
 
-  // ------- PDF table renderer (top-aligned lines, stable row height) -------
   function renderMonthlyPdfTable(doc, recordsMap, year, month){
     const left = 15, pageBottom = 280;
     const headers = ['Datum','Beginn','Ort','Ende','Ort','Grenzübergänge','Arbeit','Nacht'];
@@ -207,18 +200,18 @@
     yPos = drawHeader(yPos);
     let totalWork=0, totalNight=0;
 
+    const germanFullDays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
     const daysInMonth = new Date(year, month, 0).getDate();
     for (let day=1; day<=daysInMonth; day++){
       const key = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const r = recordsMap.get(key);
       const dayOfWeek = new Date(Date.UTC(year, month-1, day)).getUTCDay();
 
-      // lines for each cell (arrays!)
       const dateLines = [`${String(day).padStart(2,'0')}.${String(month).padStart(2,'0')}.`, germanFullDays[dayOfWeek]];
       const sLocLines = doc.splitTextToSize(r?.startLocation || '-', colW[2]-3);
       const eLocLines = doc.splitTextToSize(r?.endLocation || '-', colW[4]-3);
       const crossingsText = (r && Array.isArray(r.crossings) && r.crossings.length)
-        ? r.crossings.map(c=>`${c.from}-${c.to}${c.time?(' ('+c.time+')'):''}`).join('\n')
+        ? r.crossings.map(c=>`${c.from}-${c.to}${c.time?(' ('+c.time+')'):''}`).join('\\n')
         : '-';
       const crLines = doc.splitTextToSize(crossingsText, colW[5]-3);
 
@@ -253,7 +246,6 @@
     doc.text(`Gesamt Nachtzeit: ${fmtHM(totalNight)}`, left+180, yPos+11, {align:'right'});
   }
 
-  // ------- Export / Share -------
   window.exportToPDF = function(){
     if (!currentMonthlyData){ alert('Bitte zuerst den Bericht erstellen.'); return; }
     try{

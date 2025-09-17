@@ -1,3 +1,4 @@
+\
 // proba/js/features/overview-live-refresh.js
 (function () {
   'use strict';
@@ -5,7 +6,7 @@
     if (typeof window.refreshOverview === 'function') return window.refreshOverview();
     if (typeof window.renderOverview  === 'function') return window.renderOverview();
     if (typeof window.initOverview    === 'function') return window.initOverview();
-    // location.reload(); // ha nincs külön függvényed
+    // location.reload(); // végső fallback, ha kell
   }
   window.addEventListener('records:updated', refreshOverview);
   if ('BroadcastChannel' in window) {
