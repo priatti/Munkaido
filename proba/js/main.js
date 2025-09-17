@@ -66,26 +66,18 @@ function startLiveShift() {
     const latestRecord = getLatestRecord();
     const now = new Date();
 
-    // Alaphelyzetben töröljük a jelzőt
     localStorage.removeItem('pendingReducedRestUsage');
 
     if (latestRecord && latestRecord.endTime) {
         const lastEndTime = new Date(`${latestRecord.date}T${latestRecord.endTime}`);
         const restDurationHours = (now - lastEndTime) / (1000 * 60 * 60);
-        
-        const splitData = (typeof getSplitRestData === 'function') ? getSplitRestData() : {};
-        const isPreviousSplit = splitData[latestRecord.id] === true || latestRecord.isSplitRest;
 
-        // Csökkentett pihenő, ha: 9-11 óra a pihenő VAGY az előző munkanap 13+ óra volt.
-        const isReducedRest = (restDurationHours >= 9 && restDurationHours < 11) || (latestRecord.workMinutes > 13 * 60);
-
-        if (isReducedRest && !isPreviousSplit) {
-            // Nem kérdezünk, csak beállítunk egy ideiglenes jelzőt a háttértárban.
+        // Az új, központi segédfüggvényt használjuk itt is
+        if (isReducedDailyRest(restDurationHours, latestRecord)) {
             localStorage.setItem('pendingReducedRestUsage', '1');
         }
     }
 
-    // A műszakot mindenképpen elindítjuk.
     proceedWithShiftStart();
 }
 
@@ -122,7 +114,6 @@ function prepareFinalizeShift() {
         return;
     }
     
-    // TAKARÍTÁS: Töröljük az ideiglenes jelzőt, mert a műszak véget ér.
     localStorage.removeItem('pendingReducedRestUsage');
 
     showTab('full-day');
@@ -155,7 +146,6 @@ function discardShift() {
 
     const i18n = translations[currentLang];
     showCustomAlert(`${i18n.discardWorkday}?`, 'warning', () => {
-        // TAKARÍTÁS: Töröljük az ideiglenes jelzőt, mert a műszakot eldobtuk.
         localStorage.removeItem('pendingReducedRestUsage');
         activeShift = null;
         localStorage.removeItem('activeShift');
