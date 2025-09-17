@@ -5,8 +5,7 @@
 // ====== GLOBÁLIS ÁLLAPOT (STATE) ======
 let records = [];
 let palletRecords = [];
-let editingId = null; 
-// JAVÍTVA: 'inProgressEntry' helyett 'activeShift' a következetességért
+let editingId = null;
 let activeShift = JSON.parse(localStorage.getItem('activeShift') || 'null');
 let uniqueLocations = [];
 let uniquePalletLocations = [];
@@ -20,8 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeFeatureToggles();
     initializePwaInstall();
     initializePalletSettings();
-    initializeAuth(); 
-    
+    initializeAuth();
+
     // Globális eseménykezelők beállítása
     document.addEventListener('click', (event) => {
         const dropdownContainer = document.getElementById('dropdown-container');
@@ -59,14 +58,12 @@ function startLiveShift() {
         startLocation,
         weeklyDriveStartStr,
         kmStart,
-        crossings: [] // Kezdetben üres határátlépés lista
+        crossings: []
     };
 
-    // a helyes változót és localStorage kulcsot használjuk
     activeShift = newEntry;
     localStorage.setItem('activeShift', JSON.stringify(activeShift));
 
-    // UI frissítése az új állapothoz
     renderStartTab();
     renderLiveTabView();
 }
@@ -89,13 +86,8 @@ function addLiveCrossing() {
         return;
     }
 
-    // Hozzáadjuk az új átlépést a listához
     activeShift.crossings.push({ from, to, time });
-
-    // Elmentjük a frissített műszakot a localStorage-be
     localStorage.setItem('activeShift', JSON.stringify(activeShift));
-
-    // Újrarajzoljuk az "Indítás" fület, hogy megjelenjen a listában az új elem
     renderStartTab();
 }
 
@@ -109,42 +101,50 @@ function prepareFinalizeShift() {
         return;
     }
 
-    // Átváltunk a "Teljes nap" fülre
     showTab('full-day');
 
-    // Előtöltjük az űrlapot az aktív műszak adataival
     document.getElementById('date').value = activeShift.date;
     document.getElementById('startTime').value = activeShift.startTime;
     document.getElementById('startLocation').value = activeShift.startLocation;
     document.getElementById('kmStart').value = activeShift.kmStart || '';
     document.getElementById('weeklyDriveStart').value = activeShift.weeklyDriveStartStr || '';
-    
-    // Előtöltjük a határátlépéseket
+
     const crossingsContainer = document.getElementById('crossingsContainer');
-    crossingsContainer.innerHTML = ''; // Először kiürítjük a listát
+    crossingsContainer.innerHTML = '';
     if (activeShift.crossings && activeShift.crossings.length > 0) {
-        // Az `addCrossingRow` egy létező függvény a kódban, ami hozzáad egy sort
         activeShift.crossings.forEach(c => addCrossingRow(c.from, c.to, c.time));
     }
 
-    // A műszak befejezése után a "folyamatban lévő" állapotot töröljük
     activeShift = null;
     localStorage.removeItem('activeShift');
 
-    // Beállítjuk az alapértelmezett záró időt és fókuszálunk a mezőre
     const endTimeInput = document.getElementById('endTime');
     endTimeInput.value = new Date().toTimeString().slice(0, 5);
     endTimeInput.focus();
 }
 
 /**
+ * Megszakítja és törli a folyamatban lévő munkanapot.
+ */
+function discardShift() {
+    if (!activeShift) return;
+
+    const i18n = translations[currentLang];
+    // A fordítási kulcs a 'discardWorkday', adjunk hozzá egy kérdőjelet
+    showCustomAlert(`${i18n.discardWorkday}?`, 'warning', () => {
+        activeShift = null;
+        localStorage.removeItem('activeShift');
+        renderStartTab();
+        renderLiveTabView();
+    });
+}
+
+
+/**
  * Alaphelyzetbe állítja a "Teljes nap" fülön található űrlapot.
  */
 function resetEntryForm() {
-    // Töröljük a szerkesztési ID-t, jelezve, hogy új bejegyzést rögzítünk
     editingId = null;
-
-    // Beviteli mezők kiürítése vagy alapértelmezett értékre állítása
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
     document.getElementById('startTime').value = '';
     document.getElementById('endTime').value = '';
@@ -155,21 +155,15 @@ function resetEntryForm() {
     document.getElementById('weeklyDriveEnd').value = '';
     document.getElementById('kmStart').value = '';
     document.getElementById('kmEnd').value = '';
-
-    // Határátlépések listájának kiürítése
     document.getElementById('crossingsContainer').innerHTML = '';
 
-    // Osztott pihenő kapcsoló alaphelyzetbe állítása
     const splitRestToggle = document.getElementById('toggleSplitRest');
     if (splitRestToggle) {
         splitRestToggle.checked = false;
-        // Frissítjük a kapcsoló kinézetét is
         if (typeof updateEnhancedToggleVisuals === 'function') {
             updateEnhancedToggleVisuals(splitRestToggle);
         }
     }
-    
-    // Az összesített kijelzők (munkaidő, km, stb.) frissítése/törlése
     updateDisplays();
 }
 
@@ -179,7 +173,6 @@ function renderApp() {
     updateUniqueLocations();
     updateUniquePalletLocations();
     initAllAutocomplete();
-    
     renderLiveTabView();
     renderStartTab();
     renderRecords();
@@ -187,8 +180,7 @@ function renderApp() {
     if (document.getElementById('content-stats').offsetParent !== null) renderStats();
     if (document.getElementById('content-tachograph').offsetParent !== null) renderTachographAnalysis();
     if (document.getElementById('content-pallets').offsetParent !== null) renderPalletRecords();
-    
-    updateAllTexts(); 
+    updateAllTexts();
 }
 
 // ====== NÉZETKEZELÉS (FÜLEK) ======
@@ -200,9 +192,9 @@ function showTab(tabName) {
         loadLastValues();
     }
     if (tabName === 'pallets') {
-        renderPalletRecords(); // Most már ez a funkció tölti ki az alapértelmezett értékeket is
+        renderPalletRecords();
     }
-    if (tabName === 'report') { if (typeof initMonthlyReport==='function') { initMonthlyReport(); } }
+    if (tabName === 'report') { if (typeof initMonthlyReport === 'function') { initMonthlyReport(); } }
     if (tabName === 'list') {
         renderRecords();
     }
@@ -213,7 +205,7 @@ function showTab(tabName) {
         statsDate = new Date();
         renderStats();
     }
-     if (tabName === 'tachograph') {
+    if (tabName === 'tachograph') {
         renderTachographAnalysis();
     }
     if (tabName === 'help') {
@@ -224,7 +216,7 @@ function showTab(tabName) {
     const mainTabs = ['live', 'start', 'full-day'];
     const dropdownButton = document.getElementById('dropdown-button');
     const dropdownMenu = document.getElementById('dropdown-menu');
-    
+
     allTabs.forEach(t => t.classList.remove('tab-active'));
     dropdownButton.classList.remove('tab-active');
 
@@ -244,7 +236,6 @@ function showTab(tabName) {
     document.querySelectorAll('[id^="content-"]').forEach(c => c.classList.add('hidden'));
     document.getElementById(`content-${tabName}`).classList.remove('hidden');
     closeDropdown();
-
     updateAllTexts();
 }
 
@@ -268,36 +259,28 @@ function getLatestRecord() {
  */
 function loadLastValues(isLive = false) {
     const latestRecord = getLatestRecord();
-    if (!latestRecord) return; // Ha nincs még bejegyzés, nincs mit tenni.
+    if (!latestRecord) return;
 
-    // A 'live' prefixet használjuk az "Indítás" fül elemeihez
     const prefix = isLive ? 'live' : '';
-    
-    // Helyszín: az előző végpontja lesz az új kezdőpontja
     const startLocationInput = document.getElementById(`${prefix}StartLocation`);
     if (startLocationInput && latestRecord.endLocation) {
         startLocationInput.value = latestRecord.endLocation;
     }
 
-    // KM: az előző záró km lesz az új kezdő km
-    // Az "Indítás" fülön a km mező ID-ja 'liveStartKm', a "Teljes nap"-on csak 'kmStart'
     const kmStartInput = document.getElementById(isLive ? 'liveStartKm' : 'kmStart');
     if (kmStartInput && latestRecord.kmEnd > 0) {
         kmStartInput.value = latestRecord.kmEnd;
     }
 
-    // Heti vezetési idő: az előző záró idő lesz az új kezdő idő
     const weeklyDriveInput = document.getElementById(isLive ? 'liveWeeklyDriveStart' : 'weeklyDriveStart');
     if (weeklyDriveInput && latestRecord.weeklyDriveEnd) {
         weeklyDriveInput.value = latestRecord.weeklyDriveEnd;
     }
 
-    // Az "Indítás" fülön állítsuk be az aktuális dátumot és időt
     if (isLive) {
         const dateInput = document.getElementById('liveStartDate');
         const timeInput = document.getElementById('liveStartTime');
         const now = new Date();
-        
         if (dateInput) {
             dateInput.value = now.toISOString().split('T')[0];
         }
@@ -365,7 +348,6 @@ function renderLiveTabView() {
 
 function renderStartTab() {
     const i18n = translations[currentLang];
-    // a helyes localStorage kulcsot használjuk
     activeShift = JSON.parse(localStorage.getItem('activeShift') || 'null');
 
     const startForm = document.getElementById('start-new-day-form');
@@ -377,7 +359,6 @@ function renderStartTab() {
         progressView.classList.remove('hidden');
 
         document.getElementById('live-start-time').textContent = `${i18n.startedAt}: ${activeShift.date} ${activeShift.startTime}`;
-        
         let summaryHTML = '';
         const hasDriveData = localStorage.getItem('toggleDriveTime') === 'true' && activeShift.weeklyDriveStartStr;
         const hasKmData = localStorage.getItem('toggleKm') === 'true' && activeShift.kmStart > 0;
@@ -406,15 +387,14 @@ function renderStartTab() {
                                     <span class="font-semibold">${activeShift.kmStart} km</span>
                                 </div>`;
             }
-
             summaryHTML += `</div></div>`;
         }
         summaryContainer.innerHTML = summaryHTML;
-        
+
         const liveCrossList = document.getElementById('live-crossings-list');
         const liveCrossFrom = document.getElementById('liveCrossFrom');
         if (activeShift.crossings && activeShift.crossings.length > 0) {
-            const crossingsHTML = activeShift.crossings.map(c => 
+            const crossingsHTML = activeShift.crossings.map(c =>
                 `<div class="flex items-center justify-between bg-white dark:bg-gray-700/50 p-2 rounded-md shadow-sm">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -437,11 +417,10 @@ function renderStartTab() {
         }
         document.getElementById('liveCrossTo').value = '';
         document.getElementById('liveCrossTime').value = new Date().toTimeString().slice(0, 5);
-
     } else {
         progressView.classList.add('hidden');
         startForm.classList.remove('hidden');
-        summaryContainer.innerHTML = ''; 
+        summaryContainer.innerHTML = '';
         loadLastValues(true);
     }
 }
@@ -454,7 +433,7 @@ function renderDashboard() {
     const thisWeek = calculateSummaryForDateRange(getWeekRange(now));
     const lastWeek = calculateSummaryForDateRange(getWeekRange(now, -1));
     const thisMonth = calculateSummaryForMonth(new Date());
-    
+
     const cards = [
         { labelKey: 'dashboardDriveThisWeek', value: formatDuration(thisWeek.driveMinutes), color: 'blue' },
         { labelKey: 'dashboardWorkThisWeek', value: formatDuration(thisWeek.workMinutes), color: 'green' },
