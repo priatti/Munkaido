@@ -3,9 +3,36 @@
 (function(){
   const $ = (sel) => document.querySelector(sel);
   let currentMonthlyData = null;
+  function getSelectedYearMonth(){
+    // Prefer an <input type="month" id="reportMonth">
+    const monthEl = document.querySelector('#reportMonth, input[type="month"]');
+    let raw = "";
+    if (monthEl) {
+      raw = monthEl.value || monthEl.getAttribute('value') || monthEl.textContent || "";
+    }
+    // Try to extract YYYY-MM from any string (supports "2025-09", "2025. 09.", "2025. szeptember", etc.)
+    let m = raw.match(/(\d{4})[-.\s_/]*(\d{1,2})/);
+    if (!m) {
+      // fallback: today
+      const d = new Date();
+      return { y: d.getFullYear(), m: String(d.getMonth()+1).padStart(2,'0') };
+    }
+    const y = m[1];
+    const mm = String(parseInt(m[2],10)).padStart(2,'0');
+    return { y, m: mm };
+  }
 
-  const germanMonths = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  const /*germanMonths*/ germanMonths = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
   const germanFullDays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  
+
+  function selectRecordsForMonth(records){
+    const ym = getSelectedYearMonth();
+    const prefix = ym.y + "-" + ym.m;
+    return (records || []).filter(r => (r && r.date && String(r.date).startsWith(prefix)));
+  }
+
   function fmtHM(mins){ mins=Math.max(0,Math.round(mins||0)); const h=Math.floor(mins/60), m=mins%60; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
 
   function toISODateLoose(s){
@@ -253,7 +280,7 @@
       const userName = $('#userNameInput') ? $('#userNameInput').value : 'N/A';
       const [yearStr, monthStr] = currentMonthlyData.month.split('-');
       const year = parseInt(yearStr,10), month = parseInt(monthStr,10);
-      const monthName = germanMonths[month-1];
+      const monthName = /*germanMonths*/ germanMonths[month-1];
 
       doc.setFontSize(18); doc.setFont(undefined,'bold'); doc.text('ARBEITSZEITNACHWEIS', 105, 15, {align:'center'});
       doc.setFontSize(14); doc.setFont(undefined,'normal'); doc.text(`${monthName} ${year}`, 105, 23, {align:'center'});
@@ -274,7 +301,7 @@
       const userName = $('#userNameInput') ? $('#userNameInput').value : 'N/A';
       const [yearStr, monthStr] = currentMonthlyData.month.split('-');
       const year = parseInt(yearStr,10), month = parseInt(monthStr,10);
-      const monthName = germanMonths[month-1];
+      const monthName = /*germanMonths*/ germanMonths[month-1];
 
       doc.setFontSize(18); doc.setFont(undefined,'bold'); doc.text('ARBEITSZEITNACHWEIS',105,15,{align:'center'});
       doc.setFontSize(14); doc.text(`${monthName} ${year}`,105,23,{align:'center'});
