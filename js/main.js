@@ -58,10 +58,7 @@ function renderApp() {
 function showTab(tabName) {
     currentActiveTab = tabName;
 
-    if (tabName === 'full-day' && !editingId) {
-        resetEntryForm();
-        loadLastValues();
-    }
+    if (tabName === 'full-day' && !editingId) { if (typeof resetEntryForm==='function') { resetEntryForm(); } if (typeof loadLastValues==='function') { loadLastValues(); } }
     if (tabName === 'pallets') {
         renderPalletRecords(); // Most már ez a funkció tölti ki az alapértelmezett értékeket is
     }
