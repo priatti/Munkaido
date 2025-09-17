@@ -5,6 +5,14 @@
 /**
  * A "Teljes nap" fülön lévő adatok mentése vagy frissítése.
  */
+// Split rest data kezelő függvények (ha nincs globálisan definiálva)
+window.getSplitRestData = window.getSplitRestData || function() {
+    return JSON.parse(localStorage.getItem('splitRestData') || '{}');
+};
+
+window.saveSplitRestData = window.saveSplitRestData || function(data) {
+    localStorage.setItem('splitRestData', JSON.stringify(data));
+};
 async function saveEntry() {
     const i18n = translations[currentLang];
 
