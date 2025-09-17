@@ -62,7 +62,7 @@ function startLiveShift() {
         crossings: [] // Kezdetben üres határátlépés lista
     };
 
-    // JAVÍTVA: a helyes változót és localStorage kulcsot használjuk
+    // a helyes változót és localStorage kulcsot használjuk
     activeShift = newEntry;
     localStorage.setItem('activeShift', JSON.stringify(activeShift));
 
@@ -70,6 +70,35 @@ function startLiveShift() {
     renderStartTab();
     renderLiveTabView();
 }
+
+/**
+ * Hozzáad egy határátlépést a folyamatban lévő műszakhoz.
+ */
+function addLiveCrossing() {
+    const from = document.getElementById('liveCrossFrom').value.trim().toUpperCase();
+    const to = document.getElementById('liveCrossTo').value.trim().toUpperCase();
+    const time = document.getElementById('liveCrossTime').value;
+
+    if (!from || !to || !time) {
+        showCustomAlert('Kérlek tölts ki minden mezőt a határátlépéshez!', 'info');
+        return;
+    }
+
+    if (!activeShift) {
+        showCustomAlert('Nincs aktív műszak, amihez hozzá lehetne adni a határátlépést.', 'info');
+        return;
+    }
+
+    // Hozzáadjuk az új átlépést a listához
+    activeShift.crossings.push({ from, to, time });
+
+    // Elmentjük a frissített műszakot a localStorage-be
+    localStorage.setItem('activeShift', JSON.stringify(activeShift));
+
+    // Újrarajzoljuk az "Indítás" fület, hogy megjelenjen a listában az új elem
+    renderStartTab();
+}
+
 
 /**
  * Alaphelyzetbe állítja a "Teljes nap" fülön található űrlapot.
@@ -299,7 +328,7 @@ function renderLiveTabView() {
 
 function renderStartTab() {
     const i18n = translations[currentLang];
-    // JAVÍTVA: a helyes localStorage kulcsot használjuk
+    // a helyes localStorage kulcsot használjuk
     activeShift = JSON.parse(localStorage.getItem('activeShift') || 'null');
 
     const startForm = document.getElementById('start-new-day-form');
