@@ -1,5 +1,5 @@
 // Safer Service Worker for GitHub Pages subpath deployments
-const CACHE_NAME = 'munkaido-pro-cache-v7';
+const CACHE_NAME = 'munkaido-pro-cache-v9';
 const SCOPE = (self.registration && self.registration.scope) || '/';
 const BASE = SCOPE.endsWith('/') ? SCOPE : (SCOPE + '/');
 
@@ -13,10 +13,13 @@ const urlsToCache = [
   BASE + 'assets/images/splash.jpg',
   BASE + 'assets/images/icon-192x192.png',
   BASE + 'assets/images/icon-512x512.png',
-  // JS
+  // JS (minimum szükséges)
+  BASE + 'js/config/translations.js',
+  BASE + 'js/config/appInfo.js',
   BASE + 'js/utils/time.js',
   BASE + 'js/utils/geolocation.js',
   BASE + 'js/ui/ui.js',
+  BASE + 'js/ui/appInfoFooter.js',
   BASE + 'js/services/database.js',
   BASE + 'js/services/pwa.js',
   BASE + 'js/features/workday.js',
@@ -35,8 +38,7 @@ const urlsToCache = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)).catch(err => {
-      // If any file fails (e.g., 404), don't abort the entire install.
-      console.warn('[SW] Precache failed, continuing with partial cache:', err);
+      console.warn('[SW] Precache failed, continuing partial:', err);
       return Promise.resolve();
     })
   );
@@ -52,19 +54,12 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const req = event.request;
-
-  // Only treat top-level navigations as SPA navigations that can fall back to index.html
   const isNavigation = req.mode === 'navigate' || (req.method === 'GET' && req.headers.get('accept') && req.headers.get('accept').includes('text/html'));
 
   if (isNavigation) {
-    event.respondWith(
-      fetch(req).catch(() => caches.match(BASE + 'index.html'))
-    );
+    event.respondWith(fetch(req).catch(() => caches.match(BASE + 'index.html')));
     return;
   }
 
-  // For static assets: cache-first
-  event.respondWith(
-    caches.match(req).then(cached => cached || fetch(req))
-  );
+  event.respondWith(caches.match(req).then(cached => cached || fetch(req)));
 });
