@@ -99,6 +99,43 @@ function addLiveCrossing() {
     renderStartTab();
 }
 
+/**
+ * Előkészíti a műszak befejezését: átvált a "Teljes nap" fülre
+ * és kitölti az űrlapot az aktív műszak adataival.
+ */
+function prepareFinalizeShift() {
+    if (!activeShift) {
+        showCustomAlert('Nincs aktív műszak a befejezéshez.', 'info');
+        return;
+    }
+
+    // Átváltunk a "Teljes nap" fülre
+    showTab('full-day');
+
+    // Előtöltjük az űrlapot az aktív műszak adataival
+    document.getElementById('date').value = activeShift.date;
+    document.getElementById('startTime').value = activeShift.startTime;
+    document.getElementById('startLocation').value = activeShift.startLocation;
+    document.getElementById('kmStart').value = activeShift.kmStart || '';
+    document.getElementById('weeklyDriveStart').value = activeShift.weeklyDriveStartStr || '';
+    
+    // Előtöltjük a határátlépéseket
+    const crossingsContainer = document.getElementById('crossingsContainer');
+    crossingsContainer.innerHTML = ''; // Először kiürítjük a listát
+    if (activeShift.crossings && activeShift.crossings.length > 0) {
+        // Az `addCrossingRow` egy létező függvény a kódban, ami hozzáad egy sort
+        activeShift.crossings.forEach(c => addCrossingRow(c.from, c.to, c.time));
+    }
+
+    // A műszak befejezése után a "folyamatban lévő" állapotot töröljük
+    activeShift = null;
+    localStorage.removeItem('activeShift');
+
+    // Beállítjuk az alapértelmezett záró időt és fókuszálunk a mezőre
+    const endTimeInput = document.getElementById('endTime');
+    endTimeInput.value = new Date().toTimeString().slice(0, 5);
+    endTimeInput.focus();
+}
 
 /**
  * Alaphelyzetbe állítja a "Teljes nap" fülön található űrlapot.
