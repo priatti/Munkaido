@@ -2,7 +2,7 @@
 // ===== TACHOGRÁF ELEMZŐ (FEATURE) ======================
 // =======================================================
 
-// A heti keretek (10 órás vezetés, csökkentett pihenő) kiszámítása (JAVÍTOTT LOGIKA)
+// A heti keretek (10 órás vezetés, csökkentett pihenő) kiszámítása
 function calculateWeeklyAllowance() {
     const i18n = translations[currentLang];
     const now = new Date();
@@ -14,20 +14,19 @@ function calculateWeeklyAllowance() {
     const remainingDrives = Math.max(0, 2 - extendedDrivesThisWeek);
     
     let reducedRestsInCycle = 0;
-    // Kifejezetten ehhez az elemzéshez készítünk egy legrégebbi->legújabb sorrendet
     const analysisOrderRecords = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
     const splitData = getSplitRestData();
 
     // A legfrissebb bejegyzéstől haladunk visszafelé az időben
     for (let i = analysisOrderRecords.length - 1; i > 0; i--) {
         const currentRecord = analysisOrderRecords[i];
-        const previousRecord = analysisOrderRecords[i-1]; // Az időben őt megelőző bejegyzés
+        const previousRecord = analysisOrderRecords[i-1];
         
         const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
         const currentStart = new Date(`${currentRecord.date}T${currentRecord.startTime}`);
         const restDurationHours = (currentStart - prevEnd) / (1000 * 60 * 60);
 
-        // Ha heti pihenőt találunk (>=24h), a ciklus megszakad, nem számolunk tovább
+        // Ha heti pihenőt találunk (>=24h), a ciklus megszakad
         if (restDurationHours >= 24) {
             break;
         }
@@ -83,7 +82,7 @@ function renderWeeklyAllowance() {
     tachoContainer.innerHTML = html;
 }
 
-// SVG ikon generálása a rendelkezésre álló keretekhez (VÉGLEGES JAVÍTÁS)
+// SVG ikon generálása a rendelkezésre álló keretekhez
 function createAvailableIcon(number) {
     return `
     <svg width="45" height="45" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -92,7 +91,7 @@ function createAvailableIcon(number) {
     </svg>`;
 }
 
-// SVG ikon generálása az elhasznált keretekhez (VÉGLEGES JAVÍTÁS)
+// SVG ikon generálása az elhasznált keretekhez
 function createUsedIcon(number) {
     return `
     <svg width="45" height="45" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -108,11 +107,11 @@ function renderTachoHelperCards() {
     if (!container) return;
 
     const i18n = translations[currentLang];
-    inProgressEntry = JSON.parse(localStorage.getItem('inProgressEntry') || 'null');
+    activeShift = JSON.parse(localStorage.getItem('activeShift') || 'null');
 
-    if (inProgressEntry) {
+    if (activeShift) {
         const allowance = calculateWeeklyAllowance();
-        const startDate = new Date(`${inProgressEntry.date}T${inProgressEntry.startTime}`);
+        const startDate = new Date(`${activeShift.date}T${activeShift.startTime}`);
         const latestRestStart11h = new Date(startDate.getTime());
         latestRestStart11h.setHours(latestRestStart11h.getHours() + 13);
         let htmlContent = '';
@@ -191,7 +190,7 @@ function renderTachoHelperCards() {
     }
 }
 
-// Az osztott pihenő kapcsoló eseménykezelője - ENHANCED VERSION
+// Az osztott pihenő kapcsoló eseménykezelője
 function handleTachographToggle(checkbox, recordId) {
     const data = getSplitRestData();
     if (checkbox.checked) {
@@ -201,7 +200,6 @@ function handleTachographToggle(checkbox, recordId) {
     }
     saveSplitRestData(data);
     
-    // ENHANCED: Vizuális frissítés
     updateEnhancedToggleVisuals(checkbox);
     
     renderTachographAnalysis();
