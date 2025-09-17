@@ -1,6 +1,6 @@
 (function(){
   window.APP_INFO = {
-    version: "9.00",
+    version: "9.01",
     year: "2025",
     authorHu: "Princz Attila",
     authorDe: "Attila Princz",
