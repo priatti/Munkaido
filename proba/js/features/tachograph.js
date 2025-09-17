@@ -10,11 +10,16 @@
    */
   function isReducedDailyRest(restHours, precedingRecord) {
       if (!precedingRecord) return false;
+
       const splitData = getSplitRestData();
       const isSplit = splitData[precedingRecord.id] === true || precedingRecord.isSplitRest;
+
       if (isSplit) return false;
+
+      // EZ A SOR HIÁNYZOTT AZ ELŐZŐ VERZIÓBÓL
       const isDurationReduced = restHours >= 9 && restHours < 11;
       const isWorkdayForced = precedingRecord.workMinutes > 13 * 60;
+
       return isDurationReduced || isWorkdayForced;
   }
 
@@ -24,6 +29,7 @@
   function getTachographStatus() {
       const recordsSorted = [...records].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
       const now = new Date();
+      
       const { start: weekStart } = getWeekRange(now);
       const weekStartStr = toISODate(weekStart);
       const recordsInWeek = records.filter(r => r.date >= weekStartStr);
@@ -36,12 +42,15 @@
           const prevEnd = new Date(`${previousRecord.date}T${previousRecord.endTime}`);
           const currentStart = new Date(`${recordsSorted[i].date}T${recordsSorted[i].startTime}`);
           const restHours = (currentStart - prevEnd) / (1000 * 60 * 60);
+
           if (restHours >= 24) break;
+          
           if (isReducedDailyRest(restHours, previousRecord)) {
               reducedRestsInCycle++;
           }
       }
       let remainingRests9h = Math.max(0, 3 - reducedRestsInCycle);
+      
       const pendingUsage = parseInt(localStorage.getItem('pendingReducedRestUsage') || '0', 10);
       remainingRests9h -= pendingUsage;
 
@@ -65,6 +74,7 @@
       if (!lastWeeklyRestEnd && recordsSorted.length > 0) {
           lastWeeklyRestEnd = new Date(`${recordsSorted[0].date}T${recordsSorted[0].endTime}`);
       }
+      
       let weeklyRestDeadline = null;
       if (lastWeeklyRestEnd) {
           weeklyRestDeadline = new Date(lastWeeklyRestEnd.getTime() + 6 * 24 * 60 * 60 * 1000);
@@ -87,7 +97,9 @@
       const liveContainer = document.getElementById('live-allowance-display');
       const tachoContainer = document.getElementById('tacho-allowance-display');
       if (!liveContainer || !tachoContainer) return;
+
       const status = getTachographStatus();
+
       let driveIcons = '';
       for (let i = 0; i < 2; i++) {
           driveIcons += (i < status.remainingDrives10h) ? createAvailableIcon(10) : createUsedIcon(10);
@@ -96,13 +108,16 @@
       for (let i = 0; i < 3; i++) {
           restIcons += (i < status.remainingRests9h) ? createAvailableIcon(9) : createUsedIcon(9);
       }
+
       const percent56h = Math.min(100, (status.currentWeekDriveMinutes / (56 * 60)) * 100);
       const percent90h = Math.min(100, (status.twoWeekDriveMinutes / (90 * 60)) * 100);
+
       let deadlineHtml = `<p class="text-gray-500">${i18n.summaryNoData}</p>`;
       if (status.weeklyRestDeadline) {
           const now = new Date();
           const diffMinutes = (status.weeklyRestDeadline - now) / 60000;
           const absoluteDeadline = formatDateTime(status.weeklyRestDeadline);
+
           if (diffMinutes < 0) {
               deadlineHtml = `<p class="font-bold text-red-500">Lejárt!</p><p class="text-xs text-gray-500">${absoluteDeadline}</p>`;
           } else {
@@ -112,6 +127,7 @@
               deadlineHtml = `<p class="font-bold text-lg">${absoluteDeadline}</p><p class="text-xs text-gray-500">${relativeTime}</p>`;
           }
       }
+
       const html = `
       <div class="bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3 space-y-3">
           <h3 class="font-semibold text-gray-800 dark:text-gray-100">🗓️ Heti Státusz</h3>
@@ -146,6 +162,7 @@
               <div class="text-right">${deadlineHtml}</div>
           </div>
       </div>`;
+
       liveContainer.innerHTML = html;
       tachoContainer.innerHTML = html;
   }
