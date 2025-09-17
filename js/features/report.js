@@ -1,10 +1,70 @@
 
 // proba/js/features/report.js
 (function(){
-  console.info('[REPORT_FIX_V7] Modul betöltve');
+  console.info('[REPORT_FIX_V8] Modul betöltve');
 
   const $ = (sel) => document.querySelector(sel);
   let currentMonthlyData = null;
+  function normalizeYmFromDate(anyDate){
+    // Returns 'YYYY-MM' or '' if cannot parse
+    if (!anyDate && anyDate !== 0) return '';
+    if (anyDate instanceof Date && !isNaN(anyDate)) {
+      return anyDate.getFullYear() + '-' + String(anyDate.getMonth()+1).padStart(2,'0');
+    }
+    const s = String(anyDate).trim();
+
+    // ISO-like: YYYY-MM or YYYY-MM-DD
+    let m = s.match(/^\s*(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2}))?\s*$/);
+    if (m) { return m[1] + '-' + String(parseInt(m[2],10)).padStart(2,'0'); }
+
+    // Hungarian-like: '2025. 09. 16.' or '2025. 9. 16.'
+    m = s.match(/^\s*(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})?\.?\s*$/);
+    if (m) { return m[1] + '-' + String(parseInt(m[2],10)).padStart(2,'0'); }
+
+    // German-like: '16.09.2025' or '16. 9. 2025'
+    m = s.match(/^\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\s*$/);
+    if (m) { return m[3] + '-' + String(parseInt(m[2],10)).padStart(2,'0'); }
+
+    // Timestamp
+    const n = Number(s);
+    if (!isNaN(n) && s.length >= 10) {
+      const d = new Date(n);
+      if (!isNaN(d)) return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    }
+    return '';
+  }
+
+  function getSelectedYearMonth(){
+    const el = document.querySelector('#reportMonth, input[type="month"]');
+    let raw = el ? (el.value || el.getAttribute('value') || el.textContent || '') : '';
+    if (!raw) {
+      const d = new Date();
+      raw = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    }
+    // Extract YYYY-MM from arbitrary string
+    let ym = normalizeYmFromDate(raw);
+    if (!ym) {
+      // fallback: first YYYY and next number as month
+      const m = raw.match(/(\d{4}).*?(\d{1,2})/);
+      if (m) ym = m[1] + '-' + String(parseInt(m[2],10)).padStart(2,'0');
+    }
+    return { y: ym.slice(0,4), m: ym.slice(5,7) };
+  }
+
+  function selectRecordsForMonth(records){
+    const ym = getSelectedYearMonth();
+    const prefix = ym.y + '-' + ym.m;
+    const out = [];
+    (records || []).forEach(r => {
+      if (!r) return;
+      // common record shapes
+      const d = r.date || r.day || r.dt || r.startedAt || r.startDate || r.workdayDate;
+      const ymRec = normalizeYmFromDate(d);
+      if (ymRec && ymRec === prefix) out.push(r);
+    });
+    return out;
+  }
+
   function fetchAllRecordsRobust(){
     try{
       if (Array.isArray(window.records) && window.records.length) return window.records;
@@ -29,14 +89,7 @@
     return [];
   }
 
-  function getSelectedYearMonth(){
-    // Prefer an <input type="month" id="reportMonth">
-    const monthEl = document.querySelector('#reportMonth, input[type="month"]');
-    let raw = "";
-    if (monthEl) {
-      raw = monthEl.value || monthEl.getAttribute('value') || monthEl.textContent || "";
-    }
-    // Try to extract YYYY-MM from any string (supports "2025-09", "2025. 09.", "2025. szeptember", etc.)
+  // Try to extract YYYY-MM from any string (supports "2025-09", "2025. 09.", "2025. szeptember", etc.)
     let m = raw.match(/(\d{4})[-.\s_/]*(\d{1,2})/);
     if (!m) {
       // fallback: today
@@ -52,12 +105,6 @@
   const /*germanMonths*/ germanMonths = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
   const germanFullDays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
   
-
-  function selectRecordsForMonth(records){
-    const ym = getSelectedYearMonth();
-    const prefix = ym.y + "-" + ym.m;
-    return (records || []).filter(r => (r && r.date && String(r.date).startsWith(prefix)));
-  }
 
   function fmtHM(mins){ mins=Math.max(0,Math.round(mins||0)); const h=Math.floor(mins/60), m=mins%60; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
 

@@ -282,3 +282,6 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-checkmark {
 
 /* Hide legacy settings version label; footer shows version now */
 #settings-version{ display:none !important; }
+
+/* Hide legacy version label anywhere in settings */
+#settings-version, .settings-version, [data-translate-key='settingsVersion']{ display:none !important; }
