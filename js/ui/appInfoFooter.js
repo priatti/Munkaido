@@ -13,7 +13,7 @@
         document.body.appendChild(el);
       }
       el.textContent = (document.documentElement.lang === 'de' || lang==='de')
-        ? ("Arbeitszeit-Erfassung Pro v" + ver + " — " + text.replace(APP_INFO.authorDe, name))
+        ? ("Arbeitszeitnachweis Pro v" + ver + " — " + text.replace(APP_INFO.authorDe, name))
         : ("Munkaidő Nyilvántartó Pro v" + ver + " — " + text.replace(APP_INFO.authorHu, name));
     }catch(e){ console.warn(e); }
   }
