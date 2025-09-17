@@ -1,8 +1,34 @@
 
 // proba/js/features/report.js
 (function(){
+  console.info('[REPORT_FIX_V7] Modul betöltve');
+
   const $ = (sel) => document.querySelector(sel);
   let currentMonthlyData = null;
+  function fetchAllRecordsRobust(){
+    try{
+      if (Array.isArray(window.records) && window.records.length) return window.records;
+      if (typeof window.getAllRecords === 'function') {
+        var r = window.getAllRecords();
+        if (Array.isArray(r) && r.length) return r;
+      }
+      // try service layer
+      if (window.db && typeof window.db.getRecords === 'function') {
+        var r2 = window.db.getRecords();
+        if (Array.isArray(r2) && r2.length) return r2;
+      }
+    }catch(e){ console.warn('records getter err', e); }
+    // localStorage fallback
+    try{
+      var raw = localStorage.getItem('records');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    }catch(e){}
+    return [];
+  }
+
   function getSelectedYearMonth(){
     // Prefer an <input type="month" id="reportMonth">
     const monthEl = document.querySelector('#reportMonth, input[type="month"]');
