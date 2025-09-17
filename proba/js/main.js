@@ -145,9 +145,8 @@ function discardShift() {
 function resetEntryForm() {
     editingId = null;
     
-    // Az űrlap mezőinek kiürítése vagy alapértelmezett értékre állítása
-    document.getElementById('date').value = new Date().toISOString().split('T')[0]; // Dátumot beállítjuk mára
-    document.getElementById('startTime').value = ''; // Időt üresen hagyjuk
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('startTime').value = '';
     document.getElementById('endTime').value = '';
     document.getElementById('compensationTime').value = '';
     document.getElementById('startLocation').value = '';
@@ -207,6 +206,7 @@ function showTab(tabName) {
         renderStats();
     }
     if (tabName === 'tachograph') {
+        renderWeeklyAllowance(); // Ez az új sor a frissítéshez
         renderTachographAnalysis();
     }
     if (tabName === 'help') {
@@ -260,10 +260,9 @@ function getLatestRecord() {
  */
 function loadLastValues(isLive = false) {
     const latestRecord = getLatestRecord();
-    if (!latestRecord) return; // Ha nincs még bejegyzés, nincs mit tenni.
+    if (!latestRecord) return;
 
     if (isLive) {
-        // --- "INDÍTÁS" FÜL LOGIKÁJA ---
         const now = new Date();
         document.getElementById('liveStartDate').value = now.toISOString().split('T')[0];
         document.getElementById('liveStartTime').value = now.toTimeString().slice(0, 5);
@@ -277,7 +276,6 @@ function loadLastValues(isLive = false) {
             document.getElementById('liveWeeklyDriveStart').value = latestRecord.weeklyDriveEnd;
         }
     } else {
-        // --- "TELJES NAP" FÜL LOGIKÁJA ---
         if (latestRecord.endLocation) {
             document.getElementById('startLocation').value = latestRecord.endLocation;
         }
@@ -287,7 +285,6 @@ function loadLastValues(isLive = false) {
         if (latestRecord.weeklyDriveEnd) {
             document.getElementById('weeklyDriveStart').value = latestRecord.weeklyDriveEnd;
         }
-        // A kezdési időt itt szándékosan nem töltjük ki, mert azt a felhasználónak kell megadnia.
     }
 }
 
