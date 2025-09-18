@@ -263,7 +263,6 @@ html.dark .enhanced-toggle-container.active .enhanced-toggle-checkmark {
     border-width: 0;
 }
 
-
 /* === Hotfix 2025-09-12: Speciális funkciók layout, kisebb kártyák, grid === */
 #special-features .toggle-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 #special-features .enhanced-toggle-container {
@@ -307,4 +306,53 @@ html.dark .progress-bar {
 
 html.dark .progress-bar-fill {
     background-color: #60a5fa;
+}
+
+/* PWA Frissítés Értesítő */
+.update-notification {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1d4ed8; /* Sötétkék */
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 1000;
+    animation: slide-down 0.5s ease-out;
+}
+
+.update-notification p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.update-notification button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+html.dark .update-notification {
+    background-color: #3b82f6; /* Világoskék */
+    color: white;
+}
+
+@keyframes slide-down {
+    from {
+        top: -100px;
+        opacity: 0;
+    }
+    to {
+        top: 10px;
+        opacity: 1;
+    }
 }
