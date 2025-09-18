@@ -5,7 +5,8 @@
 (function () {
   'use-strict';
 
-  let currentMonthRecords = [];
+  let currentMonthRecords = []; // A generált riport adatait itt tároljuk
+  let generatedPdfBlob = null; // Ide mentjük a generált PDF-et a megosztáshoz
 
   // === SEGÉDFÜGGVÉNYEK ===
 
@@ -234,30 +235,46 @@
       
       if (action === 'save') {
         doc.save(fileName);
-      } else if (action === 'share') {
-        if (navigator.share && navigator.canShare) {
-            const pdfFile = new File([doc.output('blob')], fileName, { type: 'application/pdf' });
-            try {
-              await navigator.share({ files: [pdfFile], title: 'Havi Riport', text: fileName });
-            } catch (error) {
-                console.error("Megosztási hiba:", error);
-                // JAVÍTOTT, OKOSABB HIBAKEZELÉS
-                const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-                const isFacebookBrowser = (userAgent.indexOf("FBAV") > -1) || (userAgent.indexOf("Messenger") > -1);
-                
-                if ((error.name === 'NotAllowedError' || error.message.includes('Permission denied')) && isFacebookBrowser) {
-                    showCustomAlert(t('alertShareInAppBrowser'), 'info');
-                } else {
-                    showCustomAlert(`${t('errorSharing')} ${error.message}`, 'info');
-                }
-            }
-        } else {
-            showCustomAlert(t('alertShareNotSupported'), 'info');
-        }
+      } else if (action === 'prepare_share') {
+        generatedPdfBlob = doc.output('blob');
+        const shareContainer = document.getElementById('monthlyReportContent');
+        shareContainer.innerHTML = `
+          <div class="p-4 bg-green-50 dark:bg-green-900/50 rounded-lg text-center">
+            <p class="font-semibold mb-2">A PDF elkészült a megosztáshoz.</p>
+            <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg" onclick="sharePreparedPDF('${fileName}')">
+              📲 Megosztás most
+            </button>
+          </div>
+        `;
       }
     } catch (e) {
       console.error("PDF Hiba:", e);
       showCustomAlert(`PDF generálási hiba: ${e.message}`, 'info');
+    }
+  }
+
+  async function sharePreparedPDF(fileName) {
+    if (!generatedPdfBlob) {
+        showCustomAlert('Hiba: Nincs előkészített PDF a megosztáshoz.', 'info');
+        return;
+    }
+
+    if (navigator.share && navigator.canShare) {
+        const pdfFile = new File([generatedPdfBlob], fileName, { type: 'application/pdf' });
+        try {
+            await navigator.share({
+                files: [pdfFile],
+                title: 'Havi Riport',
+                text: fileName
+            });
+        } catch (error) {
+            console.error("Megosztási hiba:", error);
+            if (error.name !== 'AbortError') {
+                 showCustomAlert(`${t('errorSharing')} ${error.message}`, 'info');
+            }
+        }
+    } else {
+        showCustomAlert(t('alertShareNotSupported'), 'info');
     }
   }
 
@@ -276,6 +293,7 @@
   window.initMonthlyReport = initMonthlyReport;
   window.generateMonthlyReport = generateMonthlyReport;
   window.exportToPDF = () => generateAndProcessPDF('save');
-  window.sharePDF = () => generateAndProcessPDF('share');
+  window.sharePDF = () => generateAndProcessPDF('prepare_share');
+  window.sharePreparedPDF = sharePreparedPDF;
 
 })();
