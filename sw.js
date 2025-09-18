@@ -1,5 +1,5 @@
 // Safer Service Worker for GitHub Pages subpath deployments
-const CACHE_NAME = 'munkaido-pro-cache-v11'; // A verziószámot itt fogod a jövőben növelni
+const CACHE_NAME = 'munkaido-pro-cache-v12'; // A verziószámot itt fogod a jövőben növelni
 const SCOPE = (self.registration && self.registration.scope) || '/';
 const BASE = SCOPE.endsWith('/') ? SCOPE : (SCOPE + '/');
 
