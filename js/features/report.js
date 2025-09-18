@@ -5,7 +5,7 @@
 (function () {
   'use-strict';
 
-  let currentMonthRecords = []; // A generált riport adatait itt tároljuk
+  let currentMonthRecords = [];
 
   // === SEGÉDFÜGGVÉNYEK ===
 
@@ -209,10 +209,9 @@
               7: { cellWidth: 18 }
           },
           didParseCell: function(data) {
-              // *** EZ A JAVÍTOTT RÉSZ ***
               if (data.section === 'body') {
                   const currentDay = new Date(year, monthIndex, data.row.index + 1).getDay();
-                  if (currentDay === 0 || currentDay === 6) { // Vasárnap (0) vagy Szombat (6)
+                  if (currentDay === 0 || currentDay === 6) {
                       data.cell.styles.fillColor = '#f2f2f2';
                   }
               }
@@ -238,7 +237,20 @@
       } else if (action === 'share') {
         if (navigator.share && navigator.canShare) {
             const pdfFile = new File([doc.output('blob')], fileName, { type: 'application/pdf' });
-            await navigator.share({ files: [pdfFile], title: 'Havi Riport', text: fileName });
+            try {
+              await navigator.share({ files: [pdfFile], title: 'Havi Riport', text: fileName });
+            } catch (error) {
+                console.error("Megosztási hiba:", error);
+                // JAVÍTOTT, OKOSABB HIBAKEZELÉS
+                const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                const isFacebookBrowser = (userAgent.indexOf("FBAV") > -1) || (userAgent.indexOf("Messenger") > -1);
+                
+                if ((error.name === 'NotAllowedError' || error.message.includes('Permission denied')) && isFacebookBrowser) {
+                    showCustomAlert(t('alertShareInAppBrowser'), 'info');
+                } else {
+                    showCustomAlert(`${t('errorSharing')} ${error.message}`, 'info');
+                }
+            }
         } else {
             showCustomAlert(t('alertShareNotSupported'), 'info');
         }
