@@ -1,5 +1,5 @@
 // Safer Service Worker for GitHub Pages subpath deployments
-const CACHE_NAME = 'munkaido-pro-cache-v10';
+const CACHE_NAME = 'munkaido-pro-cache-v10'; // A verziószámot itt fogod a jövőben növelni
 const SCOPE = (self.registration && self.registration.scope) || '/';
 const BASE = SCOPE.endsWith('/') ? SCOPE : (SCOPE + '/');
 
@@ -13,7 +13,7 @@ const urlsToCache = [
   BASE + 'assets/images/splash.jpg',
   BASE + 'assets/images/icon-192x192.png',
   BASE + 'assets/images/icon-512x512.png',
-  // JS (minimum szükséges)
+  // JS
   BASE + 'js/config/translations.js',
   BASE + 'js/config/appInfo.js',
   BASE + 'js/utils/time.js',
@@ -42,7 +42,7 @@ self.addEventListener('install', event => {
       return Promise.resolve();
     })
   );
-  self.skipWaiting();
+  // Az azonnali aktiválást kivesszük, a PWA majd a következő indításkor frissül magától.
 });
 
 self.addEventListener('activate', event => {
