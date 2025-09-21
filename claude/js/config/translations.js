@@ -1,4 +1,4 @@
-const translations = {
+window.translations = {
     hu: {
         // Általános
         appTitle: "Munkaidő Nyilvántartó Pro",
@@ -197,6 +197,13 @@ const translations = {
         noMoreReducedRestsWarning: "Nincs több csökkentett pihenőd ebben a ciklusban!",
         earliestStartWarning: "Figyelem: A kalkuláció a napi pihenőidővel számol, a heti pihenőidőt nem veszi figyelembe.",
         tachoDevWarning: "A tachográf funkciók kísérleti fázisban vannak. Ha hibát találsz, kérlek jelezd!",
+        tachoWeeklyStatus: "Heti Státusz",
+        tachoDriveThisWeek: "Vezetés (ezen a héten)",
+        tachoDriveTwoWeeks: "Vezetés (két hét)",
+        tachoNextWeeklyRestDue: "Következő heti pihenő esedékes:",
+        tachoHourUnit: "ó",
+        tachoDeadlineExpired: "Lejárt!",
+        tachoRelativeTime: "({days} nap {hours} óra múlva)",
         // Raklapok
         palletsTitle: "Paletta Nyilvántartás",
         palletsBalance: "Aktuális egyenleg:",
@@ -275,6 +282,14 @@ const translations = {
         shareAborted: 'Megosztás megszakítva.',
         errorImport: 'Hiba:',
         shareErrorCannotShare: 'Ezt a fájlt nem lehet megosztani.',
+        finalizeShiftTitle: "Műszak befejezése",
+        finalizeShiftDesc: "Add meg a befejezési adatokat",
+        finalizeEndTimeLabel: "Befejezés ideje",
+        finalizeEndLocationLabel: "Befejezés helye",
+        finalizeWeeklyDriveEndLabel: "Heti vezetés vége",
+        finalizeKmEndLabel: "Záró km",
+        finalizeButton: "Befejezés",
+        palletEditSuccess: "Tranzakció sikeresen módosítva!",
         // Súgó
         helpTitle: "Súgó és Gyakori Kérdések",
         helpSectionRecording: "Munkanap rögzítése",
@@ -318,6 +333,7 @@ const translations = {
         helpDataSyncDesc: "Ha bejelentkezel a Google fiókoddal, minden adatod automatikusan és azonnal a felhőbe mentődik. Így az adatok több eszközön is elérhetők és biztonságban vannak.",
     },
     de: {
+        // Általános
         appTitle: "Arbeitszeitnachweis Pro",
         delete: "Löschen",
         ok: "OK",
@@ -326,6 +342,7 @@ const translations = {
         cityPlaceholder: "Stadt",
         fromPlaceholder: "Von",
         toPlaceholder: "Nach",
+        // Fülek és menü
         tabOverview: "Übersicht",
         tabFullDay: "Ganzer Tag",
         tabStart: "Start",
@@ -346,6 +363,7 @@ const translations = {
         menuSettingsDesc: "Datensicherung und persönliche Daten",
         menuHelp: "Hilfe",
         menuHelpDesc: "Anleitungen und Tipps",
+        // Live nézet
         liveOverviewTitle: "Übersicht",
         liveNewDayTitle: "Neuen Arbeitstag starten",
         date: "Datum",
@@ -370,6 +388,7 @@ const translations = {
         liveStartLocationLabel: "Startort:",
         liveStartDriveLabel: "Start Lenkzeit:",
         liveStartKmLabel: "Start-km:",
+        // Teljes nap nézet
         fullDayTitle: "Einen ganzen Arbeitstag erfassen",
         dateLabelFull: "Datum (Tag des Arbeitsendes)",
         workTimeAndLocation: "Arbeitszeit und Ort",
@@ -389,9 +408,10 @@ const translations = {
         splitRestQuestion: "Gab es eine ununterbrochene Pause von 3+ Stunden? (Geteilte Ruhezeit)",
         saveEntry: "Eintrag speichern",
         workTimeDisplay: "Arbeitszeit",
-        nightWorkDisplay: "Nachtarbeit (22:00-06:00)",
+        nightWorkDisplay: "Nachtarbeit (20:00-05:00)",
         driveTimeTodayDisplay: "Heutige Lenkzeit",
         kmDrivenDisplay: "Gefahrene km",
+        // Lista nézet
         listTitle: "Einträge",
         noEntries: "Noch keine Einträge vorhanden",
         entryDeparture: "Abfahrt",
@@ -402,6 +422,7 @@ const translations = {
         entryDriveTime: "Lenkzeit",
         entryDistance: "Distanz",
         entryCrossingsLabel: "Grenzübergänge",
+        // Összesítő nézet
         summaryTitle: "Zusammenfassungen",
         summaryToday: "Heute",
         summaryYesterday: "Gestern",
@@ -415,6 +436,7 @@ const translations = {
         summaryDrive: "Lenkzeit",
         summaryDistance: "Distanz",
         summaryNoData: "Keine Daten",
+        // Statisztika nézet
         statsTitle: "Detaillierte Statistiken",
         statsDaily: "Täglich",
         statsMonthly: "Monatlich",
@@ -425,6 +447,7 @@ const translations = {
         statsKmDriven: "Gefahrene Kilometer",
         statsNoDataPeriod: "Keine Daten für den ausgewählten Zeitraum.",
         chartMonths: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
+        // Riport nézet
         reportTitle: "Monatsbericht",
         reportMonthSelect: "Monat auswählen",
         reportGenerate: "Bericht erstellen",
@@ -432,6 +455,7 @@ const translations = {
         reportSharePDF: "PDF teilen",
         reportPrepared: "Bericht vorbereitet.",
         palletReportGenerate: "Palettenbericht erstellen",
+        // Beállítások
         settingsTitle: "Einstellungen & Datenverwaltung",
         settingsSyncTitle: "Cloud-Synchronisation",
         settingsSyncDesc: "Melden Sie sich mit Ihrem Google-Konto an, um Ihre Daten in der Cloud zu speichern und auf mehreren Geräten darauf zuzugreifen.",
@@ -447,8 +471,8 @@ const translations = {
         settingsThemeSelect: "Thema auswählen",
         settingsTheme: "Thema",
         settingsThemeAuto: "Automatisch",
-        settingsThemeLight: "Tag",
-        settingsThemeDark: "Nacht",
+        settingsThemeLight: "Hell",
+        settingsThemeDark: "Dunkel",
         settingsSpecialFunctions: "Spezialfunktionen",
         settingsFeatureKm: "Kilometererfassung",
         settingsFeatureDriveTime: "Lenkzeiterfassung",
@@ -474,6 +498,7 @@ const translations = {
         settingsInstallButton: "Installieren",
         developerIntroTitle: "Von einem Fahrer für Fahrer",
         developerIntroBody: "Hallo! Ich bin Attila Princz und arbeite, genau wie Sie, als LKW-Fahrer.<br><br>Jahrelang habe ich Notizbücher und verschiedene, nicht wirklich benutzerfreundliche Apps verwendet, um meine Arbeitszeiten und Paletten zu verfolgen. Ich wusste, es muss eine einfachere, schnellere und zuverlässigere Methode geben.<br><br>Deshalb habe ich Arbeitszeitnachweis Pro entwickelt: ein Werkzeug, das Lösungen für unsere echten, alltäglichen Probleme bietet, ohne unnötige Komplikationen. Jede Funktion – von der Handhabung von Wochenendschichten bis zur Tachographen-Analyse – wurde auf der Grundlage meiner eigenen Erfahrungen und der meiner Kollegen entwickelt.<br><br>Ich hoffe, es spart Ihnen genauso viel Zeit und Kopfzerbrechen wie mir.<br><br>Gute Fahrt!",
+        // Tachográf
         tachoTitle: "Fahrtenschreiber-Analyse",
         tachoAllowanceDrive10h: "Verbleibende 10-Stunden-Lenkzeiten",
         tachoAllowanceReducedRest: "Verbleibende reduzierte Ruhezeiten",
@@ -503,8 +528,16 @@ const translations = {
         with9hRestLatest: "Für 9h Ruhezeit (reduziert):",
         noMoreReducedRests: "Keine reduzierten Ruhezeiten mehr.",
         noMoreReducedRestsWarning: "Keine reduzierten Ruhezeiten mehr in diesem Zyklus!",
-        earliestStartWarning: "Achtung: Die Berechnung basiert auf der täglichen Ruhezeit, die wöchentliche Ruhezeit wird nicht berücksichtigt. Betrachten Sie immer die Daten des Fahrtenschreibers als primär.",
+        earliestStartWarning: "Achtung: Die Berechnung basiert auf der täglichen Ruhezeit, die wöchentliche Ruhezeit wird nicht berücksichtigt.",
         tachoDevWarning: "Die Tachograph-Funktionen befinden sich in einer experimentellen Phase. Wenn Sie einen Fehler finden, melden Sie ihn bitte!",
+        tachoWeeklyStatus: "Wochenstatus",
+        tachoDriveThisWeek: "Lenkzeit (diese Woche)",
+        tachoDriveTwoWeeks: "Lenkzeit (zwei Wochen)",
+        tachoNextWeeklyRestDue: "Nächste wöchentliche Ruhezeit fällig:",
+        tachoHourUnit: "Std",
+        tachoDeadlineExpired: "Fällig!",
+        tachoRelativeTime: "(in {days} Tagen {hours} Stunden)",
+        // Raklapok
         palletsTitle: "Palettenverwaltung",
         palletsBalance: "Aktueller Saldo:",
         palletsNewTransaction: "Neue Transaktion",
@@ -530,6 +563,7 @@ const translations = {
         palletReportFileName: "Palettenbericht",
         palletReportTitle: "Palettenbewegungsbericht",
         palletSettingsTitle: "📦 Paletten-Einstellungen",
+        // Raklap beállítások
         toggleMultiPallet: "Mehrere Palettentypen verwalten",
         multiPalletDesc: "Aktivieren, wenn Sie neben EUR auch andere Typen verwalten möchten (z.B. DD, CHEP).",
         addPalletType: "Hinzufügen",
@@ -539,6 +573,7 @@ const translations = {
         deletePalletTypeConfirm: "Möchten Sie den Typ \"{type}\" wirklich löschen?",
         palletTypeExists: "Dieser Typ existiert bereits!",
         palletTypeNameEmpty: "Die Typenbezeichnung darf nicht leer sein!",
+        // Üzenetek
         alertShareInAppBrowser: "Das Teilen wird im Messenger/Facebook-Browser nicht unterstützt. Für ein erfolgreiches Teilen öffnen Sie den Link bitte im normalen Browser Ihres Telefons (z.B. Chrome, Safari)!",
         alertConfirmReducedRest: "Achtung: Ihre Ruhezeit betrug weniger als 11 Stunden. Dies zählt als reduzierte tägliche Ruhezeit und verbraucht eine Ihrer 3 wöchentlichen Gelegenheiten. Möchten Sie die Schicht wirklich starten?",
         alertRolloverTitle: "Schicht über das Wochenende",
@@ -572,7 +607,7 @@ const translations = {
         autoBackupOn: "Automatische Sicherung aktiviert!",
         autoBackupOff: "Automatische Sicherung deaktiviert.",
         settingsSaved: "Einstellungen gespeichert!",
-        logRecalculatingNightWork: 'Neuberechnung der Nachtstunden nach der Regel 22:00-06:00...',
+        logRecalculatingNightWork: 'Neuberechnung der Nachtstunden nach der Regel 20:00-05:00...',
         logEntriesUpdated: 'Einträge aktualisiert.',
         logAutoExportStarted: 'Automatische Sicherung gestartet...',
         errorPdfGeneration: 'Fehler bei der PDF-Erstellung:',
@@ -580,7 +615,16 @@ const translations = {
         shareAborted: 'Teilen abgebrochen.',
         errorImport: 'Fehler:',
         shareErrorCannotShare: 'Diese Datei kann nicht geteilt werden.',
-        helpTitle: "Hilfe & FAQ",
+        finalizeShiftTitle: "Schicht beenden",
+        finalizeShiftDesc: "Geben Sie die Enddaten ein",
+        finalizeEndTimeLabel: "Endzeit",
+        finalizeEndLocationLabel: "Endort",
+        finalizeWeeklyDriveEndLabel: "Wöchentliche Lenkzeit Ende",
+        finalizeKmEndLabel: "End-km",
+        finalizeButton: "Abschließen",
+        palletEditSuccess: "Transaktion erfolgreich geändert!",
+        // Súgó - TELJES NÉMET FORDÍTÁS
+        helpTitle: "Hilfe & Häufig gestellte Fragen",
         helpSectionRecording: "Arbeitstag erfassen",
         helpRecordingIntro: "Es gibt zwei Hauptmethoden zur Erfassung von Arbeitstagen:",
         helpRecordingLiveTitle: "Live-Start (Tab 'Start')",
@@ -623,7 +667,13 @@ const translations = {
     }
 };
 
+// JAVÍTÁS: currentLang inicializálása itt történik, AZONNAL a translations betöltése után
 let currentLang = localStorage.getItem('language') || (navigator.language.startsWith('de') ? 'de' : 'hu');
+
+// BIZTONSÁGI ELLENŐRZÉS: Ha a currentLang még mindig undefined lenne
+if (typeof currentLang === 'undefined' || !currentLang) {
+    currentLang = 'hu'; // alapértelmezett magyar
+}
 
 function setLanguage(lang) {
     if (['hu', 'de'].includes(lang)) {
@@ -661,7 +711,10 @@ function updateAllTexts() {
     }
     const compensationToggle = document.getElementById('toggleCompensation');
     if(compensationToggle && compensationToggle.parentElement && compensationToggle.parentElement.parentElement) {
-        const compCard = compensationToggle.closest('.enhanced-toggle-container'); if (compCard) { compCard.style.display = currentLang === 'de' ? 'none' : 'flex'; }
+        const compCard = compensationToggle.closest('.enhanced-toggle-container'); 
+        if (compCard) { 
+            compCard.style.display = currentLang === 'de' ? 'none' : 'flex'; 
+        }
     }
 }
 
@@ -677,4 +730,9 @@ function updateLanguageButtonStyles() {
         });
     }
 }
-}
+
+// GLOBÁLIS HOZZÁFÉRHETŐSÉG BIZTOSÍTÁSA
+window.currentLang = currentLang;
+window.setLanguage = setLanguage;
+window.updateAllTexts = updateAllTexts;
+window.updateLanguageButtonStyles = updateLanguageButtonStyles;

@@ -90,7 +90,7 @@ async function savePalletEntry() {
     await savePalletRecords(); // Mentés a felhőbe és a helyi tárolóba
     
     // Visszajelzés és UI frissítés
-    const successMessage = editingPalletId ? "Tranzakció sikeresen módosítva!" : i18n.palletSaveSuccess;
+    const successMessage = editingPalletId ? i18n.palletEditSuccess : i18n.palletSaveSuccess;
     showCustomAlert(successMessage, "success");
     
     resetPalletForm(); // Űrlap törlése

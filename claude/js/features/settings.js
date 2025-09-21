@@ -191,20 +191,23 @@ function applyFeatureToggles() {
     if (kmSection) kmSection.style.display = showKm ? 'block' : 'none';
     if (drivetimeSection) drivetimeSection.style.display = showDriveTime ? 'block' : 'none';
     
-    // JAVÍTVA: Kompenzáció szekció - csak akkor rejtjük el, ha német nyelv VAGY ki van kapcsolva
+    // JAVÍTVA: currentLang biztonsági ellenőrzéssel
+    const currentLangSafe = (typeof currentLang !== 'undefined') ? currentLang : 'hu';
+    
+    // Kompenzáció szekció - csak akkor rejtjük el, ha német nyelv VAGY ki van kapcsolva
     const compensationSection = document.getElementById('compensation-section-de');
     if (compensationSection) {
         // Német nyelven mindig rejtve, magyaron a beállítás szerint
-        compensationSection.style.display = (currentLang === 'de' || !showCompensation) ? 'none' : 'block';
+        compensationSection.style.display = (currentLangSafe === 'de' || !showCompensation) ? 'none' : 'block';
     }
     
-    // JAVÍTVA: Kompenzáció toggle container elrejtése német nyelven
+    // Kompenzáció toggle container elrejtése német nyelven
     const compensationToggleContainer = document.getElementById('toggleCompensation')?.closest('.enhanced-toggle-container');
     if (compensationToggleContainer) {
-        compensationToggleContainer.style.display = currentLang === 'de' ? 'none' : 'flex';
+        compensationToggleContainer.style.display = currentLangSafe === 'de' ? 'none' : 'flex';
     }
     
-    // Osztott pihenő gomb megjelenítése/elrejtése - JAVÍTOTT LOGIKA
+    // Osztott pihenő gomb megjelenítése/elrejtése
     const splitRestContainer = document.getElementById('split-rest-container');
     if (splitRestContainer) {
         splitRestContainer.style.display = showDriveTime ? 'flex' : 'none';
@@ -225,9 +228,11 @@ function applyFeatureToggles() {
     if (liveAllowanceDisplay) liveAllowanceDisplay.style.display = showDriveTime ? 'block' : 'none';
     if (tachographMenuItem) tachographMenuItem.style.display = showDriveTime ? 'flex' : 'none';
     
-    // Fülváltás ha egy kikapcsolt funkció aktív
-    if (!showDriveTime && currentActiveTab === 'tachograph') showTab('live');
-    if (!showPallets && currentActiveTab === 'pallets') showTab('live');
+    // Fülváltás ha egy kikapcsolt funkció aktív (biztonsági ellenőrzéssel)
+    if (typeof currentActiveTab !== 'undefined') {
+        if (!showDriveTime && currentActiveTab === 'tachograph') showTab('live');
+        if (!showPallets && currentActiveTab === 'pallets') showTab('live');
+    }
 }
 
 // Automatikus mentés (export) ellenőrzése
@@ -354,3 +359,4 @@ function deletePalletType(typeToDelete) {
         uploadLocalSettings();
     });
 }
+

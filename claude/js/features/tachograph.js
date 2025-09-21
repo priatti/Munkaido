@@ -136,7 +136,7 @@
 
       const html = `
       <div class="bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3 space-y-3">
-          <h3 class="font-semibold text-gray-800 dark:text-gray-100">🗓️ Heti Státusz</h3>
+          <h3 class="font-semibold text-gray-800 dark:text-gray-100">🗓️ ${i18n.tachoWeeklyStatus}</h3>
           <div class="grid grid-cols-2 gap-3 text-center">
               <div class="p-2 bg-blue-50 dark:bg-blue-900/50 rounded-lg">
                   <p class="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">${i18n.tachoAllowanceDrive10h}</p>
@@ -150,21 +150,21 @@
           <div class="space-y-2 text-sm">
               <div>
                   <div class="flex justify-between mb-1">
-                      <span class="font-medium">Vezetés (ezen a héten)</span>
-                      <span>${formatDuration(status.currentWeekDriveMinutes)} / 56ó</span>
+                      <span class="font-medium">${i18n.tachoDriveThisWeek}</span>
+                      <span>${formatDuration(status.currentWeekDriveMinutes)} / 56${i18n.tachoHourUnit}</span>
                   </div>
                   <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percent56h}%;"></div></div>
               </div>
               <div>
                   <div class="flex justify-between mb-1">
-                      <span class="font-medium">Vezetés (két hét)</span>
-                      <span>${formatDuration(status.twoWeekDriveMinutes)} / 90ó</span>
+                      <span class="font-medium">${i18n.tachoDriveTwoWeeks}</span>
+                      <span>${formatDuration(status.twoWeekDriveMinutes)} / 90${i18n.tachoHourUnit}</span>
                   </div>
                   <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percent90h}%;"></div></div>
               </div>
           </div>
           <div class="text-sm border-t dark:border-gray-700 pt-2 flex justify-between items-center">
-              <span class="font-medium">Következő heti pihenő esedékes:</span>
+              <span class="font-medium">${i18n.tachoNextWeeklyRestDue}</span>
               <div class="text-right">${deadlineHtml}</div>
           </div>
       </div>`;

@@ -1,5 +1,5 @@
 // Safer Service Worker for GitHub Pages subpath deployments
-const CACHE_NAME = 'munkaido-pro-cache-v10';
+const CACHE_NAME = 'munkaido-pro-cache-v11';
 const SCOPE = (self.registration && self.registration.scope) || '/';
 const BASE = SCOPE.endsWith('/') ? SCOPE : (SCOPE + '/');
 
