@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Munkaidő Nyilvántartó Pro - Új verzió elérhető!</title>
+    <meta name="description" content="A Munkaidő Nyilvántartó Pro új verziója elérhető a gurigo.eu oldalon. Mentse el adatait és frissítsen az új verzióra!">
+    <link rel="icon" type="image/png" href="assets/images/icon-192x192.png">
+    <meta name="theme-color" content="#2563eb">
+    
+    <!-- Open Graph meta tags -->
+    <meta property="og:title" content="Munkaidő Nyilvántartó Pro - Új verzió">
+    <meta property="og:description" content="Frissítsen az új verzióra a gurigo.eu oldalon!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://priatti.github.io/Munkaido/">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            animation: float 20s linear infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .lang-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+        
+        .lang-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .lang-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .lang-btn.active {
+            background: white;
+            color: #2563eb;
+        }
+        
+        .warning-box {
+            background: #fef3cd;
+            border: 2px solid #fbbf24;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            position: relative;
+        }
+        
+        .warning-icon {
+            position: absolute;
+            top: -15px;
+            left: 25px;
+            background: #f59e0b;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .steps {
+            list-style: none;
+            counter-reset: step-counter;
+            margin: 30px 0;
+        }
+        
+        .steps li {
+            counter-increment: step-counter;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 15px;
+            border-left: 5px solid #2563eb;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .steps li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -15px;
+            top: 15px;
+            background: #2563eb;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+            margin: 20px 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            box-shadow: 0 5px 15px rgba(107, 114, 128, 0.4);
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(107, 114, 128, 0.6);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: #f8fafc;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .btn {
+                display: block;
+                margin: 15px 0;
+            }
+            
+            .lang-switcher {
+                position: static;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+        }
+        
+        .countdown {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc2626;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 4px;
+            animation: progress 3s ease-out;
+        }
+        
+        @keyframes progress {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="lang-switcher">
+                <a href="#" class="lang-btn active" onclick="setLanguage('hu')">🇭🇺 Magyar</a>
+                <a href="#" class="lang-btn" onclick="setLanguage('de')">🇩🇪 Deutsch</a>
+            </div>
+            
+            <div class="header-content">
+                <div class="icon">🚀</div>
+                <h1 id="title">Új verzió elérhető!</h1>
+                <p id="subtitle">A Munkaidő Nyilvántartó Pro átköltözött</p>
+            </div>
+        </div>
+        
+        <div class="content" id="content-hu">
+            <div class="warning-box">
+                <div class="warning-icon">⚠️</div>
+                <h3>🔄 Fontos: Adatok mentése szükséges!</h3>
+                <p>Az új verzióra való áttérés előtt <strong>mentse el az összes adatát</strong>, hogy ne veszítsen semmit!</p>
+            </div>
+            
+            <h2>📦 Mit kell tennie?</h2>
+            <ol class="steps">
+                <li>
+                    <strong>Adatok mentése</strong><br>
+                    Kattintson a "Régi verzió megnyitása" gombra, majd "Beállítások" → "Adatok exportálása"
+                </li>
+                <li>
+                    <strong>PWA eltávolítása (ha telepítette)</strong><br>
+                    Törölje a régi alkalmazást a telefonjáról/számítógépéről
+                </li>
+                <li>
+                    <strong>Új verzió elérése</strong><br>
+                    Látogasson el a <strong>gurigo.eu</strong> oldalra az új, fejlettebb verzióért
+                </li>
+                <li>
+                    <strong>Adatok visszatöltése</strong><br>
+                    Az új verzióban importálja a lementett adatait
+                </li>
+            </ol>
+            
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="https://gurigo.eu/proba/" class="btn">🎯 Új verzió megnyitása</a>
+                <a href="index-old.html" class="btn btn-secondary">💾 Régi verzió megnyitása (mentéshez)</a>
+            </div>
+            
+            <div class="warning-box" style="background: #dcfce7; border-color: #16a34a;">
+                <div class="warning-icon" style="background: #16a34a;">ℹ️</div>
+                <h3>✨ Mit kap az új verzióban?</h3>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>🚀 Gyorsabb teljesítmény</li>
+                    <li>🔄 Javított felhő szinkronizáció</li>
+                    <li>🛠️ Új funkciók és javítások</li>
+                    <li>📱 Jobb mobil élmény</li>
+                    <li>🌍 Pontosabb tachográf elemzés</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="content hidden" id="content-de">
+            <div class="warning-box">
+                <div class="warning-icon">⚠️</div>
+                <h3>🔄 Wichtig: Datensicherung erforderlich!</h3>
+                <p>Vor dem Wechsel zur neuen Version <strong>sichern Sie alle Ihre Daten</strong>, damit nichts verloren geht!</p>
+            </div>
+            
+            <h2>📦 Was müssen Sie tun?</h2>
+            <ol class="steps">
+                <li>
+                    <strong>Daten sichern</strong><br>
+                    Klicken Sie auf "Alte Version öffnen", dann "Einstellungen" → "Daten exportieren"
+                </li>
+                <li>
+                    <strong>PWA entfernen (falls installiert)</strong><br>
+                    Löschen Sie die alte App von Ihrem Telefon/Computer
+                </li>
+                <li>
+                    <strong>Neue Version aufrufen</strong><br>
+                    Besuchen Sie <strong>gurigo.eu</strong> für die neue, verbesserte Version
+                </li>
+                <li>
+                    <strong>Daten wiederherstellen</strong><br>
+                    Importieren Sie Ihre gesicherten Daten in der neuen Version
+                </li>
+            </ol>
+            
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="https://gurigo.eu/proba/" class="btn">🎯 Neue Version öffnen</a>
+                <a href="index-old.html" class="btn btn-secondary">💾 Alte Version öffnen (für Backup)</a>
+            </div>
+            
+            <div class="warning-box" style="background: #dcfce7; border-color: #16a34a;">
+                <div class="warning-icon" style="background: #16a34a;">ℹ️</div>
+                <h3>✨ Was bekommen Sie in der neuen Version?</h3>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>🚀 Schnellere Leistung</li>
+                    <li>🔄 Verbesserte Cloud-Synchronisation</li>
+                    <li>🛠️ Neue Funktionen und Verbesserungen</li>
+                    <li>📱 Bessere mobile Erfahrung</li>
+                    <li>🌍 Genauere Tachograph-Analyse</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p id="footer-text">© 2025 Princz Attila. Minden jog fenntartva.</p>
+            <p style="margin-top: 10px; font-size: 12px;">🚛 Egy kamionos, aki appot készít.</p>
+        </div>
+    </div>
+
+    <script>
+        let currentLanguage = 'hu';
+        
+        const translations = {
+            hu: {
+                title: "Új verzió elérhető!",
+                subtitle: "A Munkaidő Nyilvántartó Pro átköltözött",
+                footerText: "© 2025 Princz Attila. Minden jog fenntartva."
+            },
+            de: {
+                title: "Neue Version verfügbar!",
+                subtitle: "Arbeitszeitnachweis Pro ist umgezogen",
+                footerText: "© 2025 Attila Princz. Alle Rechte vorbehalten."
+            }
+        };
+        
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Update active language button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show/hide content
+            document.getElementById('content-hu').classList.toggle('hidden', lang !== 'hu');
+            document.getElementById('content-de').classList.toggle('hidden', lang !== 'de');
+            
+            // Update texts
+            document.getElementById('title').textContent = translations[lang].title;
+            document.getElementById('subtitle').textContent = translations[lang].subtitle;
+            document.getElementById('footer-text').textContent = translations[lang].footerText;
+            
+            // Update HTML lang attribute
+            document.documentElement.lang = lang;
+        }
+        
+        function exportDataOldVersion() {
+            // Ez a függvény már nem kell, mivel közvetlen link van a régi verzióra
+            window.open('index-old.html', '_blank');
+        }
+        
+        // Auto language detection
+        document.addEventListener('DOMContentLoaded', function() {
+            const browserLang = navigator.language || navigator.userLanguage;
+            if (browserLang.startsWith('de')) {
+                setLanguage('de');
+                document.querySelector('.lang-btn[onclick="setLanguage(\'de\')"]').classList.add('active');
+                document.querySelector('.lang-btn[onclick="setLanguage(\'hu\')"]').classList.remove('active');
+            }
+            
+            // Add some interactive effects
+            setTimeout(() => {
+                document.querySelector('.container').style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    document.querySelector('.container').style.transform = 'scale(1)';
+                }, 200);
+            }, 500);
+        });
+        
+        // Add some particle effects
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.style.cssText = `
+                position: fixed;
+                width: 4px;
+                height: 4px;
+                background: #10b981;
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 1000;
+                opacity: 0.7;
+            `;
+            
+            particle.style.left = Math.random() * window.innerWidth + 'px';
+            particle.style.top = window.innerHeight + 'px';
+            
+            document.body.appendChild(particle);
+            
+            const duration = 3000 + Math.random() * 2000;
+            particle.animate([
+                { transform: 'translateY(0px)', opacity: 0.7 },
+                { transform: `translateY(-${window.innerHeight + 100}px)`, opacity: 0 }
+            ], {
+                duration: duration,
+                easing: 'linear'
+            }).onfinish = () => particle.remove();
+        }
+        
+        // Create particles periodically
+        setInterval(createParticle, 2000);
+    </script>
+</body>
+</html>
