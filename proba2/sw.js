@@ -1,5 +1,5 @@
-// Safer Service Worker for GitHub Pages subpath deployments
-const CACHE_NAME = 'munkaido-pro-cache-v12';
+// Javított Service Worker a stabil működéshez
+const CACHE_NAME = 'munkaido-pro-cache-v15'; // Verziószámot növeltük a frissítés érdekében
 const SCOPE = (self.registration && self.registration.scope) || '/';
 const BASE = SCOPE.endsWith('/') ? SCOPE : (SCOPE + '/');
 
@@ -10,14 +10,16 @@ const urlsToCache = [
   BASE + 'manifest.json',
   BASE + 'assets/css/main.css',
   // Images
+  BASE + 'assets/images/gurigo.jpg',
   BASE + 'assets/images/splash.jpg',
   BASE + 'assets/images/icon-192x192.png',
   BASE + 'assets/images/icon-512x512.png',
-  // JS (minimum szükséges)
+  // JS
   BASE + 'js/config/translations.js',
   BASE + 'js/config/appInfo.js',
   BASE + 'js/utils/time.js',
   BASE + 'js/utils/geolocation.js',
+  BASE + 'js/utils/dataHelpers.js',
   BASE + 'js/ui/ui.js',
   BASE + 'js/ui/appInfoFooter.js',
   BASE + 'js/services/database.js',
@@ -37,29 +39,41 @@ const urlsToCache = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)).catch(err => {
-      console.warn('[SW] Precache failed, continuing partial:', err);
-      return Promise.resolve();
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+      .catch(err => {
+        console.warn('[SW] Precache failed:', err);
+        return Promise.resolve();
+      })
   );
-  self.skipWaiting();
+  // A hibát okozó "skipWaiting()" parancsot eltávolítottuk innen.
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(names => Promise.all(names.map(n => n !== CACHE_NAME && caches.delete(n))))
+    caches.keys().then(names => Promise.all(
+      names.map(n => {
+        if (n !== CACHE_NAME) {
+          return caches.delete(n);
+        }
+      })
+    ))
   );
   self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
   const req = event.request;
-  const isNavigation = req.mode === 'navigate' || (req.method === 'GET' && req.headers.get('accept') && req.headers.get('accept').includes('text/html'));
+  const isNavigation = req.mode === 'navigate' || (req.method === 'GET' && req.headers.get('accept')?.includes('text/html'));
 
   if (isNavigation) {
-    event.respondWith(fetch(req).catch(() => caches.match(BASE + 'index.html')));
+    event.respondWith(
+      fetch(req).catch(() => caches.match(BASE + 'index.html'))
+    );
     return;
   }
 
-  event.respondWith(caches.match(req).then(cached => cached || fetch(req)));
+  event.respondWith(
+    caches.match(req).then(cached => cached || fetch(req))
+  );
 });

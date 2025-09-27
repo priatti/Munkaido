@@ -5,6 +5,9 @@
 let alertCallback = null;
 let promptCallback = null;
 
+// JAVÍTÁS: Autocomplete eseménykezelők nyilvántartása
+let activeAutocompletePairs = new Map();
+
 function showCustomAlert(message, type, callback, options = {}) {
     const overlay = document.getElementById('custom-alert-overlay');
     const box = document.getElementById('custom-alert-box');
@@ -13,7 +16,13 @@ function showCustomAlert(message, type, callback, options = {}) {
     const buttonsContainer = document.getElementById('custom-alert-buttons');
     if(!overlay || !box || !iconContainer || !messageEl || !buttonsContainer) return;
 
-    const i18n = translations[currentLang];
+    // JAVÍTÁS: Biztonságos translations elérés
+    const i18n = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined') ? translations[currentLang] : {
+        save: 'Mentés',
+        cancel: 'Mégse',
+        ok: 'OK'
+    };
+    
     const confirmText = options.confirmText || i18n.save;
     const confirmClass = options.confirmClass || 'bg-yellow-400 hover:bg-yellow-500';
 
@@ -72,7 +81,12 @@ function showCustomPrompt(title, message, placeholder, iconHTML, callback) {
     const buttonsContainer = document.getElementById('custom-prompt-buttons');
     if(!overlay || !box || !iconContainer || !titleEl || !messageEl || !inputEl || !buttonsContainer) return;
 
-    const i18n = translations[currentLang];
+    // JAVÍTÁS: Biztonságos translations elérés
+    const i18n = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined') ? translations[currentLang] : {
+        save: 'Mentés',
+        cancel: 'Mégse'
+    };
+    
     titleEl.textContent = title;
     messageEl.innerHTML = message;
     inputEl.placeholder = placeholder;
@@ -114,6 +128,7 @@ function hideCustomPrompt(isConfirmed) {
     }, 300);
 }
 
+// JAVÍTÁS: Autocomplete eseménykezelők proper cleanup-pal
 function initAutocomplete(input, dataArray) {
     if (!input) {
         console.warn('Autocomplete input element not found');
@@ -125,42 +140,80 @@ function initAutocomplete(input, dataArray) {
         return;
     }
 
-    input.addEventListener('input', function() {
+    // Meglévő eseménykezelő eltávolítása
+    if (activeAutocompletePairs.has(input)) {
+        const oldHandler = activeAutocompletePairs.get(input);
+        input.removeEventListener('input', oldHandler);
+    }
+
+    const inputHandler = function() {
         const val = this.value;
         hideAutocomplete();
         if (!val) return;
 
         const suggestions = document.createElement('div');
         suggestions.id = 'autocomplete-list';
-        suggestions.className = 'autocomplete-list absolute z-20 w-full border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto bg-white';
-        suggestions.style.top = (this.offsetHeight + 12) + 'px';
+        suggestions.className = 'autocomplete-list absolute z-20 w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto bg-white dark:bg-gray-800';
+        suggestions.style.top = (this.offsetHeight + 2) + 'px';
 
-        const filteredData = dataArray.filter(item => item.toLowerCase().includes(val.toLowerCase()));
+        const filteredData = dataArray.filter(item => 
+            item.toLowerCase().includes(val.toLowerCase())
+        ).slice(0, 10); // Max 10 javaslat a teljesítmény miatt
+
         filteredData.forEach(item => {
             const itemEl = document.createElement('div');
             itemEl.innerHTML = item.replace(new RegExp(val, 'gi'), '<strong>$&</strong>');
-            itemEl.className = 'p-2 hover:bg-gray-100 cursor-pointer autocomplete-item';
+            itemEl.className = 'p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer autocomplete-item text-gray-900 dark:text-gray-100';
             itemEl.addEventListener('click', () => {
                 input.value = item;
                 hideAutocomplete();
+                // Trigger input event for other listeners
+                input.dispatchEvent(new Event('input', { bubbles: true }));
             });
             suggestions.appendChild(itemEl);
         });
+        
         if (filteredData.length > 0 && this.parentNode) {
-            this.parentNode.appendChild(suggestions);
+            // Ellenőrizzük, hogy a parent pozicionálva van-e
+            const parent = this.parentNode;
+            const computedStyle = window.getComputedStyle(parent);
+            if (computedStyle.position === 'static') {
+                parent.style.position = 'relative';
+            }
+            parent.appendChild(suggestions);
         }
+    };
+
+    input.addEventListener('input', inputHandler);
+    activeAutocompletePairs.set(input, inputHandler);
+
+    // Blur eseményen is elrejtjük az autocomplete-et (kis késéssel)
+    input.addEventListener('blur', () => {
+        setTimeout(hideAutocomplete, 150);
     });
 }
 
 function initAllAutocomplete() {
-    initAutocomplete(document.getElementById('liveStartLocation'), uniqueLocations);
-    initAutocomplete(document.getElementById('startLocation'), uniqueLocations);
-    initAutocomplete(document.getElementById('endLocation'), uniqueLocations);
-    initAutocomplete(document.getElementById('palletLocation'), uniquePalletLocations);
+    // JAVÍTÁS: Biztonságos ellenőrzés az egyedi helyszínek létezésére
+    const uniqueLocationsArray = (typeof uniqueLocations !== 'undefined') ? uniqueLocations : [];
+    const uniquePalletLocationsArray = (typeof uniquePalletLocations !== 'undefined') ? uniquePalletLocations : [];
+    
+    initAutocomplete(document.getElementById('liveStartLocation'), uniqueLocationsArray);
+    initAutocomplete(document.getElementById('startLocation'), uniqueLocationsArray);
+    initAutocomplete(document.getElementById('endLocation'), uniqueLocationsArray);
+    initAutocomplete(document.getElementById('palletLocation'), uniquePalletLocationsArray);
 }
 
 function hideAutocomplete() {
-    document.querySelectorAll('#autocomplete-list').forEach(list => list.remove());
+    document.querySelectorAll('#autocomplete-list').forEach(list => {
+        // JAVÍTÁS: Smooth eltűnési animáció
+        list.style.opacity = '0';
+        setTimeout(() => {
+            if (list.parentNode) {
+                list.parentNode.removeChild(list);
+            }
+        }, 150);
+    });
 }
 
 function applyTheme(theme) {
@@ -194,7 +247,19 @@ function initTheme() {
 } 
 
 function showFinalizationModal() {
-    const i18n = translations[currentLang];
+    // JAVÍTÁS: Biztonságos translations elérés
+    const i18n = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined') ? translations[currentLang] : {
+        finalizeShiftTitle: 'Műszak befejezése',
+        finalizeShiftDesc: 'Add meg a befejezési adatokat',
+        finalizeEndTimeLabel: 'Befejezés ideje',
+        finalizeEndLocationLabel: 'Befejezés helye',
+        finalizeWeeklyDriveEndLabel: 'Heti vezetés vége',
+        finalizeKmEndLabel: 'Záró km',
+        cityPlaceholder: 'Város',
+        cancel: 'Mégse',
+        finalizeButton: 'Befejezés'
+    };
+    
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     
@@ -202,6 +267,9 @@ function showFinalizationModal() {
     if (existingModal) {
         existingModal.remove();
     }
+    
+    const showDriveTime = localStorage.getItem('toggleDriveTime') === 'true';
+    const showKm = localStorage.getItem('toggleKm') === 'true';
     
     const modalHTML = `
         <div id="finalize-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 transition-opacity duration-300" onclick="handleModalBackdropClick(event)">
@@ -218,31 +286,31 @@ function showFinalizationModal() {
                 <div class="space-y-4">
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">⏰ ${i18n.finalizeEndTimeLabel}</label>
-                        <input type="time" id="finalizeEndTime" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" value="${currentTime}">
+                        <input type="time" id="finalizeEndTime" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" value="${currentTime}" required>
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">📍 ${i18n.finalizeEndLocationLabel}</label>
                         <div class="flex">
                             <input type="text" id="finalizeEndLocation" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="${i18n.cityPlaceholder}">
-                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-r-lg border border-blue-500" onclick="fetchLocation('finalizeEndLocation')">📍</button>
+                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-r-lg border border-blue-500 transition-colors duration-200" onclick="fetchLocation('finalizeEndLocation')" title="Helyszín lekérése GPS alapján">📍</button>
                         </div>
                     </div>
-                    ${localStorage.getItem('toggleDriveTime') === 'true' ? `
+                    ${showDriveTime ? `
                     <div class="bg-indigo-50 dark:bg-indigo-900/50 rounded-lg p-3">
                         <label class="block text-sm font-medium text-indigo-700 dark:text-indigo-300 mb-2">🚗 ${i18n.finalizeWeeklyDriveEndLabel}</label>
                         <input type="text" id="finalizeWeeklyDriveEnd" class="w-full p-3 border border-indigo-300 dark:border-indigo-600 rounded-lg bg-white dark:bg-indigo-800/50 text-gray-900 dark:text-gray-100" placeholder="óó:pp" onblur="formatTimeInput(this, true)">
                     </div>
                     ` : ''}
-                    ${localStorage.getItem('toggleKm') === 'true' ? `
+                    ${showKm ? `
                     <div class="bg-orange-50 dark:bg-orange-900/50 rounded-lg p-3">
                         <label class="block text-sm font-medium text-orange-700 dark:text-orange-300 mb-2">📏 ${i18n.finalizeKmEndLabel}</label>
-                        <input type="number" id="finalizeKmEnd" class="w-full p-3 border border-orange-300 dark:border-orange-600 rounded-lg bg-white dark:bg-orange-800/50 text-gray-900 dark:text-gray-100" placeholder="0">
+                        <input type="number" id="finalizeKmEnd" class="w-full p-3 border border-orange-300 dark:border-orange-600 rounded-lg bg-white dark:bg-orange-800/50 text-gray-900 dark:text-gray-100" placeholder="0" min="0" step="1">
                     </div>
                     ` : ''}
                 </div>
                 <div class="flex gap-3 mt-8">
-                    <button type="button" onclick="closeFinalizeModal()" class="flex-1 py-3 px-4 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-500">${i18n.cancel}</button>
-                    <button type="button" onclick="completeFinalizeShift()" class="flex-1 py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-800">✅ ${i18n.finalizeButton}</button>
+                    <button type="button" onclick="closeFinalizeModal()" class="flex-1 py-3 px-4 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors duration-200">${i18n.cancel}</button>
+                    <button type="button" onclick="completeFinalizeShift()" class="flex-1 py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-800 transition-all duration-200">✅ ${i18n.finalizeButton}</button>
                 </div>
             </div>
         </div>
@@ -250,6 +318,7 @@ function showFinalizationModal() {
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
+    // Modal animáció
     setTimeout(() => {
         const modal = document.getElementById('finalize-modal');
         if (modal) {
@@ -269,39 +338,63 @@ function handleModalBackdropClick(event) {
 function closeFinalizeModal() {
     const modal = document.getElementById('finalize-modal');
     if (modal) {
-        modal.remove();
+        const box = modal.querySelector('div > div');
+        modal.classList.add('opacity-0');
+        if(box) box.classList.add('scale-95');
+        
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
     }
 }
 
 async function completeFinalizeShift() {
-    const i18n = translations[currentLang];
-    const activeShift = window.activeShift;
+    // JAVÍTÁS: Biztonságos ellenőrzések
+    const activeShift = (typeof window !== 'undefined') ? window.activeShift : null;
 
     if (!activeShift) {
-        showCustomAlert('Nincs aktív műszak a befejezéshez!', 'info');
+        if (typeof showCustomAlert === 'function') {
+            showCustomAlert('Nincs aktív műszak a befejezéshez!', 'info');
+        }
         return;
     }
 
-    const endTime = document.getElementById('finalizeEndTime')?.value;
-    const endLocation = document.getElementById('finalizeEndLocation')?.value.trim();
-    const weeklyDriveEnd = document.getElementById('finalizeWeeklyDriveEnd')?.value || '';
-    const kmEnd = parseFloat(document.getElementById('finalizeKmEnd')?.value) || 0;
+    const endTimeEl = document.getElementById('finalizeEndTime');
+    const endLocationEl = document.getElementById('finalizeEndLocation');
+    const weeklyDriveEndEl = document.getElementById('finalizeWeeklyDriveEnd');
+    const kmEndEl = document.getElementById('finalizeKmEnd');
+
+    const endTime = endTimeEl ? endTimeEl.value : '';
+    const endLocation = endLocationEl ? endLocationEl.value.trim() : '';
+    const weeklyDriveEnd = weeklyDriveEndEl ? weeklyDriveEndEl.value || '' : '';
+    const kmEnd = kmEndEl ? parseFloat(kmEndEl.value) || 0 : 0;
 
     if (!endTime) {
-        showCustomAlert('Befejezés ideje kötelező!', 'info');
+        if (typeof showCustomAlert === 'function') {
+            showCustomAlert('Befejezés ideje kötelező!', 'info');
+        }
         return;
     }
     
     closeFinalizeModal();
 
-    const workMinutes = calculateWorkMinutes(activeShift.startTime, endTime);
-    const nightWorkMinutes = calculateNightWorkMinutes(activeShift.startTime, endTime);
-    const driveMinutes = Math.max(0, parseTimeToMinutes(weeklyDriveEnd) - parseTimeToMinutes(activeShift.weeklyDriveStartStr || '0:0'));
+    // JAVÍTÁS: Biztonságos függvényhívások
+    const workMinutes = (typeof calculateWorkMinutes === 'function') ? 
+        calculateWorkMinutes(activeShift.startTime, endTime) : 0;
+    const nightWorkMinutes = (typeof calculateNightWorkMinutes === 'function') ? 
+        calculateNightWorkMinutes(activeShift.startTime, endTime) : 0;
+    const driveMinutes = (typeof parseTimeToMinutes === 'function') ? 
+        Math.max(0, parseTimeToMinutes(weeklyDriveEnd) - parseTimeToMinutes(activeShift.weeklyDriveStartStr || '0:0')) : 0;
     const kmDriven = Math.max(0, kmEnd - (activeShift.kmStart || 0));
 
     const completedRecord = {
         ...activeShift,
-        endTime, endLocation, workMinutes, nightWorkMinutes, driveMinutes, kmDriven,
+        endTime, 
+        endLocation, 
+        workMinutes, 
+        nightWorkMinutes, 
+        driveMinutes, 
+        kmDriven,
         weeklyDriveEndStr: weeklyDriveEnd,
         kmEnd
     };
@@ -310,6 +403,35 @@ async function completeFinalizeShift() {
         finalizeShift(completedRecord);
     } else {
         console.error('finalizeShift function not found!');
-        showCustomAlert('Kritikus hiba: a mentési funkció nem érhető el.', 'info');
+        if (typeof showCustomAlert === 'function') {
+            showCustomAlert('Kritikus hiba: a mentési funkció nem érhető el.', 'info');
+        }
     }
 }
+
+// JAVÍTÁS: Cleanup függvény az autocomplete eseménykezelőknek
+function cleanupAutocomplete() {
+    activeAutocompletePairs.forEach((handler, input) => {
+        if (input && typeof input.removeEventListener === 'function') {
+            input.removeEventListener('input', handler);
+        }
+    });
+    activeAutocompletePairs.clear();
+}
+
+// Globális függvények exportálása
+window.showCustomAlert = showCustomAlert;
+window.hideCustomAlert = hideCustomAlert;
+window.showCustomPrompt = showCustomPrompt;
+window.hideCustomPrompt = hideCustomPrompt;
+window.initAutocomplete = initAutocomplete;
+window.initAllAutocomplete = initAllAutocomplete;
+window.hideAutocomplete = hideAutocomplete;
+window.applyTheme = applyTheme;
+window.setTheme = setTheme;
+window.initTheme = initTheme;
+window.showFinalizationModal = showFinalizationModal;
+window.handleModalBackdropClick = handleModalBackdropClick;
+window.closeFinalizeModal = closeFinalizeModal;
+window.completeFinalizeShift = completeFinalizeShift;
+window.cleanupAutocomplete = cleanupAutocomplete;

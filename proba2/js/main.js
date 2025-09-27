@@ -73,7 +73,6 @@ function safeQuerySelector(selector, warnIfMissing = true) {
 }
 
 function safeQuerySelectorAll(selector) {
-    // This function is not strictly needed based on the refactor, but good to have
     const elements = document.querySelectorAll(selector);
     return elements;
 }
@@ -212,9 +211,9 @@ function renderApp() {
     if(typeof renderRecords === 'function') renderRecords();
     if(typeof renderSummary === 'function') renderSummary();
 
-    if (safeGetElement('content-stats', false)?.offsetParent !== null) renderStats();
-    if (safeGetElement('content-tachograph', false)?.offsetParent !== null) renderTachographAnalysis();
-    if (safeGetElement('content-pallets', false)?.offsetParent !== null) renderPalletRecords();
+    if (safeGetElement('content-stats', false)?.offsetParent !== null && typeof renderStats === 'function') renderStats();
+    if (safeGetElement('content-tachograph', false)?.offsetParent !== null && typeof renderTachographAnalysis === 'function') renderTachographAnalysis();
+    if (safeGetElement('content-pallets', false)?.offsetParent !== null && typeof renderPalletRecords === 'function') renderPalletRecords();
     
     if(typeof updateAllTexts === 'function') updateAllTexts(); 
 }
@@ -236,9 +235,10 @@ function showTab(tabName) {
     if (tabName === 'report') { if (typeof initMonthlyReport === 'function') initMonthlyReport(); }
     if (tabName === 'list') { if (typeof renderRecords === 'function') renderRecords(); }
     if (tabName === 'summary') { if (typeof renderSummary === 'function') renderSummary(); }
-    if (tabName === 'stats') { statsDate = new Date(); if (typeof renderStats === 'function') renderStats(); }
+    if (tabName === 'stats') { if (typeof setStatsView === 'function') { setStatsView('daily'); } else if (typeof renderStats === 'function') { renderStats(); } }
     if (tabName === 'tachograph') { if (typeof renderTachographAnalysis === 'function') renderTachographAnalysis(); }
     if (tabName === 'help') { if (typeof renderHelp === 'function') renderHelp(); }
+    if (tabName === 'start') { if (typeof renderStartTab === 'function') renderStartTab(); }
 
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
     
@@ -249,13 +249,13 @@ function showTab(tabName) {
     if (mainTabs.includes(tabName)) {
         const tabButton = safeGetElement(`tab-${tabName}`);
         if (tabButton) tabButton.classList.add('tab-active');
-        if(dropdownButton) dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`;
+        if(dropdownButton && typeof translations !== 'undefined') dropdownButton.innerHTML = `<span data-translate-key="menuMore">${translations[currentLang].menuMore}</span> ▼`;
     } else {
         if (tabName !== 'settings' && tabName !== 'help' && dropdownButton) {
             dropdownButton.classList.add('tab-active');
             const dropdownMenu = safeGetElement('dropdown-menu');
             const selectedTitleEl = dropdownMenu ? dropdownMenu.querySelector(`button[onclick="showTab('${tabName}')"] .dropdown-item-title`) : null;
-            if (selectedTitleEl) {
+            if (selectedTitleEl && typeof translations !== 'undefined') {
                 const key = selectedTitleEl.getAttribute('data-translate-key');
                 const selectedTitle = key ? translations[currentLang][key] : selectedTitleEl.textContent;
                 dropdownButton.innerHTML = `${selectedTitle} ▼`;
@@ -269,7 +269,7 @@ function showTab(tabName) {
     
     closeDropdown();
     closeSettingsMenu();
-    updateAllTexts();
+    if (typeof updateAllTexts === 'function') updateAllTexts();
 }
 
 function toggleDropdown() { safeToggleClass('dropdown-menu', 'hidden'); }
@@ -279,26 +279,9 @@ function closeSettingsMenu() { safeAddClass('settings-dropdown', 'hidden'); }
 
 
 // ====== SEGÉDFÜGGVÉNYEK ======
-function getSortedRecords() {
-    return [...(records || [])].sort((a, b) => new Date(`${b.date}T${b.startTime}`) - new Date(`${a.date}T${a.startTime}`));
-}
-
-function getLatestRecord() {
-    if (!records || records.length === 0) return null;
-    return getSortedRecords()[0];
-}
-
-function updateUniqueLocations() {
-    const locations = new Set(records.map(r => r.startLocation).concat(records.map(r => r.endLocation)));
-    uniqueLocations = Array.from(locations).filter(Boolean).sort();
-}
-
-function updateUniquePalletLocations() {
-    const locations = new Set(palletRecords.map(r => r.location));
-    uniquePalletLocations = Array.from(locations).filter(Boolean).sort();
-}
-
 function updateDisplays() {
+    if (typeof translations === 'undefined' || typeof currentLang === 'undefined') return;
+    
     const i18n = translations[currentLang];
     const workMinutes = calculateWorkMinutes(safeGetElement('startTime')?.value, safeGetElement('endTime')?.value);
     safeSetTextContent('workTimeDisplay', workMinutes > 0 ? `${i18n.workTimeDisplay}: ${formatDuration(workMinutes)}` : '');
@@ -312,25 +295,30 @@ function updateDisplays() {
 
 async function runNightWorkRecalculation() {
     if (localStorage.getItem('nightWorkRecalculated_v20_05')) { return; }
+    
+    if (typeof translations === 'undefined' || typeof currentLang === 'undefined') return;
+    
     const i18n = translations[currentLang];
     console.log(i18n.logRecalculatingNightWork);
     let updatedCount = 0;
     records = records.map(record => {
         const newNightWorkMinutes = calculateNightWorkMinutes(record.startTime, record.endTime);
         if (record.nightWorkMinutes !== newNightWorkMinutes) {
-            return { ...record, nightWorkMinutes: newNightWorkMinutes };
             updatedCount++;
+            return { ...record, nightWorkMinutes: newNightWorkMinutes };
         }
         return record;
     });
 
-    if (updatedCount > 0 && currentUser) {
-        const batch = db.batch();
-        records.forEach(record => {
-            const docRef = db.collection('users').doc(currentUser.uid).collection('records').doc(String(record.id));
-            batch.update(docRef, { nightWorkMinutes: record.nightWorkMinutes });
-        });
-        await batch.commit();
+    if (updatedCount > 0 && typeof currentUser !== 'undefined' && currentUser) {
+        if (typeof db !== 'undefined') {
+            const batch = db.batch();
+            records.forEach(record => {
+                const docRef = db.collection('users').doc(currentUser.uid).collection('records').doc(String(record.id));
+                batch.update(docRef, { nightWorkMinutes: record.nightWorkMinutes });
+            });
+            await batch.commit();
+        }
     } else if (updatedCount > 0) {
         localStorage.setItem('workRecords', JSON.stringify(records));
     }
@@ -345,6 +333,8 @@ function renderLiveTabView() {
 }
 
 function renderDashboard() {
+    if (typeof translations === 'undefined' || typeof currentLang === 'undefined') return;
+    
     const i18n = translations[currentLang];
     const container = safeGetElement('dashboard-cards');
     if (!container) return;
@@ -374,20 +364,34 @@ function setupEventListeners() {
         safeAddEventListener(id, 'input', updateDisplays);
     });
 
-    safeAddEventListener('stats-view-daily', 'click', () => setStatsView('daily'));
-    safeAddEventListener('stats-view-monthly', 'click', () => setStatsView('monthly'));
-    safeAddEventListener('stats-view-yearly', 'click', () => setStatsView('yearly'));
-    safeAddEventListener('stats-prev', 'click', () => navigateStats(-1));
-    safeAddEventListener('stats-next', 'click', () => navigateStats(1));
+    safeAddEventListener('stats-view-daily', 'click', () => { if (typeof setStatsView === 'function') setStatsView('daily'); });
+    safeAddEventListener('stats-view-monthly', 'click', () => { if (typeof setStatsView === 'function') setStatsView('monthly'); });
+    safeAddEventListener('stats-view-yearly', 'click', () => { if (typeof setStatsView === 'function') setStatsView('yearly'); });
+    safeAddEventListener('stats-prev', 'click', () => { if (typeof navigateStats === 'function') navigateStats(-1); });
+    safeAddEventListener('stats-next', 'click', () => { if (typeof navigateStats === 'function') navigateStats(1); });
 
     safeAddEventListener('autoExportSelector', 'change', (e) => {
+        if (typeof translations === 'undefined' || typeof currentLang === 'undefined') return;
+        
         const i18n = translations[currentLang];
         localStorage.setItem('autoExportFrequency', e.target.value);
         if (e.target.value !== 'never') {
             localStorage.setItem('lastAutoExportDate', new Date().toISOString());
-            showCustomAlert(i18n.autoBackupOn, 'success');
+            if (typeof showCustomAlert === 'function') showCustomAlert(i18n.autoBackupOn, 'success');
         } else {
-            showCustomAlert(i18n.autoBackupOff, 'info');
+            if (typeof showCustomAlert === 'function') showCustomAlert(i18n.autoBackupOff, 'info');
         }
     });
 }
+
+// Globális függvények exportálása
+window.renderApp = renderApp;
+window.showTab = showTab;
+window.toggleDropdown = toggleDropdown;
+window.closeDropdown = closeDropdown;
+window.toggleSettingsMenu = toggleSettingsMenu;
+window.closeSettingsMenu = closeSettingsMenu;
+window.updateDisplays = updateDisplays;
+window.runNightWorkRecalculation = runNightWorkRecalculation;
+window.renderLiveTabView = renderLiveTabView;
+window.renderDashboard = renderDashboard;
