@@ -11,8 +11,8 @@
   function isReducedDailyRest(restHours, precedingRecord) {
       if (!precedingRecord) return false;
 
-      const splitData = getSplitRestData();
-      const isSplit = splitData[precedingRecord.id] === true || precedingRecord.isSplitRest;
+      // Az "osztott pihenő" állapotát közvetlenül a bejegyzésből olvassuk
+      const isSplit = precedingRecord.isSplitRest;
 
       if (isSplit) return false;
 
@@ -125,7 +125,7 @@
           const absoluteDeadline = formatDateTime(status.weeklyRestDeadline);
 
           if (diffMinutes < 0) {
-              deadlineHtml = `<p class="font-bold text-red-500">Lejárt!</p><p class="text-xs text-gray-500">${absoluteDeadline}</p>`;
+              deadlineHtml = `<p class="font-bold text-red-500">${i18n.tachoDeadlineExpired}</p><p class="text-xs text-gray-500">${absoluteDeadline}</p>`;
           } else {
               const days = Math.floor(diffMinutes / 1440);
               const hours = Math.floor((diffMinutes % 1440) / 60);
@@ -136,7 +136,7 @@
 
       const html = `
       <div class="bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-3 space-y-3">
-          <h3 class="font-semibold text-gray-800 dark:text-gray-100">🗓️ Heti Státusz</h3>
+          <h3 class="font-semibold text-gray-800 dark:text-gray-100">🗓️ ${i18n.tachoWeeklyStatus}</h3>
           <div class="grid grid-cols-2 gap-3 text-center">
               <div class="p-2 bg-blue-50 dark:bg-blue-900/50 rounded-lg">
                   <p class="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">${i18n.tachoAllowanceDrive10h}</p>
@@ -150,21 +150,21 @@
           <div class="space-y-2 text-sm">
               <div>
                   <div class="flex justify-between mb-1">
-                      <span class="font-medium">Vezetés (ezen a héten)</span>
-                      <span>${formatDuration(status.currentWeekDriveMinutes)} / 56ó</span>
+                      <span class="font-medium">${i18n.tachoDriveThisWeek}</span>
+                      <span>${formatDuration(status.currentWeekDriveMinutes)} / 56${i18n.tachoHourUnit}</span>
                   </div>
                   <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percent56h}%;"></div></div>
               </div>
               <div>
                   <div class="flex justify-between mb-1">
-                      <span class="font-medium">Vezetés (két hét)</span>
-                      <span>${formatDuration(status.twoWeekDriveMinutes)} / 90ó</span>
+                      <span class="font-medium">${i18n.tachoDriveTwoWeeks}</span>
+                      <span>${formatDuration(status.twoWeekDriveMinutes)} / 90${i18n.tachoHourUnit}</span>
                   </div>
                   <div class="progress-bar"><div class="progress-bar-fill" style="width: ${percent90h}%;"></div></div>
               </div>
           </div>
           <div class="text-sm border-t dark:border-gray-700 pt-2 flex justify-between items-center">
-              <span class="font-medium">Következő heti pihenő esedékes:</span>
+              <span class="font-medium">${i18n.tachoNextWeeklyRestDue}</span>
               <div class="text-right">${deadlineHtml}</div>
           </div>
       </div>`;
@@ -210,17 +210,30 @@
     }
   }
 
-  function handleTachographToggle(checkbox, recordId) {
-      const data = getSplitRestData();
-      if (checkbox.checked) {
-          data[recordId] = true;
-      } else {
-          delete data[recordId];
-      }
-      saveSplitRestData(data);
-      updateEnhancedToggleVisuals(checkbox);
-      renderTachographAnalysis();
-      renderTachographStatusCard();
+  async function handleTachographToggle(checkbox, recordId) {
+    // 1. Megkeressük a bejegyzést a fő 'records' listában
+    const recordIndex = records.findIndex(r => r.id === String(recordId));
+    if (recordIndex === -1) {
+        console.error('A bejegyzés nem található az osztott pihenő állításához:', recordId);
+        return;
+    }
+
+    // 2. Közvetlenül frissítjük a bejegyzés 'isSplitRest' állapotát
+    records[recordIndex].isSplitRest = checkbox.checked;
+
+    // 3. Elmentjük a teljes, módosított bejegyzést, ami elindítja a szinkronizálást
+    try {
+        await saveWorkRecord(records[recordIndex]);
+        // Vizuális elemek frissítése
+        updateEnhancedToggleVisuals(checkbox);
+        renderTachographAnalysis();
+        renderTachographStatusCard();
+    } catch (error) {
+        console.error('Hiba az osztott pihenő mentésekor:', error);
+        // Hiba esetén visszaállítjuk a kapcsolót
+        checkbox.checked = !checkbox.checked;
+        showCustomAlert('Hiba történt a mentés során.', 'info');
+    }
   }
 
   function renderTachographAnalysis() {
@@ -232,10 +245,11 @@
           container.innerHTML = `<p class="text-center text-gray-500 py-8">${i18n.noEntries}</p>`;
           return;
       }
-      const splitRestData = getSplitRestData();
+      
       let analysisResults = [];
       let reducedDailyRestCounter = 0;
       let extendedDrivingInWeekCounter = {};
+
       for (let i = 0; i < sortedRecords.length; i++) {
           const currentRecord = sortedRecords[i];
           const previousRecord = i > 0 ? sortedRecords[i - 1] : null;
@@ -245,7 +259,7 @@
               const currentStart = new Date(`${currentRecord.date}T${currentRecord.startTime}`);
               const restDurationMinutes = Math.round((currentStart - prevEnd) / 60000);
               const restDurationHours = restDurationMinutes / 60;
-              const isSplitRest = splitRestData[previousRecord.id] === true || previousRecord.isSplitRest;
+              const isSplitRest = previousRecord.isSplitRest;
               const prevWorkDurationHours = previousRecord.workMinutes / 60;
               if (restDurationHours >= 45) {
                   restAnalysis = { text: `${i18n.tachoWeeklyRest} (${formatDuration(restDurationMinutes)})`, colorClass: 'bg-green-700 text-white' };
@@ -293,7 +307,7 @@
           } else {
               driveAnalysis = { text: `${i18n.tachoNormalDrive} (${formatDuration(driveMinutes)})`, colorClass: 'bg-gray-300 text-gray-800' };
           }
-          analysisResults.push({ record: currentRecord, rest: restAnalysis, drive: driveAnalysis, isSplit: splitRestData[currentRecord.id] === true || currentRecord.isSplitRest });
+          analysisResults.push({ record: currentRecord, rest: restAnalysis, drive: driveAnalysis, isSplit: currentRecord.isSplitRest });
       }
       container.innerHTML = analysisResults.reverse().map(res => {
           const d = new Date(res.record.date + 'T00:00:00');
@@ -325,9 +339,6 @@
           </div>`;
       }).join('');
   }
-
-  function getSplitRestData() { return JSON.parse(localStorage.getItem('splitRestData') || '{}'); }
-  function saveSplitRestData(data) { localStorage.setItem('splitRestData', JSON.stringify(data)); }
 
   /**
    * DEBUG SEGÉDFÜGGVÉNY

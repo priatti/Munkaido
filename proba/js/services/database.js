@@ -46,6 +46,10 @@ async function handleAuthStateChange(user) {
 
     if (user) {
         console.log("Logged in:", user.uid);
+        
+        // Beállítások szinkronizálása
+        await loadSettingsFromFirestore(); 
+        
         const firestoreRecords = await loadRecordsFromFirestore('records');
         const localRecords = JSON.parse(localStorage.getItem('workRecords') || '[]');
 
@@ -184,5 +188,49 @@ async function savePalletRecords() {
     } catch (e) {
         console.error("Error saving pallet data:", e);
         showCustomAlert(translations[currentLang].alertSaveToCloudError, 'info');
+    }
+}
+
+async function saveSettingsToFirestore(settings) {
+    if (!currentUser) return;
+    try {
+        // A 'settings' kollekción belül egy 'userSettings' nevű dokumentumba mentünk.
+        // Így később akár több beállítás-csomag is lehet.
+        await db.collection('users').doc(currentUser.uid).collection('settings').doc('userSettings').set(settings);
+        console.log('Beállítások sikeresen mentve a felhőbe.');
+    } catch (error) {
+        console.error("Hiba a beállítások mentésekor:", error);
+        showCustomAlert('A beállítások szinkronizálása nem sikerült.', 'info');
+    }
+}
+
+async function loadSettingsFromFirestore() {
+    if (!currentUser) return;
+    try {
+        const doc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('userSettings').get();
+        if (doc.exists) {
+            const settings = doc.data();
+            console.log('Beállítások betöltve a felhőből:', settings);
+            // Végigmegyünk a letöltött beállításokon és frissítjük a helyi tárolót
+            Object.keys(settings).forEach(key => {
+                localStorage.setItem(key, settings[key]);
+            });
+            
+            // Frissítjük a UI-t
+            loadSettings();
+            applyFeatureToggles();
+            setTheme(localStorage.getItem('theme') || 'auto');
+            setLanguage(localStorage.getItem('language') || 'hu');
+            
+            // A kapcsolók vizuális állapotának frissítése
+            refreshToggleVisuals();
+
+        } else {
+            console.log('Nincsenek mentett beállítások a felhőben. A helyi beállítások feltöltése...');
+            // Ha a felhőben nincs semmi, feltöltjük az aktuális helyi beállításokat
+            await uploadLocalSettings();
+        }
+    } catch (error) {
+        console.error("Hiba a beállítások betöltésekor:", error);
     }
 }

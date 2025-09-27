@@ -2,10 +2,44 @@
 // ===== BEÁLLÍTÁSOK (FEATURE) ===========================
 // =======================================================
 
+async function uploadLocalSettings() {
+    const settingsToSync = {};
+    const keysToSync = [
+        'userName', 'theme', 'autoExportFrequency', 'language',
+        'toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleCompensation',
+        'palletMode', 'customPalletTypes'
+    ];
+
+    keysToSync.forEach(key => {
+        const value = localStorage.getItem(key);
+        if (value !== null) {
+            settingsToSync[key] = value;
+        }
+    });
+
+    await saveSettingsToFirestore(settingsToSync);
+}
+
+function refreshToggleVisuals() {
+    const togglesToRefresh = [
+        'toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleCompensation', 'toggleMultiPallet'
+    ];
+
+    togglesToRefresh.forEach(toggleId => {
+        const checkbox = document.getElementById(toggleId);
+        if (checkbox) {
+            const savedState = localStorage.getItem(toggleId) === 'true';
+            checkbox.checked = savedState;
+            updateEnhancedToggleVisuals(checkbox);
+        }
+    });
+}
+
 // Felhasználói beállítások mentése (pl. név)
 function saveSettings() {
     localStorage.setItem('userName', document.getElementById('userNameInput').value);
     showCustomAlert(translations[currentLang].settingsSaved, 'success');
+    uploadLocalSettings();
 }
 
 // Mentett beállítások betöltése az űrlapokba
@@ -81,40 +115,40 @@ function importData() {
 // Speciális funkciók (pl. km, vezetési idő) kapcsolóinak kezelése
 const featureToggles = ['toggleKm', 'toggleDriveTime', 'togglePallets', 'toggleCompensation'];
 
-// JAVÍTOTT: Enhanced toggle inicializálás minden toggle-ra
 function initializeFeatureToggles() {
-    // Speciális funkciók kapcsolói
+    // 1. Vizuális állapot frissítése az oldal betöltésekor
+    refreshToggleVisuals();
+
+    // 2. Eseményfigyelők hozzáadása a jövőbeli változásokhoz
     featureToggles.forEach(toggleId => {
         const checkbox = document.getElementById(toggleId);
         if (checkbox) {
-            const savedState = localStorage.getItem(toggleId) === 'true';
-            checkbox.checked = savedState;
-            
-            // MINDEN enhanced toggle vizuális állapotának frissítése
-            updateEnhancedToggleVisuals(checkbox);
-            
             checkbox.addEventListener('change', (e) => {
                 localStorage.setItem(toggleId, e.target.checked);
                 updateEnhancedToggleVisuals(e.target);
                 applyFeatureToggles();
+                uploadLocalSettings();
             });
         }
     });
     
-    // Osztott pihenő kapcsoló inicializálása
     const splitRestToggle = document.getElementById('toggleSplitRest');
     if (splitRestToggle) {
         updateEnhancedToggleVisuals(splitRestToggle);
-        
         splitRestToggle.addEventListener('change', (e) => {
             updateEnhancedToggleVisuals(e.target);
         });
     }
     
-    // Több raklaptípus kapcsoló inicializálása
     const multiPalletToggle = document.getElementById('toggleMultiPallet');
-    if (multiPalletToggle) {
-        updateEnhancedToggleVisuals(multiPalletToggle);
+    if(multiPalletToggle) {
+        multiPalletToggle.addEventListener('change', (e) => {
+            const newMode = e.target.checked ? 'multi' : 'single';
+            localStorage.setItem('palletMode', newMode);
+            updateEnhancedToggleVisuals(e.target);
+            updateMultiPalletSettingsVisibility(e.target.checked);
+            uploadLocalSettings();
+        });
     }
     
     applyFeatureToggles();
@@ -157,20 +191,23 @@ function applyFeatureToggles() {
     if (kmSection) kmSection.style.display = showKm ? 'block' : 'none';
     if (drivetimeSection) drivetimeSection.style.display = showDriveTime ? 'block' : 'none';
     
-    // JAVÍTVA: Kompenzáció szekció - csak akkor rejtjük el, ha német nyelv VAGY ki van kapcsolva
+    // JAVÍTVA: currentLang biztonsági ellenőrzéssel
+    const currentLangSafe = (typeof currentLang !== 'undefined') ? currentLang : 'hu';
+    
+    // Kompenzáció szekció - csak akkor rejtjük el, ha német nyelv VAGY ki van kapcsolva
     const compensationSection = document.getElementById('compensation-section-de');
     if (compensationSection) {
         // Német nyelven mindig rejtve, magyaron a beállítás szerint
-        compensationSection.style.display = (currentLang === 'de' || !showCompensation) ? 'none' : 'block';
+        compensationSection.style.display = (currentLangSafe === 'de' || !showCompensation) ? 'none' : 'block';
     }
     
-    // JAVÍTVA: Kompenzáció toggle container elrejtése német nyelven
+    // Kompenzáció toggle container elrejtése német nyelven
     const compensationToggleContainer = document.getElementById('toggleCompensation')?.closest('.enhanced-toggle-container');
     if (compensationToggleContainer) {
-        compensationToggleContainer.style.display = currentLang === 'de' ? 'none' : 'flex';
+        compensationToggleContainer.style.display = currentLangSafe === 'de' ? 'none' : 'flex';
     }
     
-    // Osztott pihenő gomb megjelenítése/elrejtése - JAVÍTOTT LOGIKA
+    // Osztott pihenő gomb megjelenítése/elrejtése
     const splitRestContainer = document.getElementById('split-rest-container');
     if (splitRestContainer) {
         splitRestContainer.style.display = showDriveTime ? 'flex' : 'none';
@@ -191,9 +228,11 @@ function applyFeatureToggles() {
     if (liveAllowanceDisplay) liveAllowanceDisplay.style.display = showDriveTime ? 'block' : 'none';
     if (tachographMenuItem) tachographMenuItem.style.display = showDriveTime ? 'flex' : 'none';
     
-    // Fülváltás ha egy kikapcsolt funkció aktív
-    if (!showDriveTime && currentActiveTab === 'tachograph') showTab('live');
-    if (!showPallets && currentActiveTab === 'pallets') showTab('live');
+    // Fülváltás ha egy kikapcsolt funkció aktív (biztonsági ellenőrzéssel)
+    if (typeof currentActiveTab !== 'undefined') {
+        if (!showDriveTime && currentActiveTab === 'tachograph') showTab('live');
+        if (!showPallets && currentActiveTab === 'pallets') showTab('live');
+    }
 }
 
 // Automatikus mentés (export) ellenőrzése
@@ -240,13 +279,6 @@ function initializePalletSettings() {
     toggle.checked = isMultiPalletMode;
     updateEnhancedToggleVisuals(toggle); // ENHANCED: Új vizuális kezelés
     updateMultiPalletSettingsVisibility(isMultiPalletMode);
-
-    toggle.addEventListener('change', (e) => {
-        const newMode = e.target.checked ? 'multi' : 'single';
-        localStorage.setItem('palletMode', newMode);
-        updateEnhancedToggleVisuals(e.target); // ENHANCED: Új vizuális kezelés
-        updateMultiPalletSettingsVisibility(e.target.checked);
-    });
 
     // Raklaptípusok renderelése
     renderPalletTypesList();
@@ -312,6 +344,7 @@ function addPalletType() {
     savePalletTypes(currentTypes);
     renderPalletTypesList();
     input.value = '';
+    uploadLocalSettings();
 }
 
 // Raklaptípus törlése
@@ -323,5 +356,7 @@ function deletePalletType(typeToDelete) {
         currentTypes = currentTypes.filter(t => t !== typeToDelete);
         savePalletTypes(currentTypes);
         renderPalletTypesList();
+        uploadLocalSettings();
     });
 }
+

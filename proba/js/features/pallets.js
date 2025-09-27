@@ -4,6 +4,44 @@
 
 // Globális változó a kiválasztott raklaptípus tárolására
 let selectedPalletType = 'EUR';
+let editingPalletId = null;
+
+// ÚJ FÜGGVÉNYEK
+function resetPalletForm() {
+    // Űrlap mezőinek törlése
+    document.getElementById('palletLocation').value = '';
+    document.getElementById('palletGiven').value = '';
+    document.getElementById('palletTaken').value = '';
+    document.getElementById('palletDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
+
+    // Szerkesztési mód kikapcsolása és alapértelmezett raklaptípus visszaállítása
+    editingPalletId = null;
+    selectedPalletType = 'EUR';
+    renderPalletTypeSelector();
+}
+
+function editPalletEntry(id) {
+    const record = palletRecords.find(p => p.id === String(id));
+    if (!record) return;
+
+    // Beállítjuk a szerkesztési módot
+    editingPalletId = String(id);
+
+    // Űrlap feltöltése a bejegyzés adataival
+    document.getElementById('palletDate').value = record.date;
+    document.getElementById('palletLocation').value = record.location;
+    document.getElementById('palletGiven').value = record.palletsGiven || '';
+    document.getElementById('palletTaken').value = record.palletsTaken || '';
+    document.getElementById('palletLicensePlate').value = record.licensePlate || '';
+    
+    // Raklaptípus beállítása és a UI frissítése
+    selectedPalletType = record.type || 'EUR';
+    renderPalletTypeSelector();
+    
+    // Görgessünk fel az űrlaphoz a könnyebb szerkesztésért
+    document.getElementById('palletsTitle').scrollIntoView({ behavior: 'smooth' });
+}
 
 // Új raklap tranzakció mentése
 async function savePalletEntry() {
@@ -19,37 +57,61 @@ async function savePalletEntry() {
         return;
     }
 
-    const newEntry = {
-        id: String(Date.now()),
-        date,
-        location,
-        palletsGiven,
-        palletsTaken,
-        type: selectedPalletType,
-        licensePlate
-    };
-
+    if (editingPalletId) {
+        // SZERKESZTÉS MÓD
+        const recordIndex = palletRecords.findIndex(p => p.id === editingPalletId);
+        if (recordIndex > -1) {
+            palletRecords[recordIndex] = {
+                ...palletRecords[recordIndex], // Megtartjuk a régi tulajdonságokat, pl. az id-t
+                date,
+                location,
+                palletsGiven,
+                palletsTaken,
+                type: selectedPalletType,
+                licensePlate
+            };
+        }
+    } else {
+        // ÚJ BEJEGYZÉS MÓD
+        const newEntry = {
+            id: String(Date.now()),
+            date,
+            location,
+            palletsGiven,
+            palletsTaken,
+            type: selectedPalletType,
+            licensePlate
+        };
+        palletRecords.push(newEntry);
+    }
+    
     if (licensePlate) localStorage.setItem('lastPalletLicensePlate', licensePlate);
 
-    palletRecords.push(newEntry);
-    await savePalletRecords();
-    renderPalletRecords();
+    await savePalletRecords(); // Mentés a felhőbe és a helyi tárolóba
+    
+    // Visszajelzés és UI frissítés
+    const successMessage = editingPalletId ? i18n.palletEditSuccess : i18n.palletSaveSuccess;
+    showCustomAlert(successMessage, "success");
+    
+    resetPalletForm(); // Űrlap törlése
+    renderPalletRecords(); // Lista újrarajzolása
     updateUniquePalletLocations();
-
-    document.getElementById('palletLocation').value = '';
-    document.getElementById('palletGiven').value = '';
-    document.getElementById('palletTaken').value = '';
-    document.getElementById('palletLicensePlate').value = localStorage.getItem('lastPalletLicensePlate') || '';
-    showCustomAlert(i18n.palletSaveSuccess, "success");
 }
 
 // Raklap tranzakció törlése
 async function deletePalletEntry(id) {
-    showCustomAlert(translations[currentLang].alertConfirmDelete, 'warning', async () => {
-        palletRecords = palletRecords.filter(p => p.id !== id);
-        await savePalletRecords();
-        renderPalletRecords();
-    });
+    const i18n = translations[currentLang];
+    showCustomAlert(
+        i18n.alertConfirmDelete, 
+        'warning', 
+        async () => {
+            palletRecords = palletRecords.filter(p => p.id !== id);
+            await savePalletRecords();
+            renderPalletRecords();
+        },
+        // Itt is megadjuk az új gomb szövegét és színét
+        { confirmText: i18n.delete, confirmClass: 'bg-red-500 hover:bg-red-600' }
+    );
 }
 
 // Aktuális raklap egyenleg frissítése a UI-on
@@ -108,16 +170,18 @@ function renderPalletRecords() {
     
     updatePalletBalance();
     
-    // Alapértelmezett értékek beállítása az űrlapban
-    const dateInput = document.getElementById('palletDate');
-    const licensePlateInput = document.getElementById('palletLicensePlate');
-    
-    if (dateInput && !dateInput.value) {
-        dateInput.value = new Date().toISOString().split('T')[0];
-    }
-    
-    if (licensePlateInput && !licensePlateInput.value) {
-        licensePlateInput.value = localStorage.getItem('lastPalletLicensePlate') || '';
+    // Alapértelmezett értékek beállítása az űrlapban, ha nem szerkesztési módban vagyunk
+    if (!editingPalletId) {
+        const dateInput = document.getElementById('palletDate');
+        const licensePlateInput = document.getElementById('palletLicensePlate');
+        
+        if (dateInput && !dateInput.value) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+        
+        if (licensePlateInput && !licensePlateInput.value) {
+            licensePlateInput.value = localStorage.getItem('lastPalletLicensePlate') || '';
+        }
     }
 
     if (palletRecords.length === 0) {
@@ -166,6 +230,7 @@ function renderPalletRecords() {
             <div class="text-right">
                  <p class="font-bold text-lg ${colorClass}">${quantityText} db</p>
                  <p class="text-xs text-gray-400">(+${taken} / -${given})</p>
+                 <button onclick="editPalletEntry('${p.id}')" class="text-xs text-blue-500 hover:text-blue-700 mt-1 mr-2">✏️ <span data-translate-key="edit">Szerkesztés</span></button>
                  <button onclick="deletePalletEntry('${p.id}')" class="text-xs text-gray-400 hover:text-red-500 mt-1">🗑️ <span data-translate-key="delete">${i18n.delete}</span></button>
             </div>
         </div>

@@ -27,8 +27,34 @@
         <img alt="Munkaidő Nyilvántartó Pro" src="assets/images/splash.jpg" />
     </div>
     <div class="max-w-md mx-auto bg-white dark:bg-gray-800 min-h-screen hidden" id="app">
-        <div class="bg-blue-600 text-white p-4">
-            <h1 class="text-xl font-bold text-center" data-translate-key="appTitle">Munkaidő Nyilvántartó Pro</h1>
+        <div class="relative bg-white p-2 shadow-sm flex items-center justify-between" id="app-header">
+            <div class="flex-1"></div>
+            <div class="flex-1 text-center">
+                <img src="assets/images/gurigo.jpg" alt="GuriGO Logo">
+            </div>
+            <div class="flex-1 text-right">
+                <button onclick="toggleSettingsMenu()" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </button>
+                <div id="settings-dropdown" class="hidden absolute right-2 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-20 border dark:border-gray-700">
+                    <div class="p-2 space-y-1">
+                         <button class="w-full text-left flex items-center gap-3 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" onclick="showTab('settings')">
+                            <span class="text-xl">⚙️</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 dark:text-gray-100" data-translate-key="menuSettings">Beállítások</p>
+                                <p class="text-xs text-gray-500" data-translate-key="menuSettingsDesc">Adatmentés és személyes adatok</p>
+                            </div>
+                        </button>
+                        <button class="w-full text-left flex items-center gap-3 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" onclick="showTab('help')">
+                            <span class="text-xl">❓</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 dark:text-gray-100" data-translate-key="menuHelp">Súgó</p>
+                                <p class="text-xs text-gray-500" data-translate-key="menuHelpDesc">Használati útmutató és tippek</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="flex bg-gray-100 dark:bg-gray-900 shadow-sm">
             <button class="tab tab-active" id="tab-live" onclick="showTab('live')">📊 <span data-translate-key="tabOverview">Áttekintés</span></button>
@@ -73,18 +99,6 @@
                             <p class="dropdown-item-desc" data-translate-key="menuReportDesc">Nyomtatható havi elszámolás</p>
                         </div>
                     </button>
-                    <button class="dropdown-item" onclick="showTab('settings')"><span class="dropdown-item-icon">⚙️</span>
-                        <div>
-                            <p class="dropdown-item-title" data-translate-key="menuSettings">Beállítások</p>
-                            <p class="dropdown-item-desc" data-translate-key="menuSettingsDesc">Adatmentés és személyes adatok</p>
-                        </div>
-                    </button>
-                    <button class="dropdown-item" onclick="showTab('help')"><span class="dropdown-item-icon">❓</span>
-                        <div>
-                            <p class="dropdown-item-title" data-translate-key="menuHelp">Súgó</p>
-                            <p class="dropdown-item-desc" data-translate-key="menuHelpDesc">Használati útmutató és tippek</p>
-                        </div>
-                    </button>
                 </div>
             </div>
         </div>
@@ -110,7 +124,7 @@
                             <div><label class="block text-sm mb-1" data-translate-key="weeklyDrive">Heti vezetés</label><input class="w-full p-2 border rounded" id="liveWeeklyDriveStart" onblur="formatTimeInput(this, true)" placeholder="óó:pp" type="text" /></div>
                         </div>
                         <div><label class="block text-sm mb-1" data-translate-key="startKm">Kezdő km</label><input class="w-full p-2 border rounded" id="liveStartKm" placeholder="0" type="number" /></div>
-                        <button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-base" onclick="startLiveShift()">🚀 <span data-translate-key="startWorkday">Munkanap indítás</span></button>
+                        <button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-base" onclick="startShift()">🚀 <span data-translate-key="startWorkday">Munkanap indítás</span></button>
                     </div>
                 </div>
                 <div class="hidden space-y-4" id="live-progress-view">
@@ -136,8 +150,8 @@
                             <button class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm" onclick="addLiveCrossing()">+ <span data-translate-key="addBorderCrossing">Határátlépés hozzáadása</span></button>
                         </div>
                     </div>
-                    <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-4 px-4 rounded-lg flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]" onclick="prepareFinalizeShift()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span data-translate-key="finishShift">Műszak Befejezése</span></button>
-                    <button class="w-full text-sm text-red-500 hover:text-red-700 mt-2" data-translate-key="discardWorkday" onclick="discardShift()">Munkanap elvetése</button>
+                    <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-4 px-4 rounded-lg flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]" onclick="finalizeShift()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span data-translate-key="finishShift">Műszak Befejezése</span></button>
+                    <button class="w-full text-sm text-red-500 hover:text-red-700 mt-2" data-translate-key="discardWorkday" onclick="cancelShift()">Munkanap elvetése</button>
                 </div>
             </div>
             <div class="hidden space-y-4" id="content-full-day">
@@ -248,7 +262,7 @@
                         <canvas id="kmChart"></canvas>
                     </div>
                 </div>
-                <div class="text-center text-gray-500 py-8 hidden" data-translate-key="statsNoDataPeriod" id="stats-no-data">Nincs adat a kiválasztott időszakban.</div>
+                <div class="text-center text-gray-500 py-8 hidden" data-translate-key="statsNoData" id="stats-no-data">Nincs adat a kiválasztott időszakban.</div>
             </div>
             <div class="hidden" id="content-report">
                 <h2 class="text-lg font-semibold mb-4" data-translate-key="reportTitle">Havi riport</h2>
@@ -261,7 +275,7 @@
                 <div id="monthlyReportContent"></div>
             </div>
             <div class="hidden" id="content-settings">
-                <h2 class="text-lg font-semibold mb-4" data-translate-key="settingsTitle">Beállítások és Adatkezelés</h2>
+                <h2 id="palletsTitle" class="text-lg font-semibold mb-4" data-translate-key="settingsTitle">Beállítások és Adatkezelés</h2>
                 <div class="space-y-4">
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                         <h3 class="font-semibold mb-2">☁️ <span data-translate-key="settingsSyncTitle">Felhő Szinkronizáció</span></h3>
@@ -379,7 +393,7 @@
                         <h3 class="font-semibold mb-2" data-translate-key="settingsImportTitle">Adatok importálása</h3>
                         <p class="text-sm text-gray-600 dark:text-gray-300 mb-3" data-translate-key="settingsImportDesc">Tölts vissza egy korábban lementett adatfájlt. Figyelem: ez felülírja a jelenlegi adatokat!</p>
                         <input accept=".json" class="w-full text-sm" id="importFile" type="file" />
-                        <button class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg mt-3" onclick="importData()">📤 <span data-translate-key="settingsUploadData">Adatok visszatöltése</span></button>
+                        <button class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg mt-3" onclick="importData()">📤 <span data-translate-key="settingsUploadData">Adatok visszöltése</span></button>
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 flex items-start gap-3">
                         <span class="text-2xl pt-1">ℹ️</span>
@@ -398,7 +412,7 @@
             </div>
             <div class="hidden space-y-4" id="content-pallets">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold" data-translate-key="palletsTitle">Paletta Nyilvántartás</h2>
+                    <h2 id="palletsTitle" class="text-xl font-bold" data-translate-key="palletsTitle">Paletta Nyilvántartás</h2>
                     <div class="text-right" id="palletBalanceDisplay"></div>
                 </div>
                 <div class="p-4 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 rounded-lg space-y-3">

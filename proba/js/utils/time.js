@@ -56,6 +56,7 @@ function calculateNightWorkMinutes(startTime, endTime) {
     let current = new Date(start);
     while (current < end) {
         const hour = current.getHours();
+        // JAVÍTVA: 20:00-05:00 időszak (22:00-06:00 helyett)
         if (hour >= 20 || hour < 5) {
             nightMinutes++;
         }
@@ -95,3 +96,4 @@ function getWeekIdentifier(d) {
     const week1 = new Date(date.getFullYear(), 0, 4);
     return date.getFullYear() + '-' + (1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7));
 }
+

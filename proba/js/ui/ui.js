@@ -6,13 +6,16 @@ let alertCallback = null;
 let promptCallback = null;
 
 // Egyedi felugró ablak (alert) megjelenítése
-function showCustomAlert(message, type, callback) {
+function showCustomAlert(message, type, callback, options = {}) {
     const overlay = document.getElementById('custom-alert-overlay');
     const box = document.getElementById('custom-alert-box');
     const iconContainer = document.getElementById('custom-alert-icon');
     const messageEl = document.getElementById('custom-alert-message');
     const buttonsContainer = document.getElementById('custom-alert-buttons');
     const i18n = translations[currentLang];
+
+    const confirmText = options.confirmText || i18n.save; // Ha nem adunk meg mást, a gomb "Mentés" lesz
+    const confirmClass = options.confirmClass || 'bg-yellow-400 hover:bg-yellow-500'; // Alapértelmezett sárga gomb
 
     messageEl.textContent = message;
     alertCallback = callback || null;
@@ -23,7 +26,7 @@ function showCustomAlert(message, type, callback) {
     if (type === 'warning') {
         iconContainer.classList.add('bg-yellow-100');
         iconContainer.innerHTML = warningIcon;
-        buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button><button onclick="hideCustomAlert(true)" class="py-2 px-6 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.save}</button>`;
+        buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button><button onclick="hideCustomAlert(true)" class="py-2 px-6 text-white rounded-lg font-semibold ${confirmClass}">${confirmText}</button>`;
     } else if (type === 'info') {
         iconContainer.classList.add('bg-yellow-100');
         iconContainer.innerHTML = warningIcon;
@@ -169,6 +172,7 @@ function applyTheme(theme) {
 function setTheme(theme) {
     applyTheme(theme);
     localStorage.setItem('theme', theme);
+    uploadLocalSettings();
 }
 
 function initTheme() {
@@ -180,3 +184,134 @@ function initTheme() {
         }
     });
 } 
+
+// ===== MŰSZAK BEFEJEZÉSE MODAL =====
+function showFinalizationModal() {
+    console.log('showFinalizationModal called');
+    const i18n = translations[currentLang];
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    const existingModal = document.getElementById('finalize-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modalHTML = `
+        <div id="finalize-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 transition-opacity duration-300" onclick="handleModalBackdropClick(event)">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-2xl w-11/12 max-w-md mx-auto transform transition-transform duration-300 scale-95">
+                
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-7 h-7 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">Műszak befejezése</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Add meg a befejezési adatokat</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">⏰ Befejezés ideje</label>
+                        <input type="time" id="finalizeEndTime" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" value="${currentTime}">
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">📍 Befejezés helye</label>
+                        <div class="flex">
+                            <input type="text" id="finalizeEndLocation" class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-l-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Város">
+                            <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-r-lg border border-blue-500" onclick="fetchLocation('finalizeEndLocation')">📍</button>
+                        </div>
+                    </div>
+                    ${localStorage.getItem('toggleDriveTime') === 'true' ? `
+                    <div class="bg-indigo-50 dark:bg-indigo-900/50 rounded-lg p-3">
+                        <label class="block text-sm font-medium text-indigo-700 dark:text-indigo-300 mb-2">🚗 Heti vezetés vége</label>
+                        <input type="text" id="finalizeWeeklyDriveEnd" class="w-full p-3 border border-indigo-300 dark:border-indigo-600 rounded-lg bg-white dark:bg-indigo-800/50 text-gray-900 dark:text-gray-100" placeholder="óó:pp" onblur="formatTimeInput(this, true)">
+                    </div>
+                    ` : ''}
+                    ${localStorage.getItem('toggleKm') === 'true' ? `
+                    <div class="bg-orange-50 dark:bg-orange-900/50 rounded-lg p-3">
+                        <label class="block text-sm font-medium text-orange-700 dark:text-orange-300 mb-2">📏 Záró km</label>
+                        <input type="number" id="finalizeKmEnd" class="w-full p-3 border border-orange-300 dark:border-orange-600 rounded-lg bg-white dark:bg-orange-800/50 text-gray-900 dark:text-gray-100" placeholder="0">
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button type="button" onclick="closeFinalizeModal()" class="flex-1 py-3 px-4 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-500">Mégse</button>
+                    <button type="button" onclick="completeFinalizeShift()" class="flex-1 py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-800">✅ Befejezés</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    setTimeout(() => {
+        const modal = document.getElementById('finalize-modal');
+        const box = modal.querySelector('div > div');
+        if (modal && box) {
+            modal.classList.remove('opacity-0');
+            box.classList.remove('scale-95');
+        }
+    }, 10);
+}
+
+function handleModalBackdropClick(event) {
+    if (event.target.id === 'finalize-modal') {
+        closeFinalizeModal();
+    }
+}
+
+function closeFinalizeModal() {
+    const modal = document.getElementById('finalize-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function completeFinalizeShift() {
+    const i18n = translations[currentLang];
+    const activeShift = window.activeShift;
+
+    if (!activeShift) {
+        showCustomAlert('Nincs aktív műszak a befejezéshez!', 'info');
+        return;
+    }
+
+    const endTime = document.getElementById('finalizeEndTime').value;
+    const endLocation = document.getElementById('finalizeEndLocation').value.trim();
+    const weeklyDriveEnd = document.getElementById('finalizeWeeklyDriveEnd')?.value || '';
+    const kmEnd = parseFloat(document.getElementById('finalizeKmEnd')?.value) || 0;
+
+    if (!endTime) {
+        showCustomAlert('Befejezés ideje kötelező!', 'info');
+        return;
+    }
+    
+    closeFinalizeModal();
+
+    const workMinutes = calculateWorkMinutes(activeShift.startTime, endTime);
+    const nightWorkMinutes = calculateNightWorkMinutes(activeShift.startTime, endTime);
+    const driveMinutes = Math.max(0, parseTimeToMinutes(weeklyDriveEnd) - parseTimeToMinutes(activeShift.weeklyDriveStartStr || '0:0'));
+    const kmDriven = Math.max(0, kmEnd - (activeShift.kmStart || 0));
+
+    const completedRecord = {
+        ...activeShift,
+        endTime,
+        endLocation,
+        workMinutes,
+        nightWorkMinutes,
+        driveMinutes,
+        kmDriven,
+        weeklyDriveEndStr: weeklyDriveEnd,
+        kmEnd
+    };
+    
+    // A workday.js-ben lévő finalizeShift-et hívjuk meg a mentéshez
+    if (typeof finalizeShift === 'function') {
+        finalizeShift(completedRecord);
+    } else {
+        console.error('finalizeShift function not found!');
+        showCustomAlert('Kritikus hiba: a mentési funkció nem érhető el.', 'info');
+    }
+}

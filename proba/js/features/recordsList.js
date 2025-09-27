@@ -1,3 +1,65 @@
+function resetEntryForm() {
+    editingId = null;
+    
+    const elements = [
+        'date', 'startTime', 'endTime', 'startLocation', 'endLocation',
+        'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd', 'compensationTime'
+    ];
+    
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = '';
+        }
+    });
+    
+    const crossingsContainer = document.getElementById('crossingsContainer');
+    if (crossingsContainer) {
+        crossingsContainer.innerHTML = '';
+    }
+    
+    const splitRestToggle = document.getElementById('toggleSplitRest');
+    if (splitRestToggle) {
+        splitRestToggle.checked = false;
+        if (typeof updateEnhancedToggleVisuals === 'function') {
+            updateEnhancedToggleVisuals(splitRestToggle);
+        }
+    }
+}
+
+function addCrossingRow(from = '', to = '', time = '') {
+    const container = document.getElementById('crossingsContainer');
+    if (!container) {
+        console.error('crossingsContainer not found');
+        return;
+    }
+    
+    const rowId = 'crossing-' + Date.now();
+    const currentTime = time || new Date().toTimeString().slice(0, 5);
+    
+    const rowHTML = `
+        <div class="crossing-row flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg" id="${rowId}">
+            <input type="text" class="crossing-from flex-1 p-2 border rounded text-sm uppercase" placeholder="Honnan" value="${from}">
+            <span class="text-gray-400">→</span>
+            <div class="flex flex-1">
+                <input type="text" class="crossing-to flex-1 p-2 border rounded-l text-sm uppercase" placeholder="Hova" value="${to}">
+                <button type="button" class="bg-blue-500 text-white p-2 rounded-r text-xs" onclick="fetchCountryCodeFor('${rowId}')">📍</button>
+            </div>
+            <input type="time" class="crossing-time p-2 border rounded text-sm" value="${currentTime}" onblur="formatTimeInput(this)">
+            <button type="button" class="text-red-500 hover:text-red-700 p-1" onclick="removeCrossingRow('${rowId}')">🗑️</button>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', rowHTML);
+}
+
+function removeCrossingRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) {
+        row.remove();
+    }
+}
+
 // =======================================================
 // ===== BEJEGYZÉSEK LISTÁZÁSA (FEATURE) ================
 // =======================================================
@@ -72,8 +134,8 @@ async function saveEntry() {
         kmStart,
         kmEnd,
         kmDriven,
-        weeklyDriveStart,
-        weeklyDriveEnd,
+        weeklyDriveStartStr: weeklyDriveStart,
+        weeklyDriveEndStr: weeklyDriveEnd,
         driveMinutes,
         workMinutes: workMinutes - compensationMinutes, // Kompenzáció levonása
         compensationMinutes,
@@ -177,12 +239,16 @@ function editRecord(id) {
 
 // Törlés megerősítése, majd törlés
 function confirmDeleteRecord(id) {
-    showCustomAlert(translations[currentLang].alertConfirmDelete, 'warning', async () => {
-        const splitData = getSplitRestData();
-        delete splitData[id];
-        saveSplitRestData(splitData);
-        await deleteWorkRecord(id);
-        renderApp();
-        showTab(currentActiveTab);
-    });
+    const i18n = translations[currentLang];
+    showCustomAlert(
+        i18n.alertConfirmDelete, 
+        'warning', 
+        async () => {
+            await deleteWorkRecord(id);
+            renderApp();
+            showTab(currentActiveTab);
+        },
+        // Itt adjuk meg az új gomb szövegét és színét
+        { confirmText: i18n.delete, confirmClass: 'bg-red-500 hover:bg-red-600' }
+    );
 }
