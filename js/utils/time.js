@@ -1,3 +1,7 @@
+// =======================================================
+// ===== IDŐKEZELÉSI SEGÉDFÜGGVÉNYEK (JAVÍTOTT) =========
+// =======================================================
+
 // Átalakítja az "óó:pp" formátumú stringet perccé
 function parseTimeToMinutes(timeStr) {
     if (!timeStr || !timeStr.includes(':')) return 0;
@@ -10,8 +14,8 @@ function parseTimeToMinutes(timeStr) {
 function formatDuration(minutes) {
     const h = Math.floor(minutes / 60);
     const m = Math.round(minutes % 60);
-    const h_unit = currentLang === 'de' ? 'Std' : 'ó';
-    const m_unit = currentLang === 'de' ? 'Min' : 'p';
+    const h_unit = (typeof currentLang !== 'undefined' && currentLang === 'de') ? 'Std' : 'ó';
+    const m_unit = (typeof currentLang !== 'undefined' && currentLang === 'de') ? 'Min' : 'p';
     return `${h}${h_unit} ${m}${m_unit}`;
 }
 
@@ -27,14 +31,19 @@ function formatTimeInput(inputElement, allowHoursOver24 = false) {
     let value = inputElement.value.replace(/[^0-9]/g, '');
     if (value.length < 3) return;
     if (value.length === 3 && !allowHoursOver24) value = '0' + value;
+    
     const hours = parseInt(value.substring(0, value.length - 2), 10);
     const minutes = parseInt(value.substring(value.length - 2), 10);
+
     if (minutes >= 0 && minutes <= 59 && hours >= 0 && (allowHoursOver24 || hours <= 23)) {
         inputElement.value = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
     } else {
         inputElement.value = '';
     }
-    updateDisplays();
+    // Ha létezik az updateDisplays funkció, hívjuk meg
+    if (typeof updateDisplays === 'function') {
+        updateDisplays();
+    }
 }
 
 // Kiszámolja a munkaidőt két időpont között, figyelembe véve a napváltást
@@ -46,19 +55,24 @@ function calculateWorkMinutes(start, end) {
     return Math.floor((e - s) / 60000);
 }
 
-// Kiszámolja az éjszakai (20:00-05:00) munkavégzés perceit
+// Kiszámolja az éjszakai (20:00-05:00) munkavégzés perceit (JAVÍTOTT FUNKCIÓ)
 function calculateNightWorkMinutes(startTime, endTime) {
     if (!startTime || !endTime) return 0;
     const start = new Date(`1970-01-01T${startTime}`);
     let end = new Date(`1970-01-01T${endTime}`);
-    if (end <= start) end.setDate(end.getDate() + 1);
+    if (end <= start) end.setDate(end.getDate() + 1); // Kezeli a másnapra átnyúló műszakot
+
     let nightMinutes = 0;
     let current = new Date(start);
+
     while (current < end) {
         const hour = current.getHours();
+        
+        // JAVÍTOTT LOGIKA: 20:00-tól 05:00-ig számol
         if (hour >= 20 || hour < 5) {
             nightMinutes++;
         }
+        
         current.setMinutes(current.getMinutes() + 1);
     }
     return nightMinutes;
@@ -82,7 +96,7 @@ function getWeekRange(date, offset = 0) {
 // Formáz egy dátumot olvashatóbb, hosszabb formátumra
 function formatDateTime(date) {
     if (!date) return '';
-    const locale = currentLang === 'de' ? 'de-DE' : 'hu-HU';
+    const locale = (typeof currentLang !== 'undefined' && currentLang === 'de') ? 'de-DE' : 'hu-HU';
     const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
     return date.toLocaleString(locale, options);
 }
