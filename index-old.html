@@ -190,8 +190,15 @@
                     </div>
                     <input class="sr-only" id="toggleSplitRest" type="checkbox" />
                 </div>
-                <button class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] mt-4" onclick="saveEntry()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg> <span data-translate-key="saveEntry">Bejegyzés Mentése</span></button>
-            </div>
+                
+                <div class="mt-4 space-y-2">
+                    <button type="button" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" onclick="cancelEdit()" id="cancelEditBtn" style="display: none;">❌ <span data-translate-key="cancelEdit">Mégse / Szerkesztés megszakítása</span></button>
+                    <button class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]" onclick="saveEntry()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg> 
+                        <span data-translate-key="saveEntry">Bejegyzés Mentése</span>
+                    </button>
+                </div>
+                </div>
             <div class="hidden" id="content-list">
                 <h2 class="text-lg font-semibold mb-4" data-translate-key="listTitle">Bejegyzések</h2>
                 <div id="recordsContent"></div>

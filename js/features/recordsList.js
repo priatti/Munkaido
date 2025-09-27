@@ -2,19 +2,48 @@
 // ===== BEJEGYZÉSEK LISTÁZÁSA ÉS KEZELÉSE (JAVÍTOTT) ====
 // =======================================================
 
-// A szerkesztő űrlap alaphelyzetbe állítása
+// A szerkesztő űrlap alaphelyzetbe állítása (JAVÍTOTT - ténylegesen törli az értékeket)
 function resetEntryForm() {
-    editingId = null;
-    const fields = ['date', 'startTime', 'endTime', 'startLocation', 'endLocation', 'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd', 'compensationTime'];
+    console.log('Resetting entry form...');
+    // editingId = null; // EZ A SOR LETT TÖRÖLVE A HIBA JAVÍTÁSÁHOZ
+    
+    // Összes mező explicit törlése
+    const fields = [
+        'date', 'startTime', 'endTime', 'startLocation', 'endLocation', 
+        'weeklyDriveStart', 'weeklyDriveEnd', 'kmStart', 'kmEnd', 'compensationTime'
+    ];
+    
     fields.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.value = '';
+        if (el) {
+            el.value = '';
+            console.log('Cleared field:', id);
+        }
     });
+    
+    // Határátlépések törlése
     const crossingsContainer = document.getElementById('crossingsContainer');
-    if (crossingsContainer) crossingsContainer.innerHTML = '';
+    if (crossingsContainer) {
+        crossingsContainer.innerHTML = '';
+        console.log('Cleared crossings container');
+    }
 
+    // Osztott pihenő checkbox törlése
     const splitRestToggle = document.getElementById('toggleSplitRest');
-    if (splitRestToggle) splitRestToggle.checked = false;
+    if (splitRestToggle) {
+        splitRestToggle.checked = false;
+        if (typeof updateEnhancedToggleVisuals === 'function') {
+            updateEnhancedToggleVisuals(splitRestToggle);
+        }
+        console.log('Cleared split rest toggle');
+    }
+    
+    // Display mezők frissítése
+    if (typeof updateDisplays === 'function') {
+        setTimeout(updateDisplays, 50);
+    }
+    
+    console.log('Entry form reset completed');
 }
 
 // Új határátlépés sor hozzáadása az űrlaphoz
@@ -44,6 +73,45 @@ function addCrossingRow(from = '', to = '', time = '') {
 function removeCrossingRow(rowId) {
     const row = document.getElementById(rowId);
     if (row) row.remove();
+}
+
+// Szerkesztés megszakítása
+function cancelEdit() {
+    const i18n = translations[currentLang];
+    
+    if (editingId) {
+        showCustomAlert(
+            i18n.confirmCancelEdit || 'Biztosan megszakítod a szerkesztést? A nem mentett változások elvesznek!',
+            'warning',
+            () => {
+                console.log('Edit cancelled for record:', editingId);
+                editingId = null;
+                resetEntryForm();
+                hideCancelButton();
+                showTab('list');
+            }
+        );
+    } else {
+        // Ha nincs szerkesztés, csak egy sima reset
+        resetEntryForm();
+        hideCancelButton();
+        showTab('list');
+    }
+}
+
+// Mégse gomb megjelenítése/elrejtése
+function showCancelButton() {
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) {
+        cancelBtn.style.display = 'block';
+    }
+}
+
+function hideCancelButton() {
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) {
+        cancelBtn.style.display = 'none';
+    }
 }
 
 // Új bejegyzés mentése vagy meglévő módosítása
@@ -109,6 +177,7 @@ async function saveEntry() {
     showCustomAlert(i18n.alertSaveSuccess, 'success');
     
     editingId = null;
+    hideCancelButton(); // MÉGSE GOMB ELREJTÉSE
     renderApp();
     showTab('list');
 }
@@ -162,47 +231,100 @@ function renderRecords() {
     }).join('');
 }
 
-// Bejegyzés szerkesztése (MINDEN JAVÍTÁST TARTALMAZ)
+// Bejegyzés szerkesztése (JAVÍTOTT VERZIÓ - minden adat helyes betöltése)
 function editRecord(id) {
     const record = records.find(r => r.id === String(id));
-    if (!record) return;
+    if (!record) {
+        console.error('Record not found:', id);
+        return;
+    }
 
+    console.log('Editing record:', record);
     editingId = String(id);
+    
+    // MÉGSE GOMB MEGJELENÍTÉSE
+    showCancelButton();
+    
     showTab('full-day');
     
-    // Alap adatok betöltése
-    document.getElementById('date').value = record.date || '';
-    document.getElementById('startTime').value = record.startTime || '';
-    document.getElementById('endTime').value = record.endTime || '';
-    document.getElementById('startLocation').value = record.startLocation || '';
-    document.getElementById('endLocation').value = record.endLocation || '';
-    
-    // JAVÍTÁS: Heti vezetési idők betöltése
-    document.getElementById('weeklyDriveStart').value = record.weeklyDriveStartStr || '';
-    document.getElementById('weeklyDriveEnd').value = record.weeklyDriveEndStr || '';
-    
-    document.getElementById('kmStart').value = record.kmStart || '';
-    document.getElementById('kmEnd').value = record.kmEnd || '';
-    document.getElementById('compensationTime').value = record.compensationMinutes ? formatAsHoursAndMinutes(record.compensationMinutes) : '';
-    
-    const splitRestToggle = document.getElementById('toggleSplitRest');
-    if (splitRestToggle) {
-        splitRestToggle.checked = record.isSplitRest || false;
-    }
-
-    // JAVÍTÁS: Határátlépések betöltése
-    const crossingsContainer = document.getElementById('crossingsContainer');
-    if (crossingsContainer) {
-        crossingsContainer.innerHTML = '';
-        if (record.crossings && Array.isArray(record.crossings)) {
-            record.crossings.forEach(crossing => {
-                addCrossingRow(crossing.from, crossing.to, crossing.time);
-            });
+    // Várunk egy kicsit, hogy a tab váltás megtörténjen
+    setTimeout(() => {
+        // Reset előtt
+        resetEntryForm();
+        
+        // Alap adatok betöltése
+        const dateEl = document.getElementById('date');
+        const startTimeEl = document.getElementById('startTime');
+        const endTimeEl = document.getElementById('endTime');
+        const startLocationEl = document.getElementById('startLocation');
+        const endLocationEl = document.getElementById('endLocation');
+        
+        if (dateEl) dateEl.value = record.date || '';
+        if (startTimeEl) startTimeEl.value = record.startTime || '';
+        if (endTimeEl) endTimeEl.value = record.endTime || '';
+        if (startLocationEl) startLocationEl.value = record.startLocation || '';
+        if (endLocationEl) endLocationEl.value = record.endLocation || '';
+        
+        // Heti vezetési idők betöltése
+        const weeklyStartElement = document.getElementById('weeklyDriveStart');
+        const weeklyEndElement = document.getElementById('weeklyDriveEnd');
+        
+        if (weeklyStartElement && record.weeklyDriveStartStr) {
+            weeklyStartElement.value = record.weeklyDriveStartStr;
+            console.log('Weekly drive start loaded for record', id, ':', record.weeklyDriveStartStr);
         }
-    }
+        if (weeklyEndElement && record.weeklyDriveEndStr) {
+            weeklyEndElement.value = record.weeklyDriveEndStr;
+            console.log('Weekly drive end loaded for record', id, ':', record.weeklyDriveEndStr);
+        }
+        
+        // Kilométer adatok betöltése
+        const kmStartEl = document.getElementById('kmStart');
+        const kmEndEl = document.getElementById('kmEnd');
+        if (kmStartEl) kmStartEl.value = record.kmStart || '';
+        if (kmEndEl) kmEndEl.value = record.kmEnd || '';
+        
+        // Kompenzáció betöltése
+        const compensationElement = document.getElementById('compensationTime');
+        if (compensationElement) {
+            if (record.compensationMinutes && record.compensationMinutes > 0) {
+                const hours = Math.floor(record.compensationMinutes / 60);
+                const minutes = record.compensationMinutes % 60;
+                compensationElement.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            } else {
+                compensationElement.value = '';
+            }
+        }
+        
+        // Osztott pihenő toggle beállítása
+        const splitRestToggle = document.getElementById('toggleSplitRest');
+        if (splitRestToggle) {
+            splitRestToggle.checked = record.isSplitRest || false;
+            if (typeof updateEnhancedToggleVisuals === 'function') {
+                updateEnhancedToggleVisuals(splitRestToggle);
+            }
+        }
 
-    // Számított mezők frissítése
-    updateDisplays();
+        // Határátlépések betöltése
+        const crossingsContainer = document.getElementById('crossingsContainer');
+        if (crossingsContainer) {
+            crossingsContainer.innerHTML = '';
+            if (record.crossings && Array.isArray(record.crossings)) {
+                record.crossings.forEach(crossing => {
+                    if (typeof addCrossingRow === 'function') {
+                        addCrossingRow(crossing.from, crossing.to, crossing.time);
+                    }
+                });
+            }
+        }
+
+        // Számított mezők frissítése
+        if (typeof updateDisplays === 'function') {
+            updateDisplays();
+        }
+        
+        console.log('Edit form populated for record:', id);
+    }, 100);
 }
 
 // Törlés megerősítése

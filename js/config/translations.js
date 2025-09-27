@@ -9,6 +9,9 @@ const translations = {
         cityPlaceholder: "Város",
         fromPlaceholder: "Honnan",
         toPlaceholder: "Hova",
+        // ÚJ: Szerkesztés megszakítása
+        cancelEdit: "Mégse / Szerkesztés megszakítása",
+        confirmCancelEdit: "Biztosan megszakítod a szerkesztést? A nem mentett változások elvesznek!",
         // Fülek és menü
         tabOverview: "Áttekintés",
         tabFullDay: "Teljes nap",
@@ -319,7 +322,7 @@ const translations = {
         helpDataSyncDesc: "Ha bejelentkezel a Google fiókoddal, az alkalmazás automatikusan a felhőbe menti az adataidat. Ez a legbiztonságosabb módja az adatvesztés elkerülésének, és lehetővé teszi, hogy több eszközön is elérd a nyilvántartásodat."
     },
     de: {
-        // Allgemein
+        // Általános
         appTitle: "Arbeitszeitnachweis Pro",
         delete: "Löschen",
         ok: "Okay",
@@ -328,6 +331,9 @@ const translations = {
         cityPlaceholder: "Stadt",
         fromPlaceholder: "Von",
         toPlaceholder: "Nach",
+        // ÚJ: Szerkesztés megszakítása
+        cancelEdit: "Abbrechen / Bearbeitung abbrechen",
+        confirmCancelEdit: "Möchten Sie die Bearbeitung wirklich abbrechen? Nicht gespeicherte Änderungen gehen verloren!",
         // Tabs und Menü
         tabOverview: "Übersicht",
         tabFullDay: "Ganzer Tag",
@@ -597,7 +603,7 @@ const translations = {
         shareErrorCannotShare: 'Diese Datei kann nicht geteilt werden.',
         // Hilfe
         helpTitle: "Hilfe und FAQ",
-        // ... (restliche Hilfe-Texte)
+        // ... (restliche Hilfe-Texte - ezeket rövidség miatt kihagyom, de a teljes fájlban szerepelniük kell)
     }
 };
 

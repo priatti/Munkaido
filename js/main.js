@@ -1,5 +1,5 @@
 // =======================================================
-// ===== ALKALMAZÁS FŐ VEZÉRLŐJE (main.js) ================
+// ===== ALKALMAZÁS FŐ VEZÉRLŐJE (main.js) - JAVÍTOTT =====
 // =======================================================
 
 // ====== GLOBÁLIS ÁLLAPOT (STATE) ======
@@ -143,7 +143,7 @@ function discardShift() {
  * Alaphelyzetbe állítja a "Teljes nap" fülön található űrlapot egy új bejegyzéshez.
  */
 function resetEntryForm() {
-    editingId = null;
+    // editingId = null; // EZ A SOR LETT TÖRÖLVE A HIBA JAVÍTÁSÁHOZ
     
     // Az űrlap mezőinek kiürítése vagy alapértelmezett értékre állítása
     document.getElementById('date').value = new Date().toISOString().split('T')[0]; // Dátumot beállítjuk mára
@@ -184,14 +184,31 @@ function renderApp() {
     updateAllTexts();
 }
 
-// ====== NÉZETKEZELÉS (FÜLEK) ======
+// ====== NÉZETKEZELÉS (FÜLEK) - JAVÍTOTT VERZIÓ ======
 function showTab(tabName) {
     currentActiveTab = tabName;
 
-    if (tabName === 'full-day' && !editingId) {
-        resetEntryForm();
-        loadLastValues();
+    if (tabName === 'full-day') {
+        if (!editingId) {
+            console.log('showTab: New entry mode - resetting form');
+            resetEntryForm();
+            hideCancelButton();
+            if (typeof loadLastValues === 'function') {
+                loadLastValues();
+            }
+        } else {
+            console.log('showTab: Edit mode active. EditingId:', editingId);
+            showCancelButton();
+        }
+    } else {
+        // Ha elhagyjuk a full-day tabot, automatikus reset
+        if (tabName !== 'full-day' && editingId) {
+            console.log('Leaving full-day tab while editing - auto reset');
+            editingId = null;
+            hideCancelButton();
+        }
     }
+
     if (tabName === 'pallets') {
         renderPalletRecords();
     }
@@ -284,8 +301,8 @@ function loadLastValues(isLive = false) {
         if (latestRecord.kmEnd) {
             document.getElementById('kmStart').value = latestRecord.kmEnd;
         }
-        if (latestRecord.weeklyDriveEnd) {
-            document.getElementById('weeklyDriveStart').value = latestRecord.weeklyDriveEnd;
+        if (latestRecord.weeklyDriveEndStr) {
+            document.getElementById('weeklyDriveStart').value = latestRecord.weeklyDriveEndStr;
         }
         // A kezdési időt itt szándékosan nem töltjük ki, mert azt a felhasználónak kell megadnia.
     }
