@@ -36,7 +36,6 @@
                 <button onclick="toggleSettingsMenu()" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </button>
-                <!-- JAVÍTOTT: A dropdown-t balra pozicionáljuk és egyszerűsítjük -->
                 <div id="settings-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-20 border dark:border-gray-700 max-w-[calc(100vw-2rem)]" style="transform: translateX(-1rem);">
                     <div class="p-2 space-y-1">
                          <button class="w-full text-left flex items-center gap-3 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" onclick="showTab('settings')">
@@ -72,14 +71,14 @@
                     <div class="p-4 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 rounded-lg space-y-3">
                         <h3 class="font-semibold text-lg text-green-800 dark:text-green-200" data-translate-key="liveNewDayTitle">Új munkanap indítása</h3>
                         <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-sm mb-1" data-translate-key="date">Dátum</label><input class="w-full p-2 border rounded" id="liveStartDate" type="date" /></div>
-                            <div><label class="block text-sm mb-1" data-translate-key="time">Idő</label><input class="w-full p-2 border rounded" id="liveStartTime" onblur="formatTimeInput(this)" type="time" /></div>
+                            <div><label class="block text-sm mb-1" for="liveStartDate" data-translate-key="date">Dátum</label><input class="w-full p-2 border rounded" id="liveStartDate" type="date" /></div>
+                            <div><label class="block text-sm mb-1" for="liveStartTime" data-translate-key="time">Idő</label><input class="w-full p-2 border rounded" id="liveStartTime" onblur="formatTimeInput(this)" type="time" /></div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="relative z-10"><label class="block text-sm mb-1" data-translate-key="location">Hely</label><input class="w-full p-2 border rounded" data-translate-key="cityPlaceholder" id="liveStartLocation" placeholder="Város" type="text" /></div>
-                            <div><label class="block text-sm mb-1" data-translate-key="weeklyDrive">Heti vezetés</label><input class="w-full p-2 border rounded" id="liveWeeklyDriveStart" onblur="formatTimeInput(this, true)" placeholder="óó:pp" type="text" /></div>
+                            <div class="relative z-10"><label class="block text-sm mb-1" for="liveStartLocation" data-translate-key="location">Hely</label><input class="w-full p-2 border rounded" data-translate-key="cityPlaceholder" id="liveStartLocation" placeholder="Város" type="text" /></div>
+                            <div><label class="block text-sm mb-1" for="liveWeeklyDriveStart" data-translate-key="weeklyDrive">Heti vezetés</label><input class="w-full p-2 border rounded" id="liveWeeklyDriveStart" onblur="formatTimeInput(this, true)" placeholder="óó:pp" type="text" /></div>
                         </div>
-                        <div><label class="block text-sm mb-1" data-translate-key="startKm">Kezdő km</label><input class="w-full p-2 border rounded" id="liveStartKm" placeholder="0" type="number" /></div>
+                        <div><label class="block text-sm mb-1" for="liveStartKm" data-translate-key="startKm">Kezdő km</label><input class="w-full p-2 border rounded" id="liveStartKm" placeholder="0" type="number" /></div>
                         <button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-base" onclick="startShift()">🚀 <span data-translate-key="startWorkday">Munkanap indítás</span></button>
                     </div>
                 </div>
@@ -112,20 +111,20 @@
             </div>
             <div class="hidden space-y-4" id="content-full-day">
                 <h2 class="text-xl font-bold" data-translate-key="fullDayTitle">Teljes munkanap rögzítése</h2>
-                <div><label class="block text-sm font-medium mb-1" data-translate-key="dateLabelFull">Dátum (a munka befejezésének napja)</label><input class="w-full p-2 border rounded-lg" id="date" type="date" /></div>
+                <div><label class="block text-sm font-medium mb-1" for="date" data-translate-key="dateLabelFull">Dátum (a munka befejezésének napja)</label><input class="w-full p-2 border rounded-lg" id="date" type="date" /></div>
                 <div class="bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 rounded-lg p-3 space-y-3">
                     <h3 class="font-semibold text-green-800 dark:text-green-200" data-translate-key="workTimeAndLocation">🕐 Munkaidő és Helyszín</h3>
                     <div class="grid grid-cols-2 gap-2">
-                        <div><label class="block text-xs mb-1" data-translate-key="startTime">Kezdés ideje</label><input class="w-full p-2 border rounded text-sm" id="startTime" onblur="formatTimeInput(this)" type="time" /></div>
-                        <div><label class="block text-xs mb-1" data-translate-key="endTime">Befejezés ideje</label><input class="w-full p-2 border rounded text-sm" id="endTime" onblur="formatTimeInput(this)" type="time" /></div>
+                        <div><label class="block text-xs mb-1" for="startTime" data-translate-key="startTime">Kezdés ideje</label><input class="w-full p-2 border rounded text-sm" id="startTime" onblur="formatTimeInput(this)" type="time" /></div>
+                        <div><label class="block text-xs mb-1" for="endTime" data-translate-key="endTime">Befejezés ideje</label><input class="w-full p-2 border rounded text-sm" id="endTime" onblur="formatTimeInput(this)" type="time" /></div>
                     </div>
                     <div id="compensation-section-de">
-                        <label class="block text-xs mb-1 text-yellow-700 dark:text-yellow-300" data-translate-key="compensationLabel">Kompenzáció / Szünet (levonódik)</label>
+                        <label class="block text-xs mb-1 text-yellow-700 dark:text-yellow-300" for="compensationTime" data-translate-key="compensationLabel">Kompenzáció / Szünet (levonódik)</label>
                         <input class="w-full p-2 border border-yellow-400 rounded text-sm" id="compensationTime" onblur="formatTimeInput(this, true)" placeholder="óó:pp" type="text" />
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="relative z-10"><label class="block text-xs mb-1" data-translate-key="startLocation">Kezdés helye</label><input class="w-full p-2 border rounded text-sm" data-translate-key="cityPlaceholder" id="startLocation" placeholder="Város" type="text" /></div>
-                        <div class="relative z-10"><label class="block text-xs mb-1" data-translate-key="endLocation">Befejezés helye</label>
+                        <div class="relative z-10"><label class="block text-xs mb-1" for="startLocation" data-translate-key="startLocation">Kezdés helye</label><input class="w-full p-2 border rounded text-sm" data-translate-key="cityPlaceholder" id="startLocation" placeholder="Város" type="text" /></div>
+                        <div class="relative z-10"><label class="block text-xs mb-1" for="endLocation" data-translate-key="endLocation">Befejezés helye</label>
                             <div class="flex"><input class="w-full p-2 border rounded-l text-sm" data-translate-key="cityPlaceholder" id="endLocation" placeholder="Város" type="text" /><button class="bg-blue-500 text-white p-2 rounded-r text-xs" data-translate-key="getLocationGPS" onclick="fetchLocation('endLocation')" title="Helyszín lekérése GPS alapján">📍</button></div>
                         </div>
                     </div>
@@ -140,16 +139,16 @@
                 <div class="bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 rounded-lg p-3" id="drivetime-section">
                     <h3 class="font-semibold text-blue-800 dark:text-blue-200 mb-2" data-translate-key="weeklyDriveTimeHours">🚗 Heti vezetési idő (óra)</h3>
                     <div class="grid grid-cols-2 gap-2">
-                        <div><label class="block text-xs mb-1" data-translate-key="atDayStart">Nap elején (óó:pp)</label><input class="w-full p-2 border rounded text-sm" id="weeklyDriveStart" onblur="formatTimeInput(this, true)" placeholder="28:24" type="text" /></div>
-                        <div><label class="block text-xs mb-1" data-translate-key="atDayEnd">Nap végén (óó:pp)</label><input class="w-full p-2 border rounded text-sm" id="weeklyDriveEnd" onblur="formatTimeInput(this, true)" placeholder="32:44" type="text" /></div>
+                        <div><label class="block text-xs mb-1" for="weeklyDriveStart" data-translate-key="atDayStart">Nap elején (óó:pp)</label><input class="w-full p-2 border rounded text-sm" id="weeklyDriveStart" onblur="formatTimeInput(this, true)" placeholder="28:24" type="text" /></div>
+                        <div><label class="block text-xs mb-1" for="weeklyDriveEnd" data-translate-key="atDayEnd">Nap végén (óó:pp)</label><input class="w-full p-2 border rounded text-sm" id="weeklyDriveEnd" onblur="formatTimeInput(this, true)" placeholder="32:44" type="text" /></div>
                     </div>
                     <div class="mt-2 text-sm text-blue-700 dark:text-blue-300" id="driveTimeDisplay"></div>
                 </div>
                 <div class="bg-orange-50 dark:bg-orange-900/50 border border-orange-200 dark:border-orange-800 rounded-lg p-3" id="km-section">
                     <h3 class="font-semibold text-orange-800 dark:text-orange-200 mb-2" data-translate-key="kmReading">📏 Kilométer állás</h3>
                     <div class="grid grid-cols-2 gap-2">
-                        <div><label class="block text-xs mb-1" data-translate-key="startKm">Kezdő km</label><input class="w-full p-2 border rounded text-sm" id="kmStart" placeholder="0" type="number" /></div>
-                        <div><label class="block text-xs mb-1" data-translate-key="endKm">Záró km</label><input class="w-full p-2 border rounded text-sm" id="kmEnd" placeholder="0" type="number" /></div>
+                        <div><label class="block text-xs mb-1" for="kmStart" data-translate-key="startKm">Kezdő km</label><input class="w-full p-2 border rounded text-sm" id="kmStart" placeholder="0" type="number" /></div>
+                        <div><label class="block text-xs mb-1" for="kmEnd" data-translate-key="endKm">Záró km</label><input class="w-full p-2 border rounded text-sm" id="kmEnd" placeholder="0" type="number" /></div>
                     </div>
                     <div class="mt-2 text-sm text-orange-700 dark:text-orange-300" id="kmDisplay"></div>
                 </div>
@@ -222,7 +221,7 @@
             </div>
             <div class="hidden" id="content-report">
                 <h2 class="text-lg font-semibold mb-4" data-translate-key="reportTitle">Havi riport</h2>
-                <div class="mb-4"><label class="block text-sm font-medium mb-1" data-translate-key="reportMonthSelect">Hónap kiválasztása</label><input class="w-full p-2 border rounded-lg" id="monthSelector" type="month" /></div>
+                <div class="mb-4"><label class="block text-sm font-medium mb-1" for="monthSelector" data-translate-key="reportMonthSelect">Hónap kiválasztása</label><input class="w-full p-2 border rounded-lg" id="monthSelector" type="month" /></div>
                 <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg mb-4" onclick="generateMonthlyReport()">📋 <span data-translate-key="reportGenerate">Riport generálása</span></button>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                     <button class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg hidden" id="pdfExportBtn" onclick="exportToPDF()">📄 <span data-translate-key="reportDownloadPDF">PDF letöltés</span></button>
@@ -231,7 +230,7 @@
                 <div id="monthlyReportContent"></div>
             </div>
             <div class="hidden" id="content-settings">
-                <h2 id="palletsTitle" class="text-lg font-semibold mb-4" data-translate-key="settingsTitle">Beállítások és Adatkezelés</h2>
+                <h2 class="text-lg font-semibold mb-4" data-translate-key="settingsTitle">Beállítások és Adatkezelés</h2>
                 <div class="space-y-4">
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                         <h3 class="font-semibold mb-2">☁️ <span data-translate-key="settingsSyncTitle">Felhő Szinkronizáció</span></h3>
@@ -256,7 +255,7 @@
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                         <h3 class="font-semibold mb-2" data-translate-key="settingsPersonalData">Személyes adatok</h3>
-                        <label class="block text-sm font-medium mb-1" data-translate-key="settingsNameForReports">Név (riportokhoz)</label>
+                        <label class="block text-sm font-medium mb-1" for="userNameInput" data-translate-key="settingsNameForReports">Név (riportokhoz)</label>
                         <input class="w-full p-2 border rounded-lg mb-3" data-translate-key="settingsNamePlaceholder" id="userNameInput" placeholder="Vezetéknév Keresztnév" type="text" />
                         <button class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg" data-translate-key="settingsSaveData" onclick="saveSettings()">Adatok mentése</button>
                     </div>
@@ -269,7 +268,7 @@
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                         <h3 class="font-semibold mb-2" data-translate-key="settingsAppearance">Megjelenés</h3>
-                        <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1" data-translate-key="settingsThemeSelect" for="themeSelector">Válassz témát</label>
+                        <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1" for="themeSelector" data-translate-key="settingsThemeSelect">Válassz témát</label>
                         <select class="w-full p-2 border rounded-lg bg-white" id="themeSelector" onchange="setTheme(this.value)">
                             <option data-translate-key="settingsThemeAuto" value="auto">Automatikus</option>
                             <option data-translate-key="settingsThemeLight" value="light">Nappali</option>
@@ -322,7 +321,7 @@
                             <input class="sr-only" id="toggleMultiPallet" type="checkbox" />
                         </div>
                         <div class="hidden border-t border-gray-200 dark:border-gray-600 pt-3" id="multi-pallet-settings-container">
-                            <label class="block text-sm font-medium mb-1" data-translate-key="newPalletTypeLabel">Egyedi raklaptípusok</label>
+                            <label class="block text-sm font-medium mb-1" for="newPalletTypeName" data-translate-key="newPalletTypeLabel">Egyedi raklaptípusok</label>
                             <div class="space-y-2 mb-3" id="pallet-types-list"></div>
                             <div class="flex gap-2">
                                 <input class="w-full p-2 border rounded-lg text-sm uppercase" id="newPalletTypeName" placeholder="Pl. DD, CHEP..." type="text" />
@@ -334,7 +333,7 @@
                         <h3 class="font-semibold mb-2" data-translate-key="settingsExportTitle">Adatok exportálása (Backup)</h3>
                         <p class="text-sm text-gray-600 dark:text-gray-300 mb-2" data-translate-key="settingsExportDesc">Mentsd le az összes bejegyzésedet egy JSON fájlba.</p>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1" data-translate-key="settingsAutoExportFreq" for="autoExportSelector">Automatikus mentés gyakorisága:</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1" for="autoExportSelector" data-translate-key="settingsAutoExportFreq">Automatikus mentés gyakorisága:</label>
                             <select class="w-full p-2 border rounded-lg bg-white" id="autoExportSelector">
                                 <option data-translate-key="settingsFreqNever" value="never">Soha</option>
                                 <option data-translate-key="settingsFreqDaily" value="daily">Naponta</option>
@@ -375,22 +374,22 @@
                     <h3 class="font-semibold text-lg text-blue-800 dark:text-blue-200" data-translate-key="palletsNewTransaction">Új tranzakció</h3>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm mb-1" data-translate-key="date">Dátum</label>
+                            <label class="block text-sm mb-1" for="palletDate" data-translate-key="date">Dátum</label>
                             <input class="w-full p-2 border rounded-md" id="palletDate" type="date" />
                         </div>
                         <div class="relative">
-                            <label class="block text-sm mb-1" data-translate-key="location">Helyszín</label>
+                            <label class="block text-sm mb-1" for="palletLocation" data-translate-key="location">Helyszín</label>
                             <input class="w-full p-2 border rounded-md" data-translate-key="palletsLocationPlaceholder" id="palletLocation" placeholder="Város, cég..." type="text" />
                         </div>
                     </div>
                     <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
                         <div>
-                            <label class="block text-sm mb-1" data-translate-key="palletsGivenLabel">Leadott 🚛➡️</label>
+                            <label class="block text-sm mb-1" for="palletGiven" data-translate-key="palletsGivenLabel">Leadott 🚛➡️</label>
                             <input class="w-full p-2 border rounded-md" id="palletGiven" placeholder="0" type="number" />
                         </div>
                         <button class="p-2 h-10 border rounded-md" data-translate-key="pallets1to1Button" id="pallet-1to1-btn" title="Mennyiségek szinkronizálása">1:1</button>
                         <div>
-                            <label class="block text-sm mb-1" data-translate-key="palletsTakenLabel">Felvett 🚛⬅️</label>
+                            <label class="block text-sm mb-1" for="palletTaken" data-translate-key="palletsTakenLabel">Felvett 🚛⬅️</label>
                             <input class="w-full p-2 border rounded-md" id="palletTaken" placeholder="0" type="number" />
                         </div>
                     </div>
@@ -399,7 +398,7 @@
                         <div class="flex flex-wrap gap-2" id="pallet-type-selector"></div>
                     </div>
                     <div id="palletLicensePlateContainer">
-                        <label class="block text-sm mb-1" data-translate-key="palletsLicensePlate">Rendszám (opcionális)</label>
+                        <label class="block text-sm mb-1" for="palletLicensePlate" data-translate-key="palletsLicensePlate">Rendszám (opcionális)</label>
                         <input class="w-full p-2 border rounded-md uppercase" data-translate-key="palletsLicensePlatePlaceholder" id="palletLicensePlate" placeholder="Pl. ABC-123" type="text" />
                     </div>
                     <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg mt-3" onclick="savePalletEntry()">+ <span data-translate-key="palletsSaveTransaction">Tranzakció mentése</span></button>
@@ -440,7 +439,6 @@
                 </button>
             </div>
         </div>
-        <!-- JAVÍTOTT: Eltávolítottuk a Beállítások és Súgó menüpontokat -->
         <div class="more-menu" id="moreMenu">
             <div class="more-menu-header">
                 <h3 data-translate-key="menuMore">Továbbiak</h3>
@@ -548,7 +546,8 @@
     <script src="js/utils/geolocation.js"></script>
     <script src="js/ui/ui.js"></script>
     <script src="js/ui/appInfoFooter.js"></script>
-    <script src="js/ui/bottomNavigation.js"></script> <script src="js/services/database.js"></script>
+    <script src="js/ui/bottomNavigation.js"></script> 
+    <script src="js/services/database.js"></script>
     <script src="js/services/pwa.js"></script>
     <script src="js/features/workday.js"></script>
     <script src="js/features/recordsList.js"></script>
@@ -563,4 +562,3 @@
     <script src="js/main.js"></script>
 </body>
 </html>
-    
