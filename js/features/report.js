@@ -1,9 +1,9 @@
 // =======================================================
-// ===== PONTOS PDF RIPORT A MINTA SZERINT (JAVÍTOTT) ====
+// ===== PONTOS PDF RIPORT - GURIGO LÁBLÉCCEL =========
 // =======================================================
 
 (function () {
-  'use-strict';
+  'use strict';
 
   let currentMonthRecords = []; // A generált riport adatait itt tároljuk
   let generatedPdfBlob = null; // Ide mentjük a generált PDF-et a megosztáshoz
@@ -158,13 +158,35 @@
       const monthIndex = parseInt(month, 10) - 1;
       const monthName = new Date(year, monthIndex, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
       
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.text('ARBEITSZEITNACHWEIS', 105, 15, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(12);
-      doc.text(userName, 105, 22, { align: 'center' });
-      doc.text(monthName, 105, 29, { align: 'center' });
+      // Fejléc hozzáadása függvény
+      function addHeader(doc) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('ARBEITSZEITNACHWEIS', 105, 15, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+        doc.text(userName, 105, 22, { align: 'center' });
+        doc.text(monthName, 105, 29, { align: 'center' });
+      }
+
+      // ÚJ: GuriGO lábléc hozzáadása függvény
+      function addFooter(doc) {
+        const pageHeight = doc.internal.pageSize.height;
+        const pageWidth = doc.internal.pageSize.width;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120); // Szürke szín
+        
+        // Középre igazított GuriGO lábléc
+        const footerText = 'Erstellt mit GuriGO - gurigo.eu';
+        doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        
+        // Vissza normál színre
+        doc.setTextColor(0, 0, 0);
+      }
+
+      addHeader(doc);
 
       const headers = ['Datum', 'Beginn', 'Ort', 'Ende', 'Ort', 'Grenzübergänge', 'Arbeit', 'Nacht'];
       const autoTableBody = [];
@@ -196,6 +218,7 @@
           }
       }
 
+      // Automatikus oldaltörés + GuriGO lábléc kezelése
       doc.autoTable({
           startY: 40,
           head: [headers],
@@ -216,7 +239,21 @@
                       data.cell.styles.fillColor = '#f2f2f2';
                   }
               }
-          }
+          },
+          // JAVÍTOTT: Oldaltörés esemény kezelése + GuriGO lábléc
+          didDrawPage: function(data) {
+              // Ha új oldal kezdődik, adjuk hozzá a fejlécet
+              if (data.pageNumber > 1) {
+                  addHeader(doc);
+              }
+              
+              // GuriGO lábléc hozzáadása minden oldalhoz
+              addFooter(doc);
+          },
+          margin: { top: 35, bottom: 20 },
+          pageBreak: 'auto',
+          rowPageBreak: 'avoid',
+          showHead: 'everyPage'
       });
       
       const finalY = doc.lastAutoTable.finalY + 10;
@@ -226,10 +263,23 @@
         return acc;
       }, { work: 0, night: 0 });
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.text(`Gesamt Arbeitszeit: ${formatDurationGerman(totals.work)}`, 14, finalY);
-      doc.text(`Gesamt Nachtzeit: ${formatDurationGerman(totals.night)}`, 14, finalY + 7);
+      // Ellenőrizzük, hogy van-e elég hely az összesítésnek
+      const pageHeight = doc.internal.pageSize.height;
+      if (finalY > pageHeight - 30) {
+        doc.addPage();
+        addHeader(doc);
+        addFooter(doc); // GuriGO lábléc az új oldalon is
+        const newY = 50;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text(`Gesamt Arbeitszeit: ${formatDurationGerman(totals.work)}`, 14, newY);
+        doc.text(`Gesamt Nachtzeit: ${formatDurationGerman(totals.night)}`, 14, newY + 7);
+      } else {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text(`Gesamt Arbeitszeit: ${formatDurationGerman(totals.work)}`, 14, finalY);
+        doc.text(`Gesamt Nachtzeit: ${formatDurationGerman(totals.night)}`, 14, finalY + 7);
+      }
 
       const fileName = `Arbeitszeitnachweis_${userName.replace(/ /g, "_")}_${selectedMonth}.pdf`;
       

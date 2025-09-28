@@ -7,11 +7,19 @@ function parseTimeToMinutes(timeStr) {
     if (!timeStr || !timeStr.includes(':')) return 0;
     const p = timeStr.split(':');
     if (p.length !== 2) return 0;
-    return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+    const hours = parseInt(p[0], 10);
+    const minutes = parseInt(p[1], 10);
+    if (isNaN(hours) || isNaN(minutes)) return 0;
+    return hours * 60 + minutes;
 }
 
-// A perceket "Xó Yp" formátumra alakítja
+// A perceket "Xó Yp" formátumra alakítja - JAVÍTOTT NaN kezeléssel
 function formatDuration(minutes) {
+    // JAVÍTÁS: NaN és invalid értékek kezelése
+    if (minutes === null || minutes === undefined || isNaN(minutes) || minutes < 0) {
+        minutes = 0;
+    }
+    
     const h = Math.floor(minutes / 60);
     const m = Math.round(minutes % 60);
     const h_unit = (typeof currentLang !== 'undefined' && currentLang === 'de') ? 'Std' : 'ó';
@@ -21,6 +29,7 @@ function formatDuration(minutes) {
 
 // A perceket "óó:pp" formátumra alakítja
 function formatAsHoursAndMinutes(minutes) {
+    if (isNaN(minutes) || minutes < 0) minutes = 0;
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
     return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`
@@ -52,7 +61,8 @@ function calculateWorkMinutes(start, end) {
     const s = new Date(`2000-01-01T${start}`);
     let e = new Date(`2000-01-01T${end}`);
     if (e < s) e.setDate(e.getDate() + 1);
-    return Math.floor((e - s) / 60000);
+    const result = Math.floor((e - s) / 60000);
+    return isNaN(result) ? 0 : result;
 }
 
 // Kiszámolja az éjszakai (20:00-05:00) munkavégzés perceit (JAVÍTOTT FUNKCIÓ)
@@ -75,7 +85,7 @@ function calculateNightWorkMinutes(startTime, endTime) {
         
         current.setMinutes(current.getMinutes() + 1);
     }
-    return nightMinutes;
+    return isNaN(nightMinutes) ? 0 : nightMinutes;
 }
 
 // Visszaadja egy dátum ISO formátumú stringjét (éééé-hh-nn)

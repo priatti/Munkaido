@@ -1,5 +1,5 @@
 // =======================================================
-// ===== STATISZTIKÁK (FEATURE) ==========================
+// ===== STATISZTIKÁK (FEATURE) - JAVÍTOTT NaN KEZELÉS ===
 // =======================================================
 
 let statsView = 'daily';
@@ -51,11 +51,12 @@ function renderStats() {
     const chartsContainer = document.getElementById('stats-charts-container');
     const hasData = data.datasets.work.some(d => d > 0) || data.datasets.km.some(d => d > 0);
     
+    // JAVÍTOTT: NaN kezelés az összesítésnél
     const totals = {
-        work: data.datasets.work.reduce((a, b) => a + b, 0) * 60,
-        drive: data.datasets.drive.reduce((a, b) => a + b, 0) * 60,
-        night: data.datasets.night.reduce((a, b) => a + b, 0) * 60,
-        km: data.datasets.km.reduce((a, b) => a + b, 0)
+        work: safeSum(data.datasets.work) * 60,
+        drive: safeSum(data.datasets.drive) * 60,
+        night: safeSum(data.datasets.night) * 60,
+        km: safeSum(data.datasets.km)
     };
 
     document.getElementById('workTimeTotal').textContent = formatDuration(totals.work);
@@ -77,54 +78,108 @@ function renderStats() {
     }
 }
 
-// Napi adatok kinyerése diagramhoz
+// JAVÍTOTT: Biztonságos összegzés NaN értékek kezelésével
+function safeSum(array) {
+    if (!Array.isArray(array)) return 0;
+    return array.reduce((sum, value) => {
+        const num = parseFloat(value);
+        return sum + (isNaN(num) ? 0 : num);
+    }, 0);
+}
+
+// JAVÍTOTT: Biztonságos szám konverzió
+function safeNumber(value, defaultValue = 0) {
+    const num = parseFloat(value);
+    return isNaN(num) ? defaultValue : num;
+}
+
+// Napi adatok kinyerése diagramhoz - JAVÍTOTT
 function getDailyData(date) {
     const year = date.getFullYear();
     const month = date.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const labels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
-    const datasets = { work: Array(daysInMonth).fill(0), drive: Array(daysInMonth).fill(0), night: Array(daysInMonth).fill(0), km: Array(daysInMonth).fill(0) };
+    const datasets = { 
+        work: Array(daysInMonth).fill(0), 
+        drive: Array(daysInMonth).fill(0), 
+        night: Array(daysInMonth).fill(0), 
+        km: Array(daysInMonth).fill(0) 
+    };
     
-    records.filter(r => r.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`))
+    if (!records || !Array.isArray(records)) {
+        return { labels, datasets };
+    }
+    
+    records.filter(r => r && r.date && r.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`))
            .forEach(r => {
-                const dayIndex = new Date(r.date + 'T00:00:00').getUTCDate() - 1;
-                datasets.work[dayIndex] += r.workMinutes / 60;
-                datasets.drive[dayIndex] += r.driveMinutes / 60;
-                datasets.night[dayIndex] += (r.nightWorkMinutes || 0) / 60;
-                datasets.km[dayIndex] += r.kmDriven;
+                try {
+                    const dayIndex = new Date(r.date + 'T00:00:00').getUTCDate() - 1;
+                    if (dayIndex >= 0 && dayIndex < daysInMonth) {
+                        datasets.work[dayIndex] += safeNumber(r.workMinutes) / 60;
+                        datasets.drive[dayIndex] += safeNumber(r.driveMinutes) / 60;
+                        datasets.night[dayIndex] += safeNumber(r.nightWorkMinutes) / 60;
+                        datasets.km[dayIndex] += safeNumber(r.kmDriven);
+                    }
+                } catch (e) {
+                    console.warn('Error processing record:', r, e);
+                }
            });
     return { labels, datasets };
 }
 
-// Havi adatok kinyerése diagramhoz
+// Havi adatok kinyerése diagramhoz - JAVÍTOTT
 function getMonthlyData(date) {
     const year = date.getFullYear();
     const labels = translations[currentLang].chartMonths;
-    const datasets = { work: Array(12).fill(0), drive: Array(12).fill(0), night: Array(12).fill(0), km: Array(12).fill(0) };
+    const datasets = { 
+        work: Array(12).fill(0), 
+        drive: Array(12).fill(0), 
+        night: Array(12).fill(0), 
+        km: Array(12).fill(0) 
+    };
     
-    records.filter(r => r.date.startsWith(year))
+    if (!records || !Array.isArray(records)) {
+        return { labels, datasets };
+    }
+    
+    records.filter(r => r && r.date && r.date.startsWith(year))
            .forEach(r => {
-                const monthIndex = new Date(r.date + 'T00:00:00').getUTCMonth();
-                datasets.work[monthIndex] += r.workMinutes / 60;
-                datasets.drive[monthIndex] += r.driveMinutes / 60;
-                datasets.night[monthIndex] += (r.nightWorkMinutes || 0) / 60;
-                datasets.km[monthIndex] += r.kmDriven;
+                try {
+                    const monthIndex = new Date(r.date + 'T00:00:00').getUTCMonth();
+                    if (monthIndex >= 0 && monthIndex < 12) {
+                        datasets.work[monthIndex] += safeNumber(r.workMinutes) / 60;
+                        datasets.drive[monthIndex] += safeNumber(r.driveMinutes) / 60;
+                        datasets.night[monthIndex] += safeNumber(r.nightWorkMinutes) / 60;
+                        datasets.km[monthIndex] += safeNumber(r.kmDriven);
+                    }
+                } catch (e) {
+                    console.warn('Error processing record:', r, e);
+                }
            });
     return { labels, datasets };
 }
 
-// Éves adatok kinyerése diagramhoz
+// Éves adatok kinyerése diagramhoz - JAVÍTOTT
 function getYearlyData() {
-    if (records.length === 0) return { labels: [], datasets: { work: [], drive: [], night: [], km: [] } };
+    if (!records || !Array.isArray(records) || records.length === 0) {
+        return { labels: [], datasets: { work: [], drive: [], night: [], km: [] } };
+    }
     
     const yearData = {};
     records.forEach(r => {
-        const year = r.date.substring(0, 4);
-        if (!yearData[year]) yearData[year] = { work: 0, drive: 0, night: 0, km: 0 };
-        yearData[year].work += r.workMinutes / 60;
-        yearData[year].drive += r.driveMinutes / 60;
-        yearData[year].night += (r.nightWorkMinutes || 0) / 60;
-        yearData[year].km += r.kmDriven;
+        if (!r || !r.date) return;
+        try {
+            const year = r.date.substring(0, 4);
+            if (!yearData[year]) {
+                yearData[year] = { work: 0, drive: 0, night: 0, km: 0 };
+            }
+            yearData[year].work += safeNumber(r.workMinutes) / 60;
+            yearData[year].drive += safeNumber(r.driveMinutes) / 60;
+            yearData[year].night += safeNumber(r.nightWorkMinutes) / 60;
+            yearData[year].km += safeNumber(r.kmDriven);
+        } catch (e) {
+            console.warn('Error processing record for yearly data:', r, e);
+        }
     });
     
     const labels = Object.keys(yearData).sort();
@@ -145,13 +200,20 @@ function createOrUpdateBarChart(chartInstance, canvasId, labels, data, labelText
         chartInstance.destroy();
     }
     const isDarkMode = document.documentElement.classList.contains('dark');
+    
+    // JAVÍTOTT: NaN értékek szűrése a diagram adatokból
+    const cleanData = data.map(value => {
+        const num = parseFloat(value);
+        return isNaN(num) ? 0 : num;
+    });
+    
     return new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
             datasets: [{
                 label: labelText,
-                data: data,
+                data: cleanData,
                 backgroundColor: color,
                 borderRadius: 4
             }]
@@ -159,7 +221,14 @@ function createOrUpdateBarChart(chartInstance, canvasId, labels, data, labelText
         options: {
             plugins: {
                 legend: { display: false },
-                tooltip: { callbacks: { label: function(context) { return tooltipCallback(context.parsed.y); } } }
+                tooltip: { 
+                    callbacks: { 
+                        label: function(context) { 
+                            const value = parseFloat(context.parsed.y);
+                            return tooltipCallback(isNaN(value) ? 0 : value);
+                        } 
+                    } 
+                }
             },
             scales: {
                 y: {
