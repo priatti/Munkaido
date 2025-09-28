@@ -50,24 +50,40 @@ function resetEntryForm() {
 function addCrossingRow(from = '', to = '', time = '') {
     const container = document.getElementById('crossingsContainer');
     if (!container) return;
-
+    const i18n = translations[currentLang];
     const rowId = 'crossing-' + Date.now();
     const currentTime = time || new Date().toTimeString().slice(0, 5);
     
     const rowHTML = `
-        <div class="crossing-row flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg" id="${rowId}">
-            <input type="text" class="crossing-from flex-1 p-2 border rounded text-sm uppercase" placeholder="Honnan" value="${from}">
-            <span class="text-gray-400">→</span>
-            <div class="flex flex-1">
-                <input type="text" class="crossing-to flex-1 p-2 border rounded-l text-sm uppercase" placeholder="Hova" value="${to}">
-                <button type="button" class="bg-blue-500 text-white p-2 rounded-r text-xs" onclick="fetchCountryCodeFor('${rowId}')" title="Országkód lekérése GPS alapján">📍</button>
+        <div class="crossing-row bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-3" id="${rowId}">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">${i18n.fromPlaceholder}</label>
+                    <input type="text" class="crossing-from w-full p-2 border rounded text-sm uppercase" placeholder="${i18n.fromPlaceholder}" value="${from}">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">${i18n.toPlaceholder}</label>
+                    <div class="flex">
+                        <input type="text" class="crossing-to flex-1 p-2 border rounded-l text-sm uppercase" placeholder="${i18n.toPlaceholder}" value="${to}">
+                        <button type="button" class="bg-blue-500 text-white p-2 rounded-r text-xs hover:bg-blue-600 transition-colors" onclick="fetchCountryCodeFor('${rowId}')" title="${i18n.getCountryCodeGPS}">📍</button>
+                    </div>
+                </div>
             </div>
-            <input type="time" class="crossing-time p-2 border rounded text-sm" value="${currentTime}" onblur="formatTimeInput(this)">
-            <button type="button" class="text-red-500 hover:text-red-700 p-1" onclick="removeCrossingRow('${rowId}')" title="Törlés">🗑️</button>
+            
+            <div class="flex items-end gap-2">
+                <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">${i18n.time}</label>
+                    <input type="time" class="crossing-time w-full p-2 border rounded text-sm" value="${currentTime}" onblur="formatTimeInput(this)">
+                </div>
+                <button type="button" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded text-sm font-medium transition-colors h-10 px-4" onclick="removeCrossingRow('${rowId}')" title="${i18n.delete}">
+                    🗑️ ${i18n.delete}
+                </button>
+            </div>
         </div>
     `;
     container.insertAdjacentHTML('beforeend', rowHTML);
 }
+
 
 // Határátlépés sor eltávolítása
 function removeCrossingRow(rowId) {
@@ -104,6 +120,9 @@ function showCancelButton() {
     const cancelBtn = document.getElementById('cancelEditBtn');
     if (cancelBtn) {
         cancelBtn.style.display = 'block';
+        // Gomb stílusának javítása
+        cancelBtn.className = 'w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]';
+        cancelBtn.innerHTML = '❌ <span data-translate-key="cancelEdit">Mégse / Szerkesztés megszakítása</span>';
     }
 }
 

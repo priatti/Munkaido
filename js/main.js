@@ -130,12 +130,20 @@ function discardShift() {
     if (!activeShift) return;
 
     const i18n = translations[currentLang];
-    showCustomAlert(`${i18n.discardWorkday}?`, 'warning', () => {
-        activeShift = null;
-        localStorage.removeItem('activeShift');
-        renderStartTab();
-        renderLiveTabView();
-    });
+    showCustomAlert(
+        i18n.discardWorkday + '?', 
+        'warning', 
+        () => {
+            activeShift = null;
+            localStorage.removeItem('activeShift');
+            renderStartTab();
+            renderLiveTabView();
+        },
+        { 
+            confirmText: i18n.discard, 
+            confirmClass: 'bg-red-500 hover:bg-red-600' 
+        }
+    );
 }
 
 
@@ -261,7 +269,7 @@ function toggleDropdown() { document.getElementById('dropdown-menu').classList.t
 function closeDropdown() { document.getElementById('dropdown-menu').classList.add('hidden'); }
 
 
-// ====== SEGÉDFÜGGVÉNYEK ======
+// ====== SEGÉDFÜGGÉNYEK ======
 function getSortedRecords() {
     return [...(records || [])].sort((a, b) => new Date(`${b.date}T${b.startTime}`) - new Date(`${a.date}T${a.startTime}`));
 }

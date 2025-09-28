@@ -6,7 +6,7 @@ let alertCallback = null;
 let promptCallback = null;
 
 // Egyedi felugró ablak (alert) megjelenítése
-function showCustomAlert(message, type, callback) {
+function showCustomAlert(message, type, callback, options = {}) {
     const overlay = document.getElementById('custom-alert-overlay');
     const box = document.getElementById('custom-alert-box');
     const iconContainer = document.getElementById('custom-alert-icon');
@@ -23,7 +23,12 @@ function showCustomAlert(message, type, callback) {
     if (type === 'warning') {
         iconContainer.classList.add('bg-yellow-100');
         iconContainer.innerHTML = warningIcon;
-        buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button><button onclick="hideCustomAlert(true)" class="py-2 px-6 bg-yellow-400 text-white rounded-lg font-semibold hover:bg-yellow-500">${i18n.save}</button>`;
+        
+        // Testreszabható gombok warning típushoz
+        const confirmText = options.confirmText || i18n.ok;
+        const confirmClass = options.confirmClass || 'bg-red-500 hover:bg-red-600';
+        
+        buttonsContainer.innerHTML = `<button onclick="hideCustomAlert(false)" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">${i18n.cancel}</button><button onclick="hideCustomAlert(true)" class="py-2 px-6 ${confirmClass} text-white rounded-lg font-semibold">${confirmText}</button>`;
     } else if (type === 'info') {
         iconContainer.classList.add('bg-yellow-100');
         iconContainer.innerHTML = warningIcon;
@@ -179,4 +184,4 @@ function initTheme() {
             applyTheme('auto');
         }
     });
-} 
+}
