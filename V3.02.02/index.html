@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport" />
+    <title>Munkaidő Nyilvántartó Pro</title>
+    <link href="manifest.json" rel="manifest" />
+    <link href="assets/images/icon-192x192.png" rel="icon" type="image/png" />
+    <meta content="#2563eb" name="theme-color">
+    <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" />
+    <meta content="Munkaidő Pro" name="apple-mobile-web-app-title" />
+    <link href="assets/images/icon-192x192.png" rel="apple-touch-icon" />
+    <script>
+        window.SENTRY_OPTIONS = { release: "9.00" };
+    </script>
+    <script crossorigin="anonymous" src="https://js-de.sentry-cdn.com/fbd6c74b8f2150cffb3f052ed6e84740.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="assets/css/main.css" rel="stylesheet" />
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900">
+    <div id="splash-screen">
+        <img alt="Munkaidő Nyilvántartó Pro" src="assets/images/splash.jpg" />
+    </div>
+    <div class="max-w-md mx-auto bg-white dark:bg-gray-800 min-h-screen hidden" id="app">
+        <div class="relative bg-white p-2 shadow-sm flex items-center justify-between" id="app-header">
+            <div class="flex-1"></div>
+            <div class="flex-1 text-center">
+                <img src="assets/images/gurigo.jpg" alt="GuriGO Logo">
+            </div>
+            <div class="flex-1 text-right">
+                <button onclick="toggleSettingsMenu()" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full" aria-label="Beállítások menü" aria-expanded="false">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </button>
+                <div id="settings-dropdown" class="hidden absolute right-2 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-20 border dark:border-gray-700">
+                    <div class="p-2 space-y-1">
+                         <button class="w-full text-left flex items-center gap-3 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" onclick="showTab('settings')">
+                            <span class="text-xl" aria-hidden="true">⚙️</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 dark:text-gray-100" data-translate-key="menuSettings">Beállítások</p>
+                                <p class="text-xs text-gray-500" data-translate-key="menuSettingsDesc">Adatmentés és személyes adatok</p>
+                            </div>
+                        </button>
+                        <button class="w-full text-left flex items-center gap-3 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" onclick="showTab('help')">
+                            <span class="text-xl" aria-hidden="true">❓</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 dark:text-gray-100" data-translate-key="menuHelp">Súgó</p>
+                                <p class="text-xs text-gray-500" data-translate-key="menuHelpDesc">Használati útmutató és tippek</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex bg-gray-100 dark:bg-gray-900 shadow-sm">
+            <button class="tab tab-active" id="tab-live" onclick="showTab('live')">📊 <span data-translate-key="tabOverview">Áttekintés</span></button>
+            <button class="tab" id="tab-start" onclick="showTab('start')">🚀 <span data-translate-key="tabStart">Indítás</span></button>
+            <button class="tab" id="tab-full-day" onclick="showTab('full-day')">➕ <span data-translate-key="tabFullDay">Teljes nap</span></button>
+            <div class="relative flex-1" id="dropdown-container">
+                <button class="tab w-full" id="dropdown-button" onclick="toggleDropdown()" aria-label="További menük" aria-expanded="false"><span data-translate-key="menuMore">Továbbiak</span> ▼</button>
+                <div class="dropdown-content hidden" id="dropdown-menu" role="menu">
+                    <button class="dropdown-item" onclick="showTab('list')" role="menuitem">
+                        <span class="dropdown-item-icon" aria-hidden="true">📅</span>
+                        <div>
+                            <p class="dropdown-item-title" data-translate-key="tabList">Lista</p>
+                            <p class="dropdown-item-desc" data-translate-key="menuListDesc">Mentett munkanapok</p>
+                        </div>
+                    </button>
+                    <button class="dropdown-item" id="menu-item-pallets" onclick="showTab('pallets')" role="menuitem">
+                        <span class="dropdown-item-icon" aria-hidden="true">📦</span>
+                        <div>
+                            <p class="dropdown-item-title" data-translate-key="tabPallets">Raklap</p>
+                            <p class="dropdown-item-desc" data-translate-key="menuPalletsDesc">Raklap egyenleg kezelése</p>
+                        </div>
+                    </button>
+                    <button class="dropdown-item" onclick="showTab('summary')" role="menuitem">
+                        <span class="dropdown-item-icon" aria-hidden="true">📊</span>
+                        <div>
+                            <p class="dropdown-item-title" data-translate-key="menuSummary">Összesítő</p>
+                            <p class="dropdown-item-desc" data-translate-key="menuSummaryDesc">Napi, heti és havi adatok</p>
+                        </div>
+                    </button>
+                    <button class="dropdown-item" onclick="showTab('stats')" role="menuitem">
+                        <span class="dropdown-item-icon" aria-hidden="true">📈</span>
+                        <div>
+                            <p class="dropdown-item-title" data-translate-key="menuStats">Statisztika</p>
+                            <p class="dropdown-item-desc" data-translate-key="menuStatsDesc">Részletes, lapozható diagramok</p>
+                        </div>
+                    </button>
+                    <button class="dropdown-item" id="menu-item-tachograph" onclick="showTab('tachograph')" role="menuitem">
+                        <span class="dropdown-item-icon" aria-hidden="true">⏱️</span>
+                        <div>
+                            <p class="dropdown-item-title" data-translate-key="menuTachograph">Tachográf</p>
+                            <p class="dropdown-item-desc" data-translate-key="menuTachographDesc">Vezetési és pihenőidő elemzés</p>
+                        </div>
+                    </button>
+                    <button class="dropdown-item" onclick="showTab('report')" role="menuitem">
+                        <span class="dropdown-item-icon" aria-hidden="true">📋</span>
+                        <div>
+                            <p class="dropdown-item-title" data-translate-key="menuReport">Riport</p>
+                            <p class="dropdown-item-desc" data-translate-key="menuReportDesc">Nyomtatható havi elszámolás</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="p-4">
+            <div class="space-y-4" id="content-live">
+                <div class="mb-4" id="tacho-helper-display"></div>
+                <div class="mb-4" id="live-allowance-display"></div>
+                <div class="space-y-4" id="dashboard">
+                    <h2 class="text-xl font-bold" data-translate-key="liveOverviewTitle">Áttekintés</h2>
+                    <div class="grid grid-cols-2 gap-3" id="dashboard-cards"></div>
+                </div>
+            </div>
+            <div class="hidden space-y-4" id="content-start">
+                <div id="start-new-day-form">
+                    <div class="p-4 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 rounded-lg space-y-3">
+                        <h3 class="font-semibold text-lg text-green-800 dark:text-green-200" data-translate-key="liveNewDayTitle">Új munkanap indítása</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm mb-1" data-translate-key="date">Dátum</label>
+                                <input class="w-full p-2 border rounded" id="liveStartDate" type="date" required aria-describedby="date-help" />
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1" data-translate-key="time">Idő</label>
+                                <input class="w-full p-2 border rounded" id="liveStartTime" onblur="formatTimeInput(this)" type="time" required />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="relative z-10">
+                                <label class="block text-sm mb-1" data-translate-key="location">Hely</label>
+                                <input class="w-full p-2 border rounded" data-translate-key="cityPlaceholder" id="liveStartLocation" placeholder="Város" type="text" />
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1" data-translate-key="weeklyDrive">Heti vezetés</label>
+                                <input class="w-full p-2 border rounded" id="liveWeeklyDriveStart" onblur="formatTimeInput(this, true)" placeholder="óó:pp" type="text" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm mb-1" data-translate-key="startKm">Kezdő km</label>
+                            <input class="w-full p-2 border rounded" id="liveStartKm" placeholder="0" type="number" min="0" step="1" />
+                        </div>
+                        <button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 text-base transition-colors duration-200" onclick="startShift()">
+                            🚀 <span data-translate-key="startWorkday">Munkanap indítás</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="hidden space-y-4" id="live-progress-view">
+                    <div class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-700 dark:text-blue-200 p-4 rounded-lg">
+                        <p class="font-bold" data-translate-key="workdayInProgress">Munkanap folyamatban</p>
+                        <p class="text-sm" id="live-start-time"></p>
+                    </div>
+                    <div id="live-start-summary"></div>
+                    <div class="bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
+                        <h3 class="font-semibold text-indigo-800 dark:text-indigo-200 mb-2" data-translate-key="newBorderCrossing">Új Határátlépés</h3>
+                        <div class="text-sm space-y-1 mb-3" id="live-crossings-list"></div>
+                        <div class="space-y-2 border-t border-indigo-200/50 pt-2">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="sr-only" for="liveCrossFrom">Honnan</label>
+                                    <input class="w-full p-2 border rounded text-sm uppercase" data-translate-key="fromPlaceholder" id="liveCrossFrom" placeholder="Honnan" type="text" />
+                                </div>
+                                <div>
+                                    <div class="flex">
+                                        <label class="sr-only" for="liveCrossTo">Hova</label>
+                                        <input class="w-full p-2 border rounded-l text-sm uppercase" data-translate-key="toPlaceholder" id="liveCrossTo" placeholder="Hova" type="text" />
+                                        <button class="bg-blue-500 text-white p-2 rounded-r text-xs transition-colors duration-200 hover:bg-blue-600" data-translate-key="getCountryCodeGPS" onclick="fetchCountryCodeFor('liveCrossTo')" title="Országkód lekérése GPS alapján" aria-label="GPS alapú országkód">📍</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="sr-only" for="liveCrossTime">Átlépés ideje</label>
+                                <input class="w-full p-2 border rounded text-sm" id="liveCrossTime" onblur="formatTimeInput(this)" type="time" />
+                            </div>
+                            <button class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors duration-200" onclick="addLiveCrossing()">+ <span data-translate-key="addBorderCrossing">Határátlépés hozzáadása</span></button>
+                        </div>
+                    </div>
+                    <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-4 px-4 rounded-lg flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]" onclick="finalizeShift()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <span data-translate-key="finishShift">Műszak Befejezése</span>
+                    </button>
+                    <button class="w-full text-sm text-red-500 hover:text-red-700 mt-2 transition-colors duration-200" data-translate-key="discardWorkday" onclick="cancelShift()">Munkanap elvetése</button>
+                </div>
+            </div>
+            <div class="hidden space-y-4" id="content-full-day">
+                <h2 class="text-xl font-bold" data-translate-key="fullDayTitle">Teljes munkanap rögzítése</h2>
+                <div>
+                    <label class="block text-sm font-medium mb-1" data-translate-key="dateLabelFull" for="date">Dátum (a munka befejezésének napja)</label>
+                    <input class="w-full p-2 border rounded-lg" id="date" type="date" required />
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 rounded-lg p-3 space-y-3">
+                    <h3 class="font-semibold text-green-800 dark:text-green-200" data-translate-key="workTimeAndLocation">🕐 Munkaidő és Helyszín</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs mb-1" data-translate-key="startTime" for="startTime">Kezdés ideje</label>
+                            <input class="w-full p-2 border rounded text-sm" id="startTime" onblur="formatTimeInput(this)" type="time" required />
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1" data-translate-key="endTime" for="endTime">Befejezés ideje</label>
+                            <input class="w-full p-2 border rounded text-sm" id="endTime" onblur="formatTimeInput(this)" type="time" required />
+                        </div>
+                    </div>
+                    <div id="compensation-section-de">
+                        <label class="block text-xs mb-1 text-yellow-700 dark:text-yellow-300" data-translate-key="compensationLabel" for="compensationTime">Kompenzáció / Szünet (levonódik)</label>
+                        <input class="w-full p-2 border border-yellow-400 rounded text-sm" id="compensationTime" onblur="formatTimeInput(this, true)" placeholder="óó:pp" type="text" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="relative z-10">
+                            <label class="block text-xs mb-1" data-translate-key="startLocation" for="startLocation">Kezdés helye</label>
+                            <input class="w-full p-2 border rounded text-sm" data-translate-key="cityPlaceholder" id="startLocation" placeholder="Város" type="text" />
+                        </div>
+                        <div class="relative z-10">
+                            <label class="block text-xs mb-1" data-translate-key="endLocation" for="endLocation">Befejezés helye</label>
+                            <div class="flex">
+                                <input class="w-full p-2 border rounded-l text-sm" data-translate-key="cityPlaceholder" id="endLocation" placeholder="Város" type="text" />
+                                <button class="bg-blue-500 text-white p-2 rounded-r text-xs transition-colors duration-200 hover:bg-blue-600" data-translate-key="getLocationGPS" onclick="fetchLocation('endLocation')" title="Helyszín lekérése GPS alapján" aria-label="GPS alapú helyszín">📍</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-sm text-green-700 dark:text-green-300" id="workTimeDisplay"></div>
+                    <div class="text-sm text-purple-700 dark:text-purple-400" id="nightWorkDisplay"></div>
+                </div>
+                <div class="bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
+                    <h3 class="font-semibold text-indigo-800 dark:text-indigo-200 mb-2" data-translate-key="borderCrossings">🛂 Határátlépések</h3>
+                    <div class="space-y-2" id="crossingsContainer"></div>
+                    <button class="w-full mt-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors duration-200" onclick="addCrossingRow()">+ <span data-translate-key="addCrossing">Új átlépés hozzáadása</span></button>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 rounded-lg p-3" id="drivetime-section">
+                    <h3 class="font-semibold text-blue-800 dark:text-blue-200 mb-2" data-translate-key="weeklyDriveTimeHours">🚗 Heti vezetési idő (óra)</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs mb-1" data-translate-key="atDayStart" for="weeklyDriveStart">Nap elején (óó:pp)</label>
+                            <input class="w-full p-2 border rounded text-sm" id="weeklyDriveStart" onblur="formatTimeInput(this, true)" placeholder="28:24" type="text" />
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1" data-translate-key="atDayEnd" for="weeklyDriveEnd">Nap végén (óó:pp)</label>
+                            <input class="w-full p-2 border rounded text-sm" id="weeklyDriveEnd" onblur="formatTimeInput(this, true)" placeholder="32:44" type="text" />
+                        </div>
+                    </div>
+                    <div class="mt-2 text-sm text-blue-700 dark:text-blue-300" id="driveTimeDisplay"></div>
+                </div>
+                <div class="bg-orange-50 dark:bg-orange-900/50 border border-orange-200 dark:border-orange-800 rounded-lg p-3" id="km-section">
+                    <h3 class="font-semibold text-orange-800 dark:text-orange-200 mb-2" data-translate-key="kmReading">📏 Kilométer állás</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs mb-1" data-translate-key="startKm" for="kmStart">Kezdő km</label>
+                            <input class="w-full p-2 border rounded text-sm" id="kmStart" placeholder="0" type="number" min="0" step="1" />
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1" data-translate-key="endKm" for="kmEnd">Záró km</label>
+                            <input class="w-full p-2 border rounded text-sm" id="kmEnd" placeholder="0" type="number" min="0" step="1" />
+                        </div>
+                    </div>
+                    <div class="mt-2 text-sm text-orange-700 dark:text-orange-300" id="kmDisplay"></div>
+                </div>
+                <div class="enhanced-toggle-container mt-4" id="split-rest-container">
+                    <div class="enhanced-toggle-text">
+                        <span data-translate-key="splitRestQuestion">Volt 3+ órás egybefüggő pihenő? (Osztott)</span>
+                        <span class="enhanced-toggle-checkmark hidden">✓</span>
+                    </div>
+                    <input class="sr-only" id="toggleSplitRest" type="checkbox" onchange="updateEnhancedToggleVisuals(this)" />
+                </div>
+                <button class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] mt-4" onclick="saveEntry()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg> 
+                    <span data-translate-key="saveEntry">Bejegyzés Mentése</span>
+                </button>
+            </div>
+            <div class="hidden" id="content-list">
+                <h2 class="text-lg font-semibold mb-4" data-translate-key="listTitle">Bejegyzések</h2>
+                <div id="recordsContent"></div>
+            </div>
+            <div class="hidden" id="content-summary">
+                <h2 class="text-lg font-semibold mb-4" data-translate-key="summaryTitle">Összesítések</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="summaryContent"></div>
+            </div>
+            <div class="hidden space-y-4" id="content-stats">
+                <h2 class="text-xl font-bold" data-translate-key="statsTitle">Részletes Statisztikák</h2>
+                <div class="bg-gray-100 dark:bg-gray-700 p-2 rounded-lg space-y-3">
+                    <div class="grid grid-cols-3 gap-2">
+                        <button class="stats-view-btn text-sm py-2 rounded-md bg-white dark:bg-gray-600 transition-colors duration-200" data-translate-key="statsDaily" id="stats-view-daily">Napi</button>
+                        <button class="stats-view-btn text-sm py-2 rounded-md bg-white dark:bg-gray-600 transition-colors duration-200" data-translate-key="statsMonthly" id="stats-view-monthly">Havi</button>
+                        <button class="stats-view-btn text-sm py-2 rounded-md bg-white dark:bg-gray-600 transition-colors duration-200" data-translate-key="statsYearly" id="stats-view-yearly">Éves</button>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <button class="p-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200" id="stats-prev" aria-label="Előző időszak">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        </button>
+                        <div class="font-semibold text-center" id="stats-period-display"></div>
+                        <button class="p-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200" id="stats-next" aria-label="Következő időszak">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-6" id="stats-charts-container">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-lg font-semibold" data-translate-key="statsWorkTime">Munkaidő</h3>
+                            <span class="text-sm font-bold text-green-600" id="workTimeTotal"></span>
+                        </div>
+                        <canvas id="workTimeChart" aria-label="Munkaidő diagram"></canvas>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-lg font-semibold" data-translate-key="statsDriveTime">Vezetési idő</h3>
+                            <span class="text-sm font-bold text-blue-600" id="driveTimeTotal"></span>
+                        </div>
+                        <canvas id="driveTimeChart" aria-label="Vezetési idő diagram"></canvas>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-lg font-semibold" data-translate-key="statsNightTime">Éjszakai munka</h3>
+                            <span class="text-sm font-bold text-purple-600" id="nightTimeTotal"></span>
+                        </div>
+                        <canvas id="nightTimeChart" aria-label="Éjszakai munka diagram"></canvas>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-lg font-semibold" data-translate-key="statsKmDriven">Megtett kilométer</h3>
+                            <span class="text-sm font-bold text-orange-600" id="kmTotal"></span>
+                        </div>
+                        <canvas id="kmChart" aria-label="Kilométer diagram"></canvas>
+                    </div>
+                </div>
+                <div class="text-center text-gray-500 py-8 hidden" data-translate-key="statsNoData" id="stats-no-data">Nincs adat a kiválasztott időszakban.</div>
+            </div>
+            <div class="hidden" id="content-report">
+                <h2 class="text-lg font-semibold mb-4" data-translate-key="reportTitle">Havi riport</h2>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1" data-translate-key="reportMonthSelect" for="monthSelector">Hónap kiválasztása</label>
+                    <input class="w-full p-2 border rounded-lg" id="monthSelector" type="month" />
+                </div>
+                <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg mb-4 transition-colors duration-200" onclick="generateMonthlyReport()">📋 <span data-translate-key="reportGenerate">Riport generálása</span></button>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                    <button class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg hidden transition-colors duration-200" id="pdfExportBtn" onclick="exportToPDF()">📄 <span data-translate-key="reportDownloadPDF">PDF letöltés</span></button>
+                    <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg hidden transition-colors duration-200" id="pdfShareBtn" onclick="sharePDF()">📲 <span data-translate-key="reportSharePDF">PDF megosztása</span></button>
+                </div>
+                <div id="monthlyReportContent"></div>
+            </div>
+            <div class="hidden" id="content-settings">
+                <h2 id="palletsTitle" class="text-lg font-semibold mb-4" data-translate-key="settingsTitle">Beállítások és Adatkezelés</h2>
+                <div class="space-y-4">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <h3 class="font-semibold mb-2">☁️ <span data-translate-key="settingsSyncTitle">Felhő Szinkronizáció</span></h3>
+                        <div id="logged-out-view">
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3" data-translate-key="settingsSyncDesc">Jelentkezz be a Google fiókoddal, hogy az adataidat a felhőbe mentsd és több eszközön is elérd.</p>
+                            <button class="w-full bg-white border border-gray-300 dark:bg-gray-600 dark:border-gray-500 text-gray-700 dark:text-gray-200 font-semibold py-2 px-4 rounded-lg inline-flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors duration-200" id="login-button">
+                                <svg class="w-5 h-5" viewbox="0 0 48 48"><path d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" fill="#FFC107"></path><path d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" fill="#FF3D00"></path><path d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" fill="#4CAF50"></path><path d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.215,44,30.035,44,24C44,22.659,43.862,21.35,43.611,20.083z" fill="#1976D2"></path></svg>
+                                <span data-translate-key="settingsLoginGoogle">Bejelentkezés Google-fiókkal</span>
+                            </button>
+                        </div>
+                        <div class="hidden" id="logged-in-view">
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3"><span data-translate-key="settingsLoggedInAs">Bejelentkezve mint:</span> <strong id="user-name"></strong></p>
+                            <button class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200" data-translate-key="settingsLogout" id="logout-button">Kijelentkezés</button>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 dark:bg-blue-900/50 rounded-lg p-4 hidden" id="pwa-install-container">
+                        <h3 class="font-semibold mb-2">📲 <span data-translate-key="settingsInstallAppTitle">Alkalmazás Telepítése</span></h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3" data-translate-key="settingsInstallAppDesc">Telepítse az alkalmazást a kezdőképernyőjére a gyorsabb elérés és az offline használat érdekében.</p>
+                        <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200" id="install-pwa-button">
+                            <span data-translate-key="settingsInstallButton">Telepítés</span>
+                        </button>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <h3 class="font-semibold mb-2" data-translate-key="settingsPersonalData">Személyes adatok</h3>
+                        <label class="block text-sm font-medium mb-1" data-translate-key="settingsNameForReports" for="userNameInput">Név (riportokhoz)</label>
+                        <input class="w-full p-2 border rounded-lg mb-3" data-translate-key="settingsNamePlaceholder" id="userNameInput" placeholder="Vezetéknév Keresztnév" type="text" />
+                        <button class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg transition-colors duration-200 hover:bg-blue-600" data-translate-key="settingsSaveData" onclick="saveSettings()">Adatok mentése</button>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <h3 class="font-semibold mb-2" data-translate-key="settingsLanguage">Nyelv</h3>
+                        <div class="flex items-center gap-4" id="languageSelector">
+                            <button class="p-2 rounded-lg text-lg w-full text-center border-2 border-transparent transition-colors duration-200" onclick="setLanguage('hu')">🇭🇺 Magyar</button>
+                            <button class="p-2 rounded-lg text-lg w-full text-center border-2 border-transparent transition-colors duration-200" onclick="setLanguage('de')">🇦🇹 Deutsch</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <h3 class="font-semibold mb-2" data-translate-key="settingsAppearance">Megjelenés</h3>
+                        <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1" data-translate-key="settingsThemeSelect" for="themeSelector">Válassz témát</label>
+                        <select class="w-full p-2 border rounded-lg bg-white dark:bg-gray-700" id="themeSelector" onchange="setTheme(this.value)">
+                            <option data-translate-key="settingsThemeAuto" value="auto">Automatikus</option>
+                            <option data-translate-key="settingsThemeLight" value="light">Nappali</option>
+                            <option data-translate-key="settingsThemeDark" value="dark">Éjszakai</option>
+                        </select>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3" id="special-features">
+                        <h3 class="font-semibold" data-translate-key="settingsSpecialFunctions">Speciális funkciók</h3>
+                        <div class="toggle-grid">
+                            <div class="enhanced-toggle-container" onclick="toggleFeature('toggleKm')">
+                                <div class="enhanced-toggle-text">
+                                    <span data-translate-key="settingsFeatureKm">Kilométer Nyilvántartás</span>
+                                    <span class="enhanced-toggle-checkmark hidden">✓</span>
+                                </div>
+                                <input class="sr-only" id="toggleKm" type="checkbox" />
+                            </div>
+                            <div class="enhanced-toggle-container" onclick="toggleFeature('toggleDriveTime')">
+                                <div class="enhanced-toggle-text">
+                                    <span data-translate-key="settingsFeatureDriveTime">Vezetési Idő Nyilvántartás</span>
+                                    <span class="enhanced-toggle-checkmark hidden">✓</span>
+                                </div>
+                                <input class="sr-only" id="toggleDriveTime" type="checkbox" />
+                            </div>
+                            <div class="enhanced-toggle-container" onclick="toggleFeature('togglePallets')">
+                                <div class="enhanced-toggle-text">
+                                    <span data-translate-key="settingsFeaturePallets">Raklap Nyilvántartás</span>
+                                    <span class="enhanced-toggle-checkmark hidden">✓</span>
+                                </div>
+                                <input class="sr-only" id="togglePallets" type="checkbox" />
+                            </div>
+                            <div class="enhanced-toggle-container" onclick="toggleFeature('toggleCompensation')">
+                                <div class="enhanced-toggle-text">
+                                    <span data-translate-key="settingsFeatureCompensation">Szünet/Kompenzáció Levonása</span>
+                                    <span class="enhanced-toggle-checkmark hidden">✓</span>
+                                </div>
+                                <input class="sr-only" id="toggleCompensation" type="checkbox" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
+                        <h3 class="font-semibold"><span data-translate-key="palletSettingsTitle">📦 Raklap Beállítások</span></h3>
+                        <div class="enhanced-toggle-container" onclick="toggleFeature('toggleMultiPallet')">
+                            <div class="enhanced-toggle-text">
+                                <span data-translate-key="toggleMultiPallet">Több raklaptípus kezelése</span>
+                                <div class="enhanced-toggle-description" data-translate-key="multiPalletDesc">
+                                    Kapcsold be, ha az EUR mellett más típusokat is szeretnél nyilvántartani (pl. DD, CHEP).
+                                </div>
+                                <span class="enhanced-toggle-checkmark hidden">✓</span>
+                            </div>
+                            <input class="sr-only" id="toggleMultiPallet" type="checkbox" />
+                        </div>
+                        <div class="hidden border-t border-gray-200 dark:border-gray-600 pt-3" id="multi-pallet-settings-container">
+                            <label class="block text-sm font-medium mb-1" data-translate-key="newPalletTypeLabel">Egyedi raklaptípusok</label>
+                            <div class="space-y-2 mb-3" id="pallet-types-list"></div>
+                            <div class="flex gap-2">
+                                <input class="w-full p-2 border rounded-lg text-sm uppercase" id="newPalletTypeName" placeholder="Pl. DD, CHEP..." type="text" />
+                                <button class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg text-sm whitespace-nowrap transition-colors duration-200 hover:bg-blue-600" onclick="addPalletType()"><span data-translate-key="addPalletType">Add</span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <h3 class="font-semibold mb-2" data-translate-key="settingsExportTitle">Adatok exportálása (Backup)</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-2" data-translate-key="settingsExportDesc">Mentsd le az összes bejegyzésedet egy JSON fájlba.</p>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1" data-translate-key="settingsAutoExportFreq" for="autoExportSelector">Automatikus mentés gyakorisága:</label>
+                            <select class="w-full p-2 border rounded-lg bg-white dark:bg-gray-700" id="autoExportSelector">
+                                <option data-translate-key="settingsFreqNever" value="never">Soha</option>
+                                <option data-translate-key="settingsFreqDaily" value="daily">Naponta</option>
+                                <option data-translate-key="settingsFreqWeekly" value="weekly">Hetente</option>
+                                <option data-translate-key="settingsFreqMonthly" value="monthly">Havonta</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" data-translate-key="settingsAutoExportDesc">Az alkalmazás indításakor ellenőrzi, hogy esedékes-e a mentés.</p>
+                        </div>
+                        <button class="w-full bg-gray-500 text-white py-2 px-4 rounded-lg transition-colors duration-200 hover:bg-gray-600" onclick="exportData()">📥 <span data-translate-key="settingsDownloadData">Adatok letöltése</span></button>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <h3 class="font-semibold mb-2" data-translate-key="settingsImportTitle">Adatok importálása</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3" data-translate-key="settingsImportDesc">Tölts vissza egy korábban lementett adatfájlt. Figyelem: ez felülírja a jelenlegi adatokat!</p>
+                        <input accept=".json" class="w-full text-sm mb-3" id="importFile" type="file" />
+                        <button class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg transition-colors duration-200 hover:bg-blue-600" onclick="importData()">📤 <span data-translate-key="settingsUploadData">Adatok visszöltése</span></button>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 flex items-start gap-3">
+                        <span class="text-2xl pt-1" aria-hidden="true">ℹ️</span>
+                        <div>
+                            <h3 class="font-semibold">Munkaidő PRO</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-300" data-translate-key="settingsAboutCreator">Készítette: Princz Attila</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" data-translate-key="slogan">Egy kamionos, aki appot készít.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="hidden" id="content-tachograph">
+                <h2 class="text-xl font-bold mb-4" data-translate-key="tachoTitle">Tachográf Elemzés</h2>
+                <div class="mb-4" id="tacho-allowance-display"></div>
+                <div class="space-y-3" id="tachograph-list"></div>
+            </div>
+            <div class="hidden space-y-4" id="content-pallets">
+                <div class="flex justify-between items-center">
+                    <h2 id="palletsTitle" class="text-xl font-bold" data-translate-key="palletsTitle">Paletta Nyilvántartás</h2>
+                    <div class="text-right" id="palletBalanceDisplay"></div>
+                </div>
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 rounded-lg space-y-3">
+                    <h3 class="font-semibold text-lg text-blue-800 dark:text-blue-200" data-translate-key="palletsNewTransaction">Új tranzakció</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm mb-1" data-translate-key="date" for="palletDate">Dátum</label>
+                            <input class="w-full p-2 border rounded-md" id="palletDate" type="date" required />
+                        </div>
+                        <div class="relative">
+                            <label class="block text-sm mb-1" data-translate-key="location" for="palletLocation">Helyszín</label>
+                            <input class="w-full p-2 border rounded-md" data-translate-key="palletsLocationPlaceholder" id="palletLocation" placeholder="Város, cég..." type="text" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                        <div>
+                            <label class="block text-sm mb-1" data-translate-key="palletsGivenLabel" for="palletGiven">Leadott 🚛➡️</label>
+                            <input class="w-full p-2 border rounded-md" id="palletGiven" placeholder="0" type="number" min="0" step="1" />
+                        </div>
+                        <button class="p-2 h-10 border rounded-md transition-colors duration-200 hover:bg-gray-100" data-translate-key="pallets1to1Button" id="pallet-1to1-btn" title="Mennyiségek szinkronizálása" onclick="syncPalletQuantities()">1:1</button>
+                        <div>
+                            <label class="block text-sm mb-1" data-translate-key="palletsTakenLabel" for="palletTaken">Felvett 🚛⬅️</label>
+                            <input class="w-full p-2 border rounded-md" id="palletTaken" placeholder="0" type="number" min="0" step="1" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1" data-translate-key="palletsTypeLabel">Típus</label>
+                        <div class="flex flex-wrap gap-2" id="pallet-type-selector"></div>
+                    </div>
+                    <div id="palletLicensePlateContainer">
+                        <label class="block text-sm mb-1" data-translate-key="palletsLicensePlate" for="palletLicensePlate">Rendszám (opcionális)</label>
+                        <input class="w-full p-2 border rounded-md uppercase" data-translate-key="palletsLicensePlatePlaceholder" id="palletLicensePlate" placeholder="Pl. ABC-123" type="text" />
+                    </div>
+                    <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg mt-3 transition-colors duration-200" onclick="savePalletEntry()">+ <span data-translate-key="palletsSaveTransaction">Tranzakció mentése</span></button>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-2" data-translate-key="palletsHistory">Előzmények</h3>
+                    <div class="mb-4">
+                        <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-200" onclick="generatePalletReport()">📋 <span data-translate-key="palletReportGenerate">Raklap riport generálása</span></button>
+                    </div>
+                    <div class="space-y-2" id="palletRecordsContainer">
+                    </div>
+                </div>
+            </div>
+            <div class="hidden space-y-6" id="content-help"></div>
+        </div>
+    </div>
+    
+    <div class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300" id="custom-alert-overlay" role="dialog" aria-modal="true" aria-labelledby="custom-alert-message">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-2xl w-11/12 max-w-sm mx-auto transform transition-transform duration-300 scale-95" id="custom-alert-box">
+            <div class="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center" id="custom-alert-icon"></div>
+            <p class="text-center text-lg text-gray-700 dark:text-gray-200 mb-6" id="custom-alert-message"></p>
+            <div class="flex justify-center gap-4" id="custom-alert-buttons"></div>
+        </div>
+    </div>
+    
+    <div class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300" id="custom-prompt-overlay" role="dialog" aria-modal="true" aria-labelledby="custom-prompt-title">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-2xl w-11/12 max-w-sm mx-auto transform transition-transform duration-300 scale-95" id="custom-prompt-box">
+            <div class="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center" id="custom-prompt-icon"></div>
+            <h3 class="text-xl font-semibold text-center mb-2 text-gray-900 dark:text-gray-100" id="custom-prompt-title"></h3>
+            <p class="text-center text-sm text-gray-600 dark:text-gray-300 mb-4" id="custom-prompt-message"></p>
+            <input class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg mb-4 text-center" id="custom-prompt-input" type="text" />
+            <div class="flex justify-center gap-4" id="custom-prompt-buttons"></div>
+        </div>
+    </div>
+    
+    <div class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300" id="pallet-report-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pallet-report-modal-title">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-2xl w-11/12 max-w-sm mx-auto transform transition-transform duration-300 scale-95" id="pallet-report-modal-box">
+            <h3 class="text-xl font-semibold text-center mb-4 text-gray-900 dark:text-gray-100" id="pallet-report-modal-title">Raklap Riport Készítése</h3>
+            <p class="text-center text-sm text-gray-600 dark:text-gray-300 mb-4">Válaszd ki, melyik típus(ok)ról szeretnél riportot:</p>
+            <div class="space-y-2 max-h-48 overflow-y-auto mb-6" id="pallet-report-types-container"></div>
+            <div class="flex justify-center gap-4" id="pallet-report-modal-buttons">
+                <button class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors duration-200" onclick="hidePalletReportModal()">Mégse</button>
+                <button class="py-2 px-6 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors duration-200" onclick="createSelectedPalletReport()">Riport generálása</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-analytics.js"></script>
+    <script>
+        // JAVÍTÁS: Firebase inicializálás hibaellenőrzéssel
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDGgG3y0ppl4639bzjzKA7Yq8BmSkhR-LU",
+                authDomain: "munkaido-3cc44.firebaseapp.com",
+                projectId: "munkaido-3cc44",
+                storageBucket: "munkaido-3cc44.firebasestorage.app",
+                messagingSenderId: "706081294435",
+                appId: "1:706081294435:web:c8ae57cbe45477de415056",
+                measurementId: "G-7XKCPHZNN2"
+            };
+            firebase.initializeApp(firebaseConfig);
+            firebase.analytics();
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization failed:', error);
+        }
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker sikeresen regisztrálva:', registration.scope);
+                        
+                        // Update ellenőrzés
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('New Service Worker available');
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => console.error('Service Worker regisztráció sikertelen:', error));
+            });
+        }
+    </script>
+    
+    <script src="js/config/translations.js"></script>
+    <script src="js/config/appInfo.js"></script>
+
+    <script src="js/utils/time.js"></script>
+    <script src="js/utils/geolocation.js"></script>
+    <script src="js/utils/dataHelpers.js"></script>
+
+    <script src="js/ui/ui.js"></script>
+    <script src="js/ui/appInfoFooter.js"></script>
+    <script src="js/services/database.js"></script>
+    <script src="js/services/pwa.js"></script>
+
+    <script src="js/features/workday.js"></script>
+    <script src="js/features/recordsList.js"></script>
+    <script src="js/features/pallets.js"></script>
+    <script src="js/features/summary.js"></script>
+    <script src="js/features/stats.js"></script>
+    <script src="js/features/report.js"></script>
+    <script src="js/features/tachograph.js"></script>
+    <script src="js/features/settings.js"></script>
+    <script src="js/features/help.js"></script>
+    <script src="js/features/overview-live-refresh.js"></script>
+
+    <script src="js/main.js"></script>
+    
+    <script>
+        // Toggle feature helper function
+        function toggleFeature(checkboxId) {
+            const checkbox = document.getElementById(checkboxId);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+        
+        // Pallet quantities sync helper
+        function syncPalletQuantities() {
+            const givenInput = document.getElementById('palletGiven');
+            const takenInput = document.getElementById('palletTaken');
+            
+            if (givenInput && takenInput) {
+                const givenValue = parseInt(givenInput.value) || 0;
+                if (givenValue > 0) {
+                    takenInput.value = givenValue;
+                } else {
+                    const takenValue = parseInt(takenInput.value) || 0;
+                    if (takenValue > 0) {
+                        givenInput.value = takenValue;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
