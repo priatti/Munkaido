@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GuriGO Admin</title>
+  <link href="assets/css/main.css" rel="stylesheet"/>
+  <style>
+    .admin-nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .user-card { transition: all 0.2s; }
+    .user-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900">
+  <!-- NAV -->
+  <div class="admin-nav text-white p-4 shadow-lg">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold">🛡️ GuriGO Admin</h1>
+      <div class="flex items-center gap-4">
+        <span id="admin-user-email" class="text-sm opacity-90"></span>
+        <button id="signout-btn" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg hidden">Kilép</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH GATE / UNAUTHORIZED / DASHBOARD CONTAINERS -->
+  <div id="admin-auth-gate" class="container mx-auto p-6 hidden">
+    <div class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
+      <h2 class="text-xl font-bold mb-2">Bejelentkezés szükséges</h2>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">Lépj be admin fiókkal az admin felülethez.</p>
+
+      <div class="space-y-3">
+        <button id="google-login" class="w-full py-3 border-2 rounded-lg font-semibold flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" viewBox="0 0 48 48">
+  <path d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" fill="#FFC107"/>
+  <path d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" fill="#FF3D00"/>
+  <path d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" fill="#4CAF50"/>
+  <path d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.215,44,30.035,44,24C44,22.659,43.862,21.35,43.611,20.083z" fill="#1976D2"/>
+</svg>
+          <span>Folytatás Google fiókkal</span>
+        </button>
+
+        <div class="text-center text-sm text-gray-500 dark:text-gray-400">vagy</div>
+
+        <form id="email-login-form" class="space-y-2">
+          <input id="admin-email" type="email" placeholder="E-mail" class="w-full px-3 py-2 border rounded-lg" required/>
+          <input id="admin-pass" type="password" placeholder="Jelszó" class="w-full px-3 py-2 border rounded-lg" required/>
+          <button class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold">Belépés</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-unauthorized" class="container mx-auto p-6 hidden">
+    <div class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl p-6 shadow text-center">
+      <div class="text-5xl mb-3">⛔</div>
+      <h2 class="text-xl font-bold mb-2">Nincs jogosultság</h2>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">Ez az oldal csak admin felhasználóknak érhető el.</p>
+      <button id="signout-unauth" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-semibold">Kijelentkezés</button>
+    </div>
+  </div>
+
+  <div id="admin-dashboard" class="container mx-auto p-6 hidden">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+        <div class="text-gray-500 text-sm">Összes felhasználó</div>
+        <div class="text-3xl font-bold" id="stat-total-users">0</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+        <div class="text-gray-500 text-sm">Pro előfizetők</div>
+        <div class="text-3xl font-bold text-indigo-600" id="stat-pro-users">0</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+        <div class="text-gray-500 text-sm">Max előfizetők</div>
+        <div class="text-3xl font-bold text-purple-600" id="stat-max-users">0</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+        <div class="text-gray-500 text-sm">Havi bevétel (HUF)</div>
+        <div class="text-3xl font-bold text-green-600" id="stat-revenue">0</div>
+      </div>
+    </div>
+
+    <!-- Users List -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+      <div class="p-4 border-b dark:border-gray-700">
+        <h2 class="text-xl font-bold">Felhasználók</h2>
+      </div>
+      <div class="p-4 flex gap-4">
+        <input type="text" id="search-user" placeholder="Keresés email vagy név alapján..." class="flex-1 px-4 py-2 border rounded-lg">
+        <select id="filter-tier" class="px-4 py-2 border rounded-lg">
+          <option value="">Összes csomag</option>
+          <option value="guest">Vendég</option>
+          <option value="free">Ingyenes</option>
+          <option value="pro">Pro</option>
+          <option value="max">Max</option>
+        </select>
+        <button id="search-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold">🔍 Keresés</button>
+      </div>
+      <div id="users-list" class="divide-y dark:divide-gray-700">
+        <!-- Dinamikusan generált -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+  <script>
+    // Firebase init
+    const firebaseConfig = {
+      apiKey: "AIzaSyDGgG3y0ppl4639bzjzKA7Yq8BmSkhR-LU",
+      authDomain: "munkaido-3cc44.firebaseapp.com",
+      projectId: "munkaido-3cc44",
+      storageBucket: "munkaido-3cc44.firebasestorage.app",
+      messagingSenderId: "706081294435",
+      appId: "1:706081294435:web:c8ae57cbe45477de415056"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Admin e-mailek (kisbetűs összehasonlítás)
+    const ADMIN_EMAILS = ["info@gurigo.eu", "princz.attila@gmail.com", "admin@gurigo.eu"].map(e => e.toLowerCase());
+
+    // UI helpers
+    const gateEl = document.getElementById('admin-auth-gate');
+    const unauthEl = document.getElementById('admin-unauthorized');
+    const dashEl = document.getElementById('admin-dashboard');
+    const emailLabel = document.getElementById('admin-user-email');
+    const signoutBtn = document.getElementById('signout-btn');
+
+    function show(el){ el.classList.remove('hidden'); }
+    function hide(el){ el.classList.add('hidden'); }
+
+    // Auth handlers
+    document.getElementById('google-login').addEventListener('click', async () => {
+      try {
+        await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      } catch (e) {
+        alert('Google bejelentkezés sikertelen: ' + e.message);
+      }
+    });
+
+    document.getElementById('email-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('admin-email').value.trim();
+      const pass  = document.getElementById('admin-pass').value;
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, pass);
+      } catch (err) {
+        alert('Belépés sikertelen: ' + err.message);
+      }
+    });
+
+    document.getElementById('signout-unauth').addEventListener('click', () => firebase.auth().signOut());
+    signoutBtn.addEventListener('click', () => firebase.auth().signOut());
+
+    // Main auth state
+    firebase.auth().onAuthStateChanged(async (user) => {
+      hide(gateEl); hide(unauthEl); hide(dashEl);
+      emailLabel.textContent = '';
+      signoutBtn.classList.add('hidden');
+
+      if (!user) {
+        show(gateEl); // NINCS átirányítás indexre – itt marad a belépő nézet!
+        return;
+      }
+
+      const email = (user.email || '').toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) {
+        show(unauthEl);
+        signoutBtn.classList.remove('hidden');
+        emailLabel.textContent = email;
+        return;
+      }
+
+      // Authorized:
+      emailLabel.textContent = email;
+      signoutBtn.classList.remove('hidden');
+      show(dashEl);
+      await loadStats();
+      await loadUsers();
+    });
+
+    // DATA LOADERS
+    async function loadUsers() {
+      const container = document.getElementById('users-list');
+      const searchTerm = (document.getElementById('search-user').value || '').toLowerCase();
+      const tierFilter = document.getElementById('filter-tier').value;
+
+      container.innerHTML = '<div class="p-8 text-center text-gray-500">Betöltés...</div>';
+      try {
+        const snapshot = await db.collectionGroup('profile').get();
+        const users = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const userId = doc.ref.parent.parent.id;
+          if (tierFilter && data.subscriptionTier !== tierFilter) return;
+          if (searchTerm &&
+              !(data.email || '').toLowerCase().includes(searchTerm) &&
+              !(data.displayName || '').toLowerCase().includes(searchTerm)) return;
+          users.push({ id: userId, ...data });
+        });
+        if (users.length === 0) {
+          container.innerHTML = '<div class="p-8 text-center text-gray-500">Nincs találat</div>';
+          return;
+        }
+        container.innerHTML = users.map(u => renderUserCard(u)).join('');
+      } catch (e) {
+        console.error(e);
+        container.innerHTML = '<div class="p-8 text-center text-red-500">Hiba történt</div>';
+      }
+    }
+
+    function renderUserCard(user) {
+      const tierColors = { guest: 'gray', free: 'blue', pro: 'indigo', max: 'purple' };
+      const color = tierColors[user.subscriptionTier] || 'gray';
+      return `
+        <div class="user-card p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
+          <div class="flex items-center justify-between">
+            <div class="flex-1">
+              <div class="font-semibold">${user.displayName || 'Névtelen'}</div>
+              <div class="text-sm text-gray-500">${user.email || 'Nincs email'}</div>
+              <div class="text-xs text-gray-400 mt-1">
+                Regisztráció: ${user.createdAt ? user.createdAt.toDate().toLocaleDateString('hu-HU') : 'Ismeretlen'}
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="text-center">
+                <div class="text-xs text-gray-500 mb-1">Csomag</div>
+                <span class="px-3 py-1 bg-${color}-100 dark:bg-${color}-900/50 text-${color}-800 dark:text-${color}-200 rounded-full text-sm font-semibold">
+                  ${(user.subscriptionTier || 'free').toUpperCase()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function loadStats() {
+      try {
+        const snapshot = await db.collectionGroup('profile').get();
+        let total = 0, pro = 0, max = 0, revenue = 0;
+        snapshot.forEach(doc => {
+          const d = doc.data(); total++;
+          if (d.subscriptionTier === 'pro') { pro++; revenue += 2990; }
+          else if (d.subscriptionTier === 'max') { max++; revenue += 4990; }
+        });
+        document.getElementById('stat-total-users').textContent = total;
+        document.getElementById('stat-pro-users').textContent = pro;
+        document.getElementById('stat-max-users').textContent = max;
+        document.getElementById('stat-revenue').textContent   = revenue.toLocaleString('hu-HU');
+      } catch (e) { console.error(e); }
+    }
+
+    // search controls
+    document.getElementById('search-btn').addEventListener('click', loadUsers);
+    document.getElementById('filter-tier').addEventListener('change', loadUsers);
+    document.getElementById('search-user').addEventListener('keypress', (e)=>{ if(e.key==='Enter') loadUsers(); });
+  </script>
+</body>
+</html>
