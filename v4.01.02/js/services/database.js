@@ -131,3 +131,47 @@ async function migrateLocalToFirestore(records, collectionName) {
     console.error('Migration failed:', e);
   }
 }
+
+
+// === ADDED: missing persistence helpers ===
+async function saveSettingsToFirestore(settings) {
+  if (!window.currentUser) return;
+  try {
+    await db.collection('users')
+      .doc(window.currentUser.uid)
+      .collection('settings')
+      .doc('config')
+      .set(settings, { merge: true });
+  } catch (e) {
+    console.error('Settings save failed:', e);
+  }
+}
+
+
+async function saveWorkRecord(record) {
+  // Local fall-back for guests / offline
+  window.records = Array.isArray(window.records) ? window.records : [];
+  if (!window.currentUser) {
+    // keep unique by id
+    window.records = window.records.filter(r => r.id !== record.id);
+    window.records.push(record);
+    try { localStorage.setItem('workRecords', JSON.stringify(window.records)); } catch(_) {}
+    return;
+  }
+  try {
+    await db.collection('users')
+      .doc(window.currentUser.uid)
+      .collection('records')
+      .doc(String(record.id))
+      .set(record);
+    const idx = window.records.findIndex(r => r.id === record.id);
+    if (idx > -1) window.records[idx] = record; else window.records.push(record);
+  } catch (e) {
+    console.error('Record save failed:', e);
+    throw e;
+  }
+}
+
+window.saveSettingsToFirestore = saveSettingsToFirestore;
+
+window.saveWorkRecord = saveWorkRecord;

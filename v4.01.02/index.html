@@ -20,7 +20,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="assets/css/main.css" rel="stylesheet"/>
 <link rel="stylesheet" href="assets/nav-fix.css">
-</meta></head>
+</meta><script src="js/config/subscriptionTiers.js"></script>
+</head>
 <body class="bg-gray-100 dark:bg-gray-900">
 <div id="splash-screen">
 <img alt="Munkaidő Nyilvántartó Pro" src="assets/images/splash.jpg"/>
@@ -658,6 +659,14 @@
         };
         firebase.initializeApp(firebaseConfig);
         firebase.analytics();
+        // Initialize Firestore and expose as global `db`
+        try {
+            var db = firebase.firestore();
+            window.db = db;
+        } catch (e) {
+            console.error('Failed to init Firestore:', e);
+        }
+
     </script>
 
 <!-- SERVICE WORKER -->

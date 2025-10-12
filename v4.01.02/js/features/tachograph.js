@@ -110,7 +110,7 @@ const recordsSorted = [...src].sort((a, b) => new Date(`${a.date}T${a.startTime}
 
       
       // === MÓDOSÍTÁS ITT ===
-      const hasAccess = true; // IDEIGLENES: Mindenki VIP a teszt idejére
+      const hasAccess = (typeof window.hasFeatureAccess === 'function') ? window.hasFeatureAccess('advancedStats') : false;
       const recordsToUse = hasAccess ? records : demoRecords;
 const status = getTachographStatus(recordsToUse);
 
@@ -244,7 +244,7 @@ const status = getTachographStatus(recordsToUse);
       const i18n = translations[currentLang];
       const container = document.getElementById('tachograph-list');
       if (!container) return;
-      const hasAccess = true; // IDEIGLENES: Mindenki VIP a teszt idejére
+      const hasAccess = (typeof window.hasFeatureAccess === 'function') ? window.hasFeatureAccess('advancedStats') : false;
       const recordsToUse = hasAccess ? records : demoRecords;
       const sortedRecords = [...recordsToUse].sort((a, b) => new Date(`${a.date}T${a.startTime}`) - new Date(`${b.date}T${b.startTime}`));
       if (sortedRecords.length < 1) {
