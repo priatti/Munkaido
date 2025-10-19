@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GuriGO Admin</title>
+  <link href="assets/css/main.css" rel="stylesheet"/>
+  <style>
+    .admin-nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .user-card { transition: all 0.2s; }
+    .user-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+    
+    .badge-guest { background-color: #f3f4f6; color: #374151; }
+    .badge-free { background-color: #dbeafe; color: #1e40af; }
+    .badge-pro { background-color: #e0e7ff; color: #3730a3; }
+    .badge-max { background-color: #f3e8ff; color: #6b21a8; }
+    
+    html.dark .badge-guest { background-color: #374151; color: #e5e7eb; }
+    html.dark .badge-free { background-color: rgba(30, 64, 175, 0.3); color: #93c5fd; }
+    html.dark .badge-pro { background-color: rgba(55, 48, 163, 0.3); color: #c7d2fe; }
+    html.dark .badge-max { background-color: rgba(107, 33, 168, 0.3); color: #e9d5ff; }
+
+    .tab-button { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; }
+    .tab-button:not(.active) { background: transparent; color: #6b7280; }
+    .tab-button.active { background: #4f46e5; color: white; }
+  </style>
+
+<style id="feature-toggle-visibility-fix">
+/* Ensure feature checkboxes are visible across mobile browsers */
+label.flex.items-center.gap-2 input[type="checkbox"],
+input[type="checkbox"][id^="guest-"],
+input[type="checkbox"][id^="free-"],
+input[type="checkbox"][id^="pro-"],
+input[type="checkbox"][id^="max-"] {
+  width: 18px;
+  height: 18px;
+  appearance: auto !important;
+  -webkit-appearance: checkbox !important;
+  opacity: 1 !important;
+  position: static !important;
+  margin-right: .4rem;
+}
+[data-badge-for]{
+  display: inline-block;
+  min-width: 2.2em;
+  text-align: center;
+}
+</style>
+
+</head>
+<body class="bg-gray-100 dark:bg-gray-900">
+  <div class="admin-nav text-white p-4 shadow-lg">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold">🛡️ GuriGO Admin</h1>
+      <div class="flex items-center gap-4">
+        <span id="admin-user-email" class="text-sm opacity-90"></span>
+        <button id="signout-btn" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg hidden">Kilép</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH GATE -->
+  <div id="admin-auth-gate" class="container mx-auto p-6 hidden">
+    <div class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
+      <h2 class="text-xl font-bold mb-2">Bejelentkezés szükséges</h2>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">Lépj be admin fiókkal.</p>
+      <div class="space-y-3">
+        <button id="google-login" class="w-full py-3 border-2 rounded-lg font-semibold flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" viewBox="0 0 48 48"><path d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" fill="#FFC107"/><path d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" fill="#FF3D00"/><path d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" fill="#4CAF50"/><path d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.215,44,30.035,44,24C44,22.659,43.862,21.35,43.611,20.083z" fill="#1976D2"/></svg>
+          <span>Folytatás Google fiókkal</span>
+        </button>
+        <div class="text-center text-sm text-gray-500 dark:text-gray-400">vagy</div>
+        <form id="email-login-form" class="space-y-2">
+          <input id="admin-email" type="email" placeholder="E-mail" class="w-full px-3 py-2 border rounded-lg" required/>
+          <input id="admin-pass" type="password" placeholder="Jelszó" class="w-full px-3 py-2 border rounded-lg" required/>
+          <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold">Belépés</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNAUTHORIZED -->
+  <div id="admin-unauthorized" class="container mx-auto p-6 hidden">
+    <div class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl p-6 shadow text-center">
+      <div class="text-5xl mb-3">⛔</div>
+      <h2 class="text-xl font-bold mb-2">Nincs jogosultság</h2>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">Ez az oldal csak admin felhasználóknak érhető el.</p>
+      <button id="signout-unauth" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg font-semibold">Kijelentkezés</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="admin-dashboard" class="container mx-auto p-6 hidden">
+    <!-- Tabs -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow mb-6 p-4">
+      <div class="flex gap-2">
+        <button class="tab-button active" onclick="showAdminTab(event, 'users')">👥 Felhasználók</button>
+        <button class="tab-button" onclick="showAdminTab(event, 'plans')">📦 Csomagok</button>
+      </div>
+    </div>
+
+    <!-- USERS TAB -->
+    <div id="tab-users">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+          <div class="text-gray-500 text-sm">Összes felhasználó</div>
+          <div class="text-3xl font-bold" id="stat-total-users">0</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+          <div class="text-gray-500 text-sm">Pro előfizetők</div>
+          <div class="text-3xl font-bold text-indigo-600" id="stat-pro-users">0</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+          <div class="text-gray-500 text-sm">Max előfizetők</div>
+          <div class="text-3xl font-bold text-purple-600" id="stat-max-users">0</div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+        <div class="p-4 border-b dark:border-gray-700">
+          <h2 class="text-xl font-bold">Felhasználók</h2>
+        </div>
+        <div class="p-4 flex gap-4">
+          <input type="text" id="search-user" placeholder="Keresés email vagy név alapján..." class="flex-1 px-4 py-2 border rounded-lg">
+          <select id="filter-tier" class="px-4 py-2 border rounded-lg">
+            <option value="">Összes csomag</option>
+            <option value="guest">Vendég</option>
+            <option value="free">Ingyenes</option>
+            <option value="pro">Pro</option>
+            <option value="max">Max</option>
+          </select>
+<select id="filter-country" class="border rounded px-2 py-1 ml-2">
+  <option value="">🌍 Ország: Mind</option>
+  <option value="AT">🇦🇹 Ausztria</option>
+  <option value="DE">🇩🇪 Németország</option>
+  <option value="HU">🇭🇺 Magyarország</option>
+  <option value="SK">🇸🇰 Szlovákia</option>
+  <option value="RO">🇷🇴 Románia</option>
+  <option value="PL">🇵🇱 Lengyelország</option>
+  <option value="CZ">🇨🇿 Csehország</option>
+  <option value="SI">🇸🇮 Szlovénia</option>
+  <option value="HR">🇭🇷 Horvátország</option>
+  <option value="IT">🇮🇹 Olaszország</option>
+  <option value="FR">🇫🇷 Franciaország</option>
+  <option value="ES">🇪🇸 Spanyolország</option>
+  <option value="NL">🇳🇱 Hollandia</option>
+</select>
+
+          <button id="search-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold">🔍 Keresés</button>
+        </div>
+        <div id="users-list" class="divide-y dark:divide-gray-700"></div>
+      </div>
+    </div>
+
+    <!-- PLANS TAB -->
+    <div id="tab-plans" class="hidden">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-6">
+        <h2 class="text-xl font-bold mb-4">📦 Előfizetési csomagok konfigurációja</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Állítsd be az egyes csomagok limiteit és funkcióit. Változtatások azonnal érvénybe lépnek.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="plans-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-functions.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCwvPTcnyxH_394R0E13BnrzHZzG8-_8SI",
+      authDomain: "munkaido-3cc44.firebaseapp.com",
+      projectId: "munkaido-3cc44",
+      storageBucket: "munkaido-3cc44.firebasestorage.app",
+      messagingSenderId: "706081294435",
+      appId: "1:706081294435:web:c8ae57cbe45477de415056"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const ADMIN_EMAILS = ["info@gurigo.eu"].map(e => e.toLowerCase());
+
+    const gateEl = document.getElementById('admin-auth-gate');
+    const unauthEl = document.getElementById('admin-unauthorized');
+    const dashEl = document.getElementById('admin-dashboard');
+    const emailLabel = document.getElementById('admin-user-email');
+    const signoutBtn = document.getElementById('signout-btn');
+
+    function show(el){ el.classList.remove('hidden'); }
+    function hide(el){ el.classList.add('hidden'); }
+
+    document.getElementById('google-login').addEventListener('click', async () => {
+      try {
+        await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      } catch (e) {
+        alert('Google bejelentkezés sikertelen: ' + e.message);
+      }
+    });
+
+    document.getElementById('email-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('admin-email').value.trim();
+      const pass = document.getElementById('admin-pass').value;
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, pass);
+      } catch (err) {
+        alert('Belépés sikertelen: ' + err.message);
+      }
+    });
+
+    document.getElementById('signout-unauth').addEventListener('click', () => firebase.auth().signOut());
+    signoutBtn.addEventListener('click', () => firebase.auth().signOut());
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      hide(gateEl); hide(unauthEl); hide(dashEl);
+      emailLabel.textContent = '';
+      signoutBtn.classList.add('hidden');
+
+      if (!user) {
+        show(gateEl);
+        return;
+      }
+
+      const email = (user.email || '').toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) {
+        show(unauthEl);
+        signoutBtn.classList.remove('hidden');
+        emailLabel.textContent = email;
+        return;
+      }
+
+      emailLabel.textContent = email;
+      signoutBtn.classList.remove('hidden');
+      show(dashEl);
+      await loadStats();
+      await loadUsers();
+      await loadPlans();
+    });
+
+    async function loadUsers() {
+  const container = document.getElementById('users-list');
+  const searchTerm = (document.getElementById('search-user') ? document.getElementById('search-user').value.toLowerCase() : '');
+  const tierFilter = (document.getElementById('filter-tier') ? document.getElementById('filter-tier').value : '');
+
+  if (container) container.innerHTML = '<div class="p-8 text-center text-gray-500">Betöltés...</div>';
+
+  try {
+    const snapshot = await db.collectionGroup('profile').get();
+    const users = [];
+    snapshot.forEach(function(doc){
+      const data = doc.data() || {};
+      if (tierFilter && data.subscriptionTier !== tierFilter) return;
+      if (searchTerm) {
+        var email = (data.email || '').toLowerCase();
+        var name = (data.displayName || '').toLowerCase();
+        if (email.indexOf(searchTerm) === -1 && name.indexOf(searchTerm) === -1) return;
+      }
+      var segments = doc.ref.path.split('/'); // users/{userId}/profile/info
+      var userId = segments[1] || data.userId || doc.id;
+      users.push(Object.assign({ id: userId }, data));
+    });
+
+    if (container) {
+      container.innerHTML = users.length
+        ? users.map(function(u){ return renderUserCard(u); }).join('')
+        : '<div class="p-8 text-center text-gray-500">Nincs találat</div>';
+    }
+  } catch (e) {
+    console.error('User load error:', e);
+    if (container) container.innerHTML = '<div class="p-8 text-center text-red-500">Hiba: ' + e.message + '</div>';
+  }
+}
+
+
+    function renderUserCard(user) {
+      const tierBadges = { guest: 'badge-guest', free: 'badge-free', pro: 'badge-pro', max: 'badge-max' };
+      const tier = user.subscriptionTier || 'free';
+      const badgeClass = tierBadges[tier] || 'badge-free';
+      
+      return `
+        <div class="user-card p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
+          <div class="flex items-center justify-between">
+            <div class="flex-1">
+              <div class="font-semibold">${user.displayName || 'Névtelen'}</div>
+              <div class="text-sm text-gray-500">${user.email || 'Nincs email'}</div>
+              <div class="text-xs text-gray-400 mt-1">
+                Regisztráció: ${user.createdAt ? user.createdAt.toDate().toLocaleDateString('hu-HU') : 'Ismeretlen'}
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-gray-500 mb-1">Csomag</div>
+              <select class="px-3 py-1 ${badgeClass} rounded-full text-sm font-semibold border-none" onchange="changeTier('${user.id}', this.value, '${user.email}')">
+                <option value="guest" ${tier === 'guest' ? 'selected' : ''}>GUEST</option>
+                <option value="free" ${tier === 'free' ? 'selected' : ''}>FREE</option>
+                <option value="pro" ${tier === 'pro' ? 'selected' : ''}>PRO</option>
+                <option value="max" ${tier === 'max' ? 'selected' : ''}>MAX</option>
+              </select>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function changeTier(userId, newTier, userEmail) {
+      if (!confirm(`Biztosan módosítod ${userEmail} előfizetését ${newTier.toUpperCase()}-ra?`)) {
+        await loadUsers();
+        return;
+      }
+      try {
+        const userRef = db.collection('users').doc(userId);
+        const profileRef = userRef.collection('profile').doc('info');
+        const subscriptionRef = userRef.collection('settings').doc('subscription');
+
+        await profileRef.set({
+          subscriptionTier: newTier,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedBy: (firebase.auth().currentUser && firebase.auth().currentUser.email) || 'admin'
+        }, { merge: true });
+
+        try {
+          await subscriptionRef.set({
+            tier: newTier,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedBy: (firebase.auth().currentUser && firebase.auth().currentUser.email) || 'admin'
+          }, { merge: true });
+        } catch (e) {
+          try { console.warn('subscription write skipped:', e && e.code ? e.code : e); } catch(_) {}
+        }
+        alert(`✅ ${userEmail} előfizetése frissítve: ${newTier.toUpperCase()}`);
+        await loadUsers();
+      } catch (error) {
+        console.error('Tier update error:', error);
+        alert('❌ Hiba történt: ' + error.message);
+        await loadUsers();
+      }
+    }
+
+    async function loadStats() {
+  try {
+    const snapshot = await db.collectionGroup('profile').get();
+    var total = 0, pro = 0, max = 0;
+    snapshot.forEach(function(doc){
+      var d = doc.data() || {};
+      total++;
+      if (d.subscriptionTier === 'pro') pro++;
+      else if (d.subscriptionTier === 'max') max++;
+    });
+    var setText = function(id, val){ var el = document.getElementById(id); if (el) el.textContent = val; };
+    setText('stat-total-users', total);
+    setText('stat-pro-users', pro);
+    setText('stat-max-users', max);
+  } catch (e) {
+    console.error('Stats load error:', e);
+  }
+}
+
+
+    document.getElementById('search-btn').addEventListener('click', loadUsers);
+    document.getElementById('filter-tier').addEventListener('change', loadUsers);
+    document.getElementById('search-user').addEventListener('keypress', (e)=>{ if(e.key==='Enter') loadUsers(); });
+
+    // === CSOMAGOK KEZELÉSE ===
+    const DEFAULT_PLANS = {
+      guest: {
+        name: 'Vendég',
+        maxRecords: 10,
+        maxPallets: 5,
+        maxReports: 2,
+        tachograph: false,
+        stats: false,
+        report: true,
+        cloudSync: false
+      },
+      free: {
+        name: 'Ingyenes',
+        maxRecords: 50,
+        maxPallets: 20,
+        maxReports: 10,
+        tachograph: true,
+        stats: true,
+        report: true,
+        cloudSync: true
+      },
+      pro: {
+        name: 'Pro',
+        maxRecords: -1,
+        maxPallets: -1,
+        maxReports: -1,
+        tachograph: true,
+        stats: true,
+        report: true,
+        cloudSync: true
+      },
+      max: {
+        name: 'Max',
+        maxRecords: -1,
+        maxPallets: -1,
+        maxReports: -1,
+        tachograph: true,
+        stats: true,
+        report: true,
+        cloudSync: true
+      }
+    };
+
+    async function loadPlans() {
+      const container = document.getElementById('plans-list');
+      if (!container) return;
+      container.innerHTML = '<div class="p-6 text-center text-gray-500">Betöltés...</div>';
+      try {
+        const entries = Object.entries(DEFAULT_PLANS);
+        const docs = await Promise.all(entries.map(([tier]) => db.collection('subscriptionPlans').doc(tier).get().then(d=>({tier, doc:d})).catch(err => ({tier, err}))));
+        let html = '';
+        for (const item of docs) {
+          try {
+            const defaults = DEFAULT_PLANS[item.tier];
+            const plan = (item.doc && item.doc.exists) ? item.doc.data() : defaults;
+            html += renderPlanEditor(item.tier, plan);
+          } catch(e) {
+            console.error(`Error rendering ${item.tier}:`, e);
+          }
+        }
+        container.innerHTML = html || '<div class="p-6 text-center text-red-500">Nem sikerült betölteni.</div>';
+      } catch (e) {
+        console.error('Plans load error:', e);
+        container.innerHTML = '<div class="p-6 text-center text-red-500">Hiba történt a csomagok betöltésekor.</div>';
+      }
+    }
+
+    function renderPlanEditor(tier, plan) {
+      const colors = { guest: 'gray', free: 'blue', pro: 'indigo', max: 'purple' };
+      const color = colors[tier] || 'gray';
+      
+      return `
+        <div class="border-2 border-${color}-200 dark:border-${color}-800 rounded-lg p-4">
+          <h3 class="text-lg font-bold text-${color}-700 dark:text-${color}-300 mb-3">${plan.name}</h3>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="text-sm font-medium">Havi bejegyzések (-1 = korlátlan)</label>
+              <input type="number" value="${plan.maxRecords}" id="${tier}-maxRecords" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium">Havi raklap tranzakciók (-1 = korlátlan)</label>
+              <input type="number" value="${plan.maxPallets}" id="${tier}-maxPallets" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium">Havi riportok (-1 = korlátlan)</label>
+              <input type="number" value="${plan.maxReports}" id="${tier}-maxReports" class="w-full px-3 py-2 border rounded-lg" />
+            </div>
+            
+            <div class="space-y-2">
+              <label class="flex items-center gap-2">
+                <input type="checkbox" ${plan.tachograph ? 'checked' : ''} id="${tier}-tachograph" />
+                <span class="text-sm">Tachográf modul</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" ${plan.stats ? 'checked' : ''} id="${tier}-stats" />
+                <span class="text-sm">Statisztikák</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" ${plan.report ? 'checked' : ''} id="${tier}-report" />
+                <span class="text-sm">Riport generálás</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" ${plan.cloudSync ? 'checked' : ''} id="${tier}-cloudSync" />
+                <span class="text-sm">Felhő szinkronizáció</span>
+              </label>
+            </div>
+            
+            <button onclick="savePlan('${tier}')" class="w-full bg-${color}-600 hover:bg-${color}-700 text-white py-2 rounded-lg font-semibold">💾 Mentés</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function savePlan(tier) {
+      const plan = {
+        name: DEFAULT_PLANS[tier].name,
+        maxRecords: parseInt(document.getElementById(`${tier}-maxRecords`).value),
+        maxPallets: parseInt(document.getElementById(`${tier}-maxPallets`).value),
+        maxReports: parseInt(document.getElementById(`${tier}-maxReports`).value),
+        tachograph: document.getElementById(`${tier}-tachograph`).checked,
+        stats: document.getElementById(`${tier}-stats`).checked,
+        report: document.getElementById(`${tier}-report`).checked,
+        cloudSync: document.getElementById(`${tier}-cloudSync`).checked,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: firebase.auth().currentUser.email
+      };
+      
+      try {
+        await db.collection('subscriptionPlans').doc(tier).set(plan);
+        alert(`✅ ${plan.name} csomag sikeresen mentve!`);
+      } catch (e) {
+        console.error('Save error:', e);
+        alert('❌ Mentési hiba: ' + e.message);
+      }
+    }
+
+    function showAdminTab(e, tabName) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      e.target.classList.add('active');
+      
+      document.getElementById('tab-users').classList.add('hidden');
+      document.getElementById('tab-plans').classList.add('hidden');
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+    }
+  </script>
+
+<script>
+// ====== ADMIN TOGGLE SAVER + RESET (v1) ======
+const ADMIN_TOGGLE_EMAILS = ['info@gurigo.eu'];
+const TOGGLE_DEFAULT_PLANS = {
+  guest: { tachograph:false, stats:false, report:false, cloudSync:false },
+  free:  { tachograph:false, stats:true,  report:false, cloudSync:false },
+  pro:   { tachograph:true,  stats:true,  report:true,  cloudSync:false },
+  max:   { tachograph:true,  stats:true,  report:true,  cloudSync:true  }
+};
+function isAdminUser(){ const u=firebase.auth().currentUser; return !!(u && ADMIN_TOGGLE_EMAILS.includes((u.email||''))); }
+function planDoc(tier){ return db.collection('plans').doc(tier); }
+function setBadgeForCheckbox(cb){
+  if (!cb) return;
+  const id = cb.id;
+  let badge = document.querySelector('[data-badge-for="'+id+'"]');
+  if (!badge){
+    badge = document.createElement('span');
+    badge.setAttribute('data-badge-for', id);
+    badge.className = 'text-xs px-2 py-0.5 rounded-full ml-2';
+    const label = cb.closest('label');
+    (label||cb.parentElement||document.body).appendChild(badge);
+  }
+  const on = cb.checked;
+  badge.textContent = on ? 'BE' : 'KI';
+  badge.classList.remove('bg-gray-200','text-gray-700','bg-green-100','text-green-700');
+  badge.classList.add(on ? 'bg-green-100' : 'bg-gray-200', on ? 'text-green-700' : 'text-gray-700');
+}
+function hint(el, txt, ok){
+  let tip = el.querySelector('[data-toggle-hint]');
+  if (!tip){
+    tip = document.createElement('span');
+    tip.setAttribute('data-toggle-hint','');
+    tip.className = 'ml-2 text-xs';
+    el.appendChild(tip);
+  }
+  tip.textContent = txt;
+  if (ok) setTimeout(()=>{ if (tip.textContent===txt) tip.textContent=''; }, 1200);
+}
+async function saveToggle(tier, feature, value, labelEl, cb){
+  if (!isAdminUser()){ alert('Nincs admin jogosultság.'); cb.checked = !cb.checked; return; }
+  hint(labelEl, 'Mentés...');
+  try{
+    await planDoc(tier).set({
+      [feature]: value,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: ((firebase.auth().currentUser && firebase.auth().currentUser.email))||'admin'
+    }, { merge:true });
+    hint(labelEl, '✅ Mentve', true);
+  }catch(e){
+    console.error(e); hint(labelEl, '❌ Hiba'); cb.checked = !cb.checked; alert('Nem sikerült menteni: '+e.message);
+  }
+}
+async function resetPlan(tier, btn){
+  if (!isAdminUser()){ alert('Nincs admin jogosultság.'); return; }
+  if (!TOGGLE_DEFAULT_PLANS[tier]){ alert('Ismeretlen csomag: '+tier); return; }
+  if (!confirm('Biztosan visszaállítod a ' + tier.toUpperCase() + ' csomag alapértékeit?')) return;
+  const data = { ...TOGGLE_DEFAULT_PLANS[tier], updatedAt: firebase.firestore.FieldValue.serverTimestamp(), updatedBy: ((firebase.auth().currentUser && firebase.auth().currentUser.email))||'admin' };
+  const old = btn.textContent; btn.textContent='Mentés...'; btn.disabled=true;
+  try{
+    await planDoc(tier).set(data, { merge:true });
+    Object.entries(TOGGLE_DEFAULT_PLANS[tier]).forEach(([feature,val])=>{
+      const cb = document.getElementById(`${tier}-${feature}`);
+      if (cb){ cb.checked=!!val; setBadgeForCheckbox(cb); }
+    });
+    btn.textContent='✅ Kész'; setTimeout(()=>btn.textContent=old, 1200);
+  }catch(e){ console.error(e); alert('Reset hiba: '+e.message); btn.textContent=old; }
+  finally{ btn.disabled=false; }
+}
+function bindTogglesAndReset(){
+  const q = 'input[type="checkbox"][id^="guest-"], input[type="checkbox"][id^="free-"], input[type="checkbox"][id^="pro-"], input[type="checkbox"][id^="max-"]';
+  document.querySelectorAll(q).forEach(cb=>{
+    setBadgeForCheckbox(cb);
+    if (cb.dataset.bound) return;
+    cb.dataset.bound='1';
+    cb.addEventListener('change', ()=>{
+      const id = cb.id; const dash = id.indexOf('-'); if (dash<0) return;
+      const tier = id.slice(0,dash); const feature = id.slice(dash+1);
+      const label = cb.closest('label') || cb.parentElement || cb;
+      setBadgeForCheckbox(cb);
+      saveToggle(tier, feature, cb.checked, label, cb);
+    });
+  });
+  ['guest','free','pro','max'].forEach(tier=>{
+    const anyCb = document.querySelector(`input#${tier}-tachograph, input#${tier}-stats, input#${tier}-report, input#${tier}-cloudSync`);
+    if (!anyCb) return;
+    if (!document.querySelector(`[data-reset-btn="${tier}"]`)){
+      const btn = document.createElement('button');
+      btn.setAttribute('data-reset-btn', tier);
+      btn.className = 'mt-2 mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm';
+      btn.innerHTML = '↺ Visszaállítás ( ' + tier.toUpperCase() + ' )';
+      const block = anyCb.closest('.plan-block') || anyCb.closest('.card') || anyCb.closest('div');
+      ((block && block.parentElement) || anyCb.parentElement).insertBefore(btn, ((block && block.nextSibling)) || anyCb);
+      btn.addEventListener('click', ()=>resetPlan(tier, btn));
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', bindTogglesAndReset);
+// Throttled and filtered MutationObserver: react only to changes under #plans-list or #users-list
+(function(){
+  let scheduled = false;
+  const isRelevant = (node) => {
+    let el = node;
+    for (let i=0; i<5 && el; i++) {
+      if (el.id === 'plans-list' || el.id === 'users-list') return true;
+      el = el.parentElement || (el.parentNode && el.parentNode.host) || el.parentNode; // support shadow roots if any
+    }
+    return false;
+  };
+  const observer = new MutationObserver((mutations) => {
+    if (!mutations.some(m => isRelevant(m.target))) return;
+    if (scheduled) return;
+    scheduled = true;
+    setTimeout(() => { try { bindTogglesAndReset(); } finally { scheduled = false; } }, 50);
+  });
+  observer.observe(document.getElementById('admin-dashboard') || document.documentElement, { childList: true, subtree: true });
+})();
+// ====== Ajánlott Firestore Rules ======
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+//     match /plans/{tier} {
+//       allow read: if request.auth != null;
+//       allow write: if request.auth != null && (request.auth.token.email in ['info@gurigo.eu','princz.attila@gmail.com','admin@gurigo.eu']);
+//     }
+//   }
+// }
+</script>
+
+
+<!-- === COUNTRY FILTER + LOAD USERS WRAPPER === -->
+<script>
+(function(){
+  var COUNTRY_LIST = [
+    { code:'',  label:'Összes ország' },
+    { code:'HU', label:'🇭🇺 HU – Magyarország' },
+    { code:'AT', label:'🇦🇹 AT – Ausztria' }, { code:'DE', label:'🇩🇪 DE – Németország' },
+    { code:'NL', label:'🇳🇱 NL – Hollandia' }, { code:'PL', label:'🇵🇱 PL – Lengyelország' },
+    { code:'CZ', label:'🇨🇿 CZ – Csehország' }, { code:'SK', label:'🇸🇰 SK – Szlovákia' },
+    { code:'RO', label:'🇷🇴 RO – Románia' },  { code:'IT', label:'🇮🇹 IT – Olaszország' },
+    { code:'SI', label:'🇸🇮 SI – Szlovénia' }, { code:'HR', label:'🇭🇷 HR – Horvátország' },
+    { code:'BE', label:'🇧🇪 BE – Belgium' },  { code:'FR', label:'🇫🇷 FR – Franciaország' },
+    { code:'ES', label:'🇪🇸 ES – Spanyolország' }
+  ];
+  window.__COUNTRY_LIST_ADMIN = COUNTRY_LIST;
+
+  function ensureCountryFilterUI(){
+    var tierSel = document.getElementById('filter-tier');
+    if (!tierSel || document.getElementById('filter-country')) return;
+    var sel = document.createElement('select');
+    sel.id = 'filter-country';
+    sel.className = tierSel.className || 'border rounded px-3 py-2';
+    for (var i=0;i<COUNTRY_LIST.length;i++){
+      var o = COUNTRY_LIST[i];
+      var opt = document.createElement('option');
+      opt.value = o.code; opt.textContent = o.label;
+      sel.appendChild(opt);
+    }
+    sel.addEventListener('change', function(){ if (typeof loadUsers==='function') loadUsers(); });
+    tierSel.parentElement.insertBefore(sel, tierSel.nextSibling);
+  }
+  document.addEventListener('DOMContentLoaded', ensureCountryFilterUI);
+
+  // Wrap existing loadUsers
+  if (typeof window.loadUsers === 'function') {
+    window.__orig_loadUsers = window.loadUsers;
+    window.loadUsers = async function(){
+      var countrySel = document.getElementById('filter-country');
+      if (!countrySel) return window.__orig_loadUsers();
+      var container = document.getElementById('users-list');
+      var searchTerm = (document.getElementById('search-user') ? document.getElementById('search-user').value.toLowerCase() : '');
+      var tierFilter = (document.getElementById('filter-tier') ? document.getElementById('filter-tier').value : '');
+      var country = countrySel.value || '';
+
+      if (container) container.innerHTML = '<div class="p-8 text-center text-gray-500">Betöltés...</div>';
+      try {
+        var q = db.collectionGroup('profile');
+        if (country) q = q.where('countryCode', '==', country);
+        var snap = await q.get(), users=[];
+        snap.forEach(function(doc){
+          var d = doc.data()||{};
+          if (tierFilter && d.subscriptionTier !== tierFilter) return;
+          if (searchTerm) {
+            var email=(d.email||'').toLowerCase(), name=(d.displayName||'').toLowerCase();
+            if (email.indexOf(searchTerm)===-1 && name.indexOf(searchTerm)===-1) return;
+          }
+          var seg = doc.ref.path.split('/'); var userId = seg[1] || d.userId || doc.id;
+          users.push(Object.assign({ id:userId }, d));
+        });
+        container.innerHTML = users.length ? users.map(function(u){return renderUserCard(u);}).join('') :
+          '<div class="p-8 text-center text-gray-500">Nincs találat</div>';
+      } catch(e){
+        console.error('User load error (country wrapper):', e);
+        if (container) container.innerHTML = '<div class="p-8 text-center text-red-500">Hiba: '+e.message+'</div>';
+      }
+    };
+  }
+})();
+</script>
+
+
+<!-- === USER CARD COUNTRY FIELD (WRAPPER) === -->
+<script>
+(function(){
+  function countryOptionsHtml(selected){
+    var list = (window.__COUNTRY_LIST_ADMIN || []);
+    var out = [];
+    for (var i=0;i<list.length;i++){
+      var o=list[i]; if (!o.code) continue;
+      var sel = (o.code === (selected || 'HU')) ? 'selected' : '';
+      out.push('<option value="'+o.code+'" '+sel+'>'+o.label+'</option>');
+    }
+    return out.join('');
+  }
+  if (typeof window.renderUserCard === 'function' && !window.__renderUserCardCountryWrapped){
+    var _orig = window.renderUserCard;
+    window.renderUserCard = function(user){
+      var html = _orig(user);
+      var insertAfter = '</div>\n              <div class="text-xs text-gray-400 mt-1">';
+      if (html.indexOf(insertAfter) > -1) {
+        var country = user.countryCode || 'HU';
+        var block =
+          '<div class="mt-2 text-sm flex items-center gap-2">'+
+            '<span class="text-gray-500">Ország:</span>'+
+            '<select class="border rounded px-2 py-1" onchange="changeCountry(\''+(user.id||'')+'\', this.value)">'+
+              countryOptionsHtml(country)+
+            '</select>'+
+          '</div>\n              ';
+        html = html.replace(insertAfter, block + insertAfter);
+      }
+      return html;
+    };
+    window.__renderUserCardCountryWrapped = true;
+  }
+  if (!window.changeCountry){
+    window.changeCountry = async function(userId, newCode){
+      try{
+        await db.collection('users').doc(userId).collection('profile').doc('info').update({
+          countryCode:newCode,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedBy: (firebase.auth().currentUser && (firebase.auth().currentUser.email||firebase.auth().currentUser.uid)) || 'admin'
+        });
+      }catch(e){
+        console.error('Country update error:', e);
+        alert('Nem sikerült menteni: '+e.message);
+        if (typeof loadUsers==='function') loadUsers();
+      }
+    };
+  }
+})();
+</script>
+
+<script>
+(function(){
+  function qs(s){ return document.querySelector(s); }
+  function qsa(s){ return Array.from(document.querySelectorAll(s)); }
+  function countryFlag(code){
+    try {
+      if(!code) return '🏳️';
+      code = code.toUpperCase();
+      const A=0x1F1E6;
+      return String.fromCodePoint(...code.split('').map(c => A + (c.charCodeAt(0)-65)));
+    } catch(e){ return '🏳️'; }
+  }
+  const getDB = () => (window.db || (window.firebase && firebase.firestore && firebase.firestore()) || null);
+
+  function wireFilters(){
+    const els = ['#filter-country', '#filter-tier', '#search-user']
+      .map(sel => qs(sel)).filter(Boolean);
+    els.forEach(el => {
+      if (!el._wired){
+        el.addEventListener('change', applyFilters);
+        el.addEventListener('input', applyFilters);
+        el._wired = true;
+      }
+    });
+  }
+
+  function readFilters(){
+    const tierEl = qs('#filter-tier');
+    const countryEl = qs('#filter-country');
+    const searchEl = qs('#search-user');
+    const tierRaw = ((tierEl && tierEl.value) || '').toLowerCase();
+    const tier = (!tierRaw || ['all','összes','mind','any','*','-','--'].includes(tierRaw)) ? '' : tierRaw;
+    return {
+      tier,
+      country: (countryEl && countryEl.value) || '',
+      search: ((searchEl && searchEl.value) || '').toLowerCase().trim()
+    };
+  }
+
+  function detectUserCards(){
+    // Try common selectors
+    let cards = qsa('#users-list [data-user-id]');
+    if (cards.length) return cards;
+    cards = qsa('#users-list .user-card, #users-list .user-item, .admin-user-card');
+    return cards;
+  }
+
+  async function decorateFlags(){
+    const db = getDB();
+    if (!db) return;
+    const cards = detectUserCards();
+    if (!cards.length) return;
+
+    await Promise.all(cards.map(async (el) => {
+      if (el.dataset.countryDecorated) return;
+      let uid = el.getAttribute('data-user-id') || el.getAttribute('data-uid') || el.getAttribute('data-id') || '';
+      if (!uid) {
+        // Try to parse from link hrefs inside the card (if any)
+        const a = el.querySelector('a[href*="/users/"]');
+        if (a) {
+          const m = a.getAttribute('href').match(/users\/([^\/]+)/);
+          if (m) uid = m[1];
+        }
+      }
+      if (!uid) { el.dataset.countryDecorated = 'skip'; return; }
+
+      try {
+        const doc = await getDB().collection('users').doc(uid).collection('profile').doc('info').get();
+        const data = doc.exists ? doc.data() : null;
+        const code = (data && data.countryCode) ? String(data.countryCode).toUpperCase() : '';
+        if (code) el.setAttribute('data-country', code);
+        // inject flag
+        const hdr = el.querySelector('[data-user-name]') || el.querySelector('.user-name') || el.querySelector('h3,h4,div');
+        if (hdr && !hdr.querySelector('.country-flag')) {
+          const span = document.createElement('span');
+          span.className = 'country-flag';
+          span.style.marginRight = '6px';
+          span.textContent = countryFlag(code);
+          hdr.prepend(span);
+        }
+        el.dataset.countryDecorated = '1';
+      } catch(e){ console.warn('[admin-cg-enhance] flag decorate failed', e); }
+    }));
+  }
+
+  function applyFilters(){
+    const {tier, country, search} = readFilters();
+    const cards = detectUserCards();
+    cards.forEach(el => {
+      let ok = true;
+      const t = (el.getAttribute('data-tier') || '').toLowerCase();
+      const c = (el.getAttribute('data-country') || '').toUpperCase();
+      if (tier) ok = ok && (t === tier);
+      if (country) ok = ok && (c === country.toUpperCase());
+      if (search) ok = ok && ((el.textContent || '').toLowerCase().includes(search));
+      el.style.display = ok ? '' : 'none';
+    });
+  }
+
+  function wrapLoadUsers(){
+    if (window.__cgEnhanceWrapped) return;
+    const orig = window.loadUsers;
+    if (typeof orig !== 'function') { wireFilters(); decorateFlags().then(applyFilters); return; }
+    window.loadUsers = async function(...args){
+      const r = await orig.apply(this, args);
+      try { wireFilters(); await decorateFlags(); applyFilters(); } catch(e){}
+      return r;
+    };
+    window.__cgEnhanceWrapped = true;
+  }
+
+  function init(){
+    wireFilters();
+    wrapLoadUsers();
+    // In case list already rendered
+    setTimeout(() => { decorateFlags().then(applyFilters); }, 500);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+
+</body>
+</html>

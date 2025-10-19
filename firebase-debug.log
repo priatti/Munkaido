@@ -1,0 +1,346 @@
+[debug] [2025-10-18T22:37:11.931Z] ----------------------------------------------------------------------
+[debug] [2025-10-18T22:37:11.937Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\priat\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-10-18T22:37:11.938Z] CLI Version:   13.35.1
+[debug] [2025-10-18T22:37:11.940Z] Platform:      win32
+[debug] [2025-10-18T22:37:11.940Z] Node Version:  v18.20.8
+[debug] [2025-10-18T22:37:11.946Z] Time:          Sun Oct 19 2025 00:37:11 GMT+0200 (közép-európai nyári idő)
+[debug] [2025-10-18T22:37:11.947Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-10-18T22:37:12.841Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-18T22:37:12.844Z] > authorizing via signed-in user (priatti11@gmail.com)
+[debug] [2025-10-18T22:37:12.845Z] [iam] checking project munkaido-3cc44 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-10-18T22:37:12.851Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:12.852Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:12.856Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions [none]
+[debug] [2025-10-18T22:37:12.857Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions x-goog-quota-user=projects/munkaido-3cc44
+[debug] [2025-10-18T22:37:12.858Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-10-18T22:37:13.859Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions 200
+[debug] [2025-10-18T22:37:13.861Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-10-18T22:37:13.865Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:13.866Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:13.866Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/munkaido-3cc44/serviceAccounts/munkaido-3cc44@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-10-18T22:37:13.867Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/munkaido-3cc44/serviceAccounts/munkaido-3cc44@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-10-18T22:37:14.755Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/munkaido-3cc44/serviceAccounts/munkaido-3cc44@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-10-18T22:37:14.755Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/munkaido-3cc44/serviceAccounts/munkaido-3cc44@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'munkaido-3cc44'...
+[info] 
+[info] i  deploying functions 
+[debug] [2025-10-18T22:37:14.769Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:14.770Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:14.771Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44 [none]
+[debug] [2025-10-18T22:37:15.607Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44 200
+[debug] [2025-10-18T22:37:15.607Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44 {"projectNumber":"706081294435","projectId":"munkaido-3cc44","lifecycleState":"ACTIVE","name":"GuriGO","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-08-28T08:33:47.981174Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[debug] [2025-10-18T22:37:15.617Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:15.617Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:15.618Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:15.618Z] Checked if tokens are valid: true, expires at: 1760830230393
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[debug] [2025-10-18T22:37:15.622Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:15.622Z] Checked if tokens are valid: true, expires at: 1760830230393
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-10-18T22:37:15.630Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:15.630Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:15.632Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-10-18T22:37:15.632Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/munkaido-3cc44
+[debug] [2025-10-18T22:37:15.636Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/runtimeconfig.googleapis.com [none]
+[debug] [2025-10-18T22:37:15.636Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/runtimeconfig.googleapis.com x-goog-quota-user=projects/munkaido-3cc44
+[debug] [2025-10-18T22:37:15.639Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/cloudbuild.googleapis.com [none]
+[debug] [2025-10-18T22:37:15.640Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/cloudbuild.googleapis.com x-goog-quota-user=projects/munkaido-3cc44
+[debug] [2025-10-18T22:37:15.644Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/artifactregistry.googleapis.com [none]
+[debug] [2025-10-18T22:37:15.644Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/artifactregistry.googleapis.com x-goog-quota-user=projects/munkaido-3cc44
+[debug] [2025-10-18T22:37:16.633Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/runtimeconfig.googleapis.com 200
+[debug] [2025-10-18T22:37:16.634Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2025-10-18T22:37:16.637Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/cloudfunctions.googleapis.com 200
+[debug] [2025-10-18T22:37:16.638Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/cloudfunctions.googleapis.com [omitted]
+[info] +  functions: required API cloudfunctions.googleapis.com is enabled 
+[debug] [2025-10-18T22:37:16.672Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/cloudbuild.googleapis.com 200
+[debug] [2025-10-18T22:37:16.673Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/cloudbuild.googleapis.com [omitted]
+[info] +  functions: required API cloudbuild.googleapis.com is enabled 
+[debug] [2025-10-18T22:37:16.681Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/artifactregistry.googleapis.com 200
+[debug] [2025-10-18T22:37:16.681Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/artifactregistry.googleapis.com [omitted]
+[info] +  artifactregistry: required API artifactregistry.googleapis.com is enabled 
+[debug] [2025-10-18T22:37:16.685Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:16.685Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:16.686Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/munkaido-3cc44/adminSdkConfig [none]
+[debug] [2025-10-18T22:37:17.049Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/munkaido-3cc44/adminSdkConfig 200
+[debug] [2025-10-18T22:37:17.049Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/munkaido-3cc44/adminSdkConfig {"projectId":"munkaido-3cc44","storageBucket":"munkaido-3cc44.firebasestorage.app"}
+[debug] [2025-10-18T22:37:17.051Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:17.051Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:17.051Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/munkaido-3cc44/configs [none]
+[debug] [2025-10-18T22:37:17.400Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/munkaido-3cc44/configs 200
+[debug] [2025-10-18T22:37:17.400Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/munkaido-3cc44/configs {}
+[debug] [2025-10-18T22:37:17.406Z] Validating nodejs source
+[warn] !  functions: Runtime Node.js 18 was deprecated on 2025-04-30 and will be decommissioned on 2025-10-31, after which you will not be able to deploy without upgrading. Consider upgrading now to avoid disruption. See https://cloud.google.com/functions/docs/runtime-support for full details on the lifecycle policy 
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] !  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-10-18T22:37:21.290Z] > [functions] package.json contents: {
+  "name": "gurigo-functions",
+  "private": true,
+  "engines": {
+    "node": "18"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "firebase-admin": "^12.5.0",
+    "firebase-functions": "^5.0.1"
+  }
+}
+[debug] [2025-10-18T22:37:21.292Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2025-10-18T22:37:21.303Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-10-18T22:37:21.337Z] Found firebase-functions binary at 'C:\GuriGO\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8777
+
+[debug] [2025-10-18T22:37:25.372Z] Got response from /__/functions.yaml {"endpoints":{"onAuthUserCreate":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"eventTrigger":{"eventType":"providers/firebase.auth/eventTypes/user.create","eventFilters":{"resource":"projects/munkaido-3cc44"},"retry":false},"labels":{},"entryPoint":"onAuthUserCreate"},"backfillAuthCreationTime":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"backfillAuthCreationTime"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2025-10-18T22:37:25.461Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:25.462Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:25.464Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com [none]
+[debug] [2025-10-18T22:37:25.464Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com x-goog-quota-user=projects/munkaido-3cc44
+[debug] [2025-10-18T22:37:26.426Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com 200
+[debug] [2025-10-18T22:37:26.426Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com [omitted]
+[warn] !  extensions: missing required API firebaseextensions.googleapis.com. Enabling now... 
+[debug] [2025-10-18T22:37:26.429Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:26.430Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:26.431Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com:enable [none]
+[debug] [2025-10-18T22:37:26.431Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com:enable x-goog-quota-user=projects/munkaido-3cc44
+[debug] [2025-10-18T22:37:27.655Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com:enable 200
+[debug] [2025-10-18T22:37:27.655Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com:enable [omitted]
+[debug] [2025-10-18T22:37:37.682Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:37.683Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:37.683Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com [none]
+[debug] [2025-10-18T22:37:37.684Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com x-goog-quota-user=projects/munkaido-3cc44
+[debug] [2025-10-18T22:37:38.620Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com 200
+[debug] [2025-10-18T22:37:38.620Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/munkaido-3cc44/services/firebaseextensions.googleapis.com [omitted]
+[info] +  extensions: required API firebaseextensions.googleapis.com is enabled 
+[debug] [2025-10-18T22:37:38.635Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-18T22:37:38.637Z] > authorizing via signed-in user (priatti11@gmail.com)
+[debug] [2025-10-18T22:37:38.638Z] [iam] checking project munkaido-3cc44 for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2025-10-18T22:37:38.640Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:38.640Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:38.640Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions [none]
+[debug] [2025-10-18T22:37:38.640Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions x-goog-quota-user=projects/munkaido-3cc44
+[debug] [2025-10-18T22:37:38.640Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-10-18T22:37:39.420Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions 200
+[debug] [2025-10-18T22:37:39.420Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-10-18T22:37:39.421Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:39.422Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:39.423Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/munkaido-3cc44/instances pageSize=100&pageToken=
+[debug] [2025-10-18T22:37:41.516Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/munkaido-3cc44/instances 200
+[debug] [2025-10-18T22:37:41.516Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/munkaido-3cc44/instances {}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged C:\GuriGO\functions (30.79 KB) for uploading 
+[debug] [2025-10-18T22:37:41.664Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:41.664Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:41.665Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/-/functions [none]
+[debug] [2025-10-18T22:37:42.367Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/-/functions 200
+[debug] [2025-10-18T22:37:42.367Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/-/functions {}
+[debug] [2025-10-18T22:37:42.368Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:42.368Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:42.369Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/munkaido-3cc44/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-10-18T22:37:43.460Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/munkaido-3cc44/locations/-/functions 200
+[debug] [2025-10-18T22:37:43.461Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/munkaido-3cc44/locations/-/functions {}
+[debug] [2025-10-18T22:37:43.469Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:43.470Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:43.470Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44 [none]
+[debug] [2025-10-18T22:37:44.299Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44 200
+[debug] [2025-10-18T22:37:44.300Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/munkaido-3cc44 {"projectNumber":"706081294435","projectId":"munkaido-3cc44","lifecycleState":"ACTIVE","name":"GuriGO","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-08-28T08:33:47.981174Z"}
+[debug] [2025-10-18T22:37:44.303Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:44.304Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:44.304Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/munkaido-3cc44/billingInfo [none]
+[debug] [2025-10-18T22:37:45.100Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/munkaido-3cc44/billingInfo 200
+[debug] [2025-10-18T22:37:45.100Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/munkaido-3cc44/billingInfo {"name":"projects/munkaido-3cc44/billingInfo","projectId":"munkaido-3cc44","billingAccountName":"billingAccounts/014B66-8F7BB5-586F9B","billingEnabled":true}
+[debug] [2025-10-18T22:37:45.104Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:45.104Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:45.106Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions:generateUploadUrl [none]
+[debug] [2025-10-18T22:37:45.106Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions:generateUploadUrl {}
+[debug] [2025-10-18T22:37:55.821Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions:generateUploadUrl 200
+[debug] [2025-10-18T22:37:55.822Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/uploads-1080890127021.us-central1.cloudfunctions.appspot.com/0fbb13f3-6a5a-4d4a-a37a-05bd0440f3c5.zip?GoogleAccessId=service-706081294435@gcf-admin-robot.iam.gserviceaccount.com&Expires=1760828875&Signature=k2sO%2BdsskgPrE6WKar%2BwtuQGsKZM4GcwG2gp6MjZQUerCWd1N%2BVbKxN%2BjFmnAd6pLY4lw6ZQ8FZY3FwZ64Z3zXXeMdeX0zJXcmstupYB7ia64kOdi8l4F1ZmXU63u%2BWu5pD0k%2ByX962s4O%2F5iuLuj0RGSkIGEi0sDMLxoBevwj86n44S2xo3jEyq95l3wzGvBlwmA8G0q%2BiAyYq%2Fb8F9Kk8%2F8se63%2Fz7Iq5TXPxoioSArV22QR1DI%2BQRe%2BPrSWOH98ZvUgrXMuUgcnQvM6fUkihwEF7MySteMRSVutdtTAnYxpmqf%2Bx%2BDL%2F6NlwwjTeSIyFTH18GVGboUBv1HSIb%2Bw%3D%3D"}
+[debug] [2025-10-18T22:37:55.825Z] >>> [apiv2][query] PUT https://storage.googleapis.com/uploads-1080890127021.us-central1.cloudfunctions.appspot.com/0fbb13f3-6a5a-4d4a-a37a-05bd0440f3c5.zip GoogleAccessId=service-706081294435%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1760828875&Signature=k2sO%2BdsskgPrE6WKar%2BwtuQGsKZM4GcwG2gp6MjZQUerCWd1N%2BVbKxN%2BjFmnAd6pLY4lw6ZQ8FZY3FwZ64Z3zXXeMdeX0zJXcmstupYB7ia64kOdi8l4F1ZmXU63u%2BWu5pD0k%2ByX962s4O%2F5iuLuj0RGSkIGEi0sDMLxoBevwj86n44S2xo3jEyq95l3wzGvBlwmA8G0q%2BiAyYq%2Fb8F9Kk8%2F8se63%2Fz7Iq5TXPxoioSArV22QR1DI%2BQRe%2BPrSWOH98ZvUgrXMuUgcnQvM6fUkihwEF7MySteMRSVutdtTAnYxpmqf%2Bx%2BDL%2F6NlwwjTeSIyFTH18GVGboUBv1HSIb%2Bw%3D%3D
+[debug] [2025-10-18T22:37:55.825Z] >>> [apiv2][body] PUT https://storage.googleapis.com/uploads-1080890127021.us-central1.cloudfunctions.appspot.com/0fbb13f3-6a5a-4d4a-a37a-05bd0440f3c5.zip [stream]
+[debug] [2025-10-18T22:37:56.448Z] <<< [apiv2][status] PUT https://storage.googleapis.com/uploads-1080890127021.us-central1.cloudfunctions.appspot.com/0fbb13f3-6a5a-4d4a-a37a-05bd0440f3c5.zip 200
+[debug] [2025-10-18T22:37:56.449Z] <<< [apiv2][body] PUT https://storage.googleapis.com/uploads-1080890127021.us-central1.cloudfunctions.appspot.com/0fbb13f3-6a5a-4d4a-a37a-05bd0440f3c5.zip [omitted]
+[info] +  functions: functions folder uploaded successfully 
+[info] i  functions: creating Node.js 18 (1st Gen) function onAuthUserCreate(us-central1)... 
+[info] i  functions: creating Node.js 18 (1st Gen) function backfillAuthCreationTime(us-central1)... 
+[debug] [2025-10-18T22:37:56.467Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:56.467Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:56.468Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions [none]
+[debug] [2025-10-18T22:37:56.468Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions {"name":"projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate","sourceUploadUrl":"https://storage.googleapis.com/uploads-1080890127021.us-central1.cloudfunctions.appspot.com/0fbb13f3-6a5a-4d4a-a37a-05bd0440f3c5.zip?GoogleAccessId=service-706081294435@gcf-admin-robot.iam.gserviceaccount.com&Expires=1760828875&Signature=k2sO%2BdsskgPrE6WKar%2BwtuQGsKZM4GcwG2gp6MjZQUerCWd1N%2BVbKxN%2BjFmnAd6pLY4lw6ZQ8FZY3FwZ64Z3zXXeMdeX0zJXcmstupYB7ia64kOdi8l4F1ZmXU63u%2BWu5pD0k%2ByX962s4O%2F5iuLuj0RGSkIGEi0sDMLxoBevwj86n44S2xo3jEyq95l3wzGvBlwmA8G0q%2BiAyYq%2Fb8F9Kk8%2F8se63%2Fz7Iq5TXPxoioSArV22QR1DI%2BQRe%2BPrSWOH98ZvUgrXMuUgcnQvM6fUkihwEF7MySteMRSVutdtTAnYxpmqf%2Bx%2BDL%2F6NlwwjTeSIyFTH18GVGboUBv1HSIb%2Bw%3D%3D","entryPoint":"onAuthUserCreate","runtime":"nodejs18","dockerRegistry":"ARTIFACT_REGISTRY","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"8c1ceebb1d837025ba27ab9056547057ad9659bf"},"eventTrigger":{"eventType":"providers/firebase.auth/eventTypes/user.create","resource":"projects/munkaido-3cc44"},"minInstances":null,"maxInstances":null,"ingressSettings":null,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"munkaido-3cc44\",\"storageBucket\":\"munkaido-3cc44.firebasestorage.app\"}","GCLOUD_PROJECT":"munkaido-3cc44","EVENTARC_CLOUD_EVENT_SOURCE":"projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate"},"serviceAccountEmail":null,"availableMemoryMb":null,"timeout":null,"vpcConnector":null,"vpcConnectorEgressSettings":null,"buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}}
+[debug] [2025-10-18T22:37:58.352Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions 200
+[debug] [2025-10-18T22:37:58.353Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions {"name":"operations/cHJvamVjdHMvbXVua2FpZG8tM2NjNDQvbG9jYXRpb25zL3VzLWNlbnRyYWwxL29wZXJhdGlvbnMvb3BlcmF0aW9uLTE3NjA4MjcwNzY4NzgtNjQxNzY4MDZkYTE1ZS1kZDhkYTVkMC00NDJhMjBmOQ","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate","updateTime":"2025-10-18T22:37:58.394776731Z"}}
+[debug] [2025-10-18T22:37:58.354Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:58.355Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:58.356Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvbXVua2FpZG8tM2NjNDQvbG9jYXRpb25zL3VzLWNlbnRyYWwxL29wZXJhdGlvbnMvb3BlcmF0aW9uLTE3NjA4MjcwNzY4NzgtNjQxNzY4MDZkYTE1ZS1kZDhkYTVkMC00NDJhMjBmOQ [none]
+[debug] [2025-10-18T22:37:58.672Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvbXVua2FpZG8tM2NjNDQvbG9jYXRpb25zL3VzLWNlbnRyYWwxL29wZXJhdGlvbnMvb3BlcmF0aW9uLTE3NjA4MjcwNzY4NzgtNjQxNzY4MDZkYTE1ZS1kZDhkYTVkMC00NDJhMjBmOQ 200
+[debug] [2025-10-18T22:37:58.672Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvbXVua2FpZG8tM2NjNDQvbG9jYXRpb25zL3VzLWNlbnRyYWwxL29wZXJhdGlvbnMvb3BlcmF0aW9uLTE3NjA4MjcwNzY4NzgtNjQxNzY4MDZkYTE1ZS1kZDhkYTVkMC00NDJhMjBmOQ {"name":"operations/cHJvamVjdHMvbXVua2FpZG8tM2NjNDQvbG9jYXRpb25zL3VzLWNlbnRyYWwxL29wZXJhdGlvbnMvb3BlcmF0aW9uLTE3NjA4MjcwNzY4NzgtNjQxNzY4MDZkYTE1ZS1kZDhkYTVkMC00NDJhMjBmOQ","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate","updateTime":"2025-10-18T22:37:58.394776731Z"}}
+[debug] [2025-10-18T22:37:59.195Z] [create-default-us-central1-onAuthUserCreate] Retrying task index 0
+[debug] [2025-10-18T22:37:59.196Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:59.196Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:59.197Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvbXVua2FpZG8tM2NjNDQvbG9jYXRpb25zL3VzLWNlbnRyYWwxL29wZXJhdGlvbnMvb3BlcmF0aW9uLTE3NjA4MjcwNzY4NzgtNjQxNzY4MDZkYTE1ZS1kZDhkYTVkMC00NDJhMjBmOQ [none]
+[debug] [2025-10-18T22:37:59.492Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvbXVua2FpZG8tM2NjNDQvbG9jYXRpb25zL3VzLWNlbnRyYWwxL29wZXJhdGlvbnMvb3BlcmF0aW9uLTE3NjA4MjcwNzY4NzgtNjQxNzY4MDZkYTE1ZS1kZDhkYTVkMC00NDJhMjBmOQ 200
+[debug] [2025-10-18T22:37:59.492Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/operations/cHJvamVjdHMvbXVua2FpZG8tM2NjNDQvbG9jYXRpb25zL3VzLWNlbnRyYWwxL29wZXJhdGlvbnMvb3BlcmF0aW9uLTE3NjA4MjcwNzY4NzgtNjQxNzY4MDZkYTE1ZS1kZDhkYTVkMC00NDJhMjBmOQ {"name":"operations/cHJvamVjdHMvbXVua2FpZG8tM2NjNDQvbG9jYXRpb25zL3VzLWNlbnRyYWwxL29wZXJhdGlvbnMvb3BlcmF0aW9uLTE3NjA4MjcwNzY4NzgtNjQxNzY4MDZkYTE1ZS1kZDhkYTVkMC00NDJhMjBmOQ","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v1.OperationMetadataV1","target":"projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate","type":"CREATE_FUNCTION","request":{"@type":"type.googleapis.com/google.cloud.functions.v1.CloudFunction","name":"projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate","eventTrigger":{"eventType":"providers/firebase.auth/eventTypes/user.create","resource":"projects/munkaido-3cc44","failurePolicy":{}},"entryPoint":"onAuthUserCreate","updateTime":"1970-01-01T00:00:00Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"8c1ceebb1d837025ba27ab9056547057ad9659bf"},"sourceUploadUrl":"https://storage.googleapis.com/uploads-1080890127021.us-central1.cloudfunctions.appspot.com/0fbb13f3-6a5a-4d4a-a37a-05bd0440f3c5.zip?GoogleAccessId=service-706081294435@gcf-admin-robot.iam.gserviceaccount.com&Expires=1760828875&Signature=k2sO%2BdsskgPrE6WKar%2BwtuQGsKZM4GcwG2gp6MjZQUerCWd1N%2BVbKxN%2BjFmnAd6pLY4lw6ZQ8FZY3FwZ64Z3zXXeMdeX0zJXcmstupYB7ia64kOdi8l4F1ZmXU63u%2BWu5pD0k%2ByX962s4O%2F5iuLuj0RGSkIGEi0sDMLxoBevwj86n44S2xo3jEyq95l3wzGvBlwmA8G0q%2BiAyYq%2Fb8F9Kk8%2F8se63%2Fz7Iq5TXPxoioSArV22QR1DI%2BQRe%2BPrSWOH98ZvUgrXMuUgcnQvM6fUkihwEF7MySteMRSVutdtTAnYxpmqf%2Bx%2BDL%2F6NlwwjTeSIyFTH18GVGboUBv1HSIb%2Bw%3D%3D","environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"munkaido-3cc44\",\"storageBucket\":\"munkaido-3cc44.firebasestorage.app\"}","GCLOUD_PROJECT":"munkaido-3cc44","EVENTARC_CLOUD_EVENT_SOURCE":"projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate"},"runtime":"nodejs18","buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRegistry":"ARTIFACT_REGISTRY"},"updateTime":"2025-10-18T22:37:59.050680900Z"},"done":true,"error":{"code":9,"message":"Failed to create 1st Gen function projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate: Default service account '706081294435-compute@developer.gserviceaccount.com' doesn't exist. Please recreate this account or specify a different account. Please visit https://cloud.google.com/functions/docs/troubleshooting for in-depth troubleshooting documentation."}}
+[debug] [2025-10-18T22:37:59.492Z] Got source token undefined for region us-central1
+[debug] [2025-10-18T22:37:59.493Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:59.493Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:37:59.494Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions [none]
+[debug] [2025-10-18T22:37:59.494Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions {"name":"projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime","sourceUploadUrl":"https://storage.googleapis.com/uploads-1080890127021.us-central1.cloudfunctions.appspot.com/0fbb13f3-6a5a-4d4a-a37a-05bd0440f3c5.zip?GoogleAccessId=service-706081294435@gcf-admin-robot.iam.gserviceaccount.com&Expires=1760828875&Signature=k2sO%2BdsskgPrE6WKar%2BwtuQGsKZM4GcwG2gp6MjZQUerCWd1N%2BVbKxN%2BjFmnAd6pLY4lw6ZQ8FZY3FwZ64Z3zXXeMdeX0zJXcmstupYB7ia64kOdi8l4F1ZmXU63u%2BWu5pD0k%2ByX962s4O%2F5iuLuj0RGSkIGEi0sDMLxoBevwj86n44S2xo3jEyq95l3wzGvBlwmA8G0q%2BiAyYq%2Fb8F9Kk8%2F8se63%2Fz7Iq5TXPxoioSArV22QR1DI%2BQRe%2BPrSWOH98ZvUgrXMuUgcnQvM6fUkihwEF7MySteMRSVutdtTAnYxpmqf%2Bx%2BDL%2F6NlwwjTeSIyFTH18GVGboUBv1HSIb%2Bw%3D%3D","entryPoint":"backfillAuthCreationTime","runtime":"nodejs18","dockerRegistry":"ARTIFACT_REGISTRY","labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"8c1ceebb1d837025ba27ab9056547057ad9659bf"},"httpsTrigger":{"securityLevel":"SECURE_ALWAYS"},"minInstances":null,"maxInstances":null,"ingressSettings":null,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"munkaido-3cc44\",\"storageBucket\":\"munkaido-3cc44.firebasestorage.app\"}","GCLOUD_PROJECT":"munkaido-3cc44","EVENTARC_CLOUD_EVENT_SOURCE":"projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime"},"serviceAccountEmail":null,"availableMemoryMb":null,"timeout":null,"vpcConnector":null,"vpcConnectorEgressSettings":null,"buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}}
+[error] Failed to create 1st Gen function projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate: Default service account '706081294435-compute@developer.gserviceaccount.com' doesn't exist. Please recreate this account or specify a different account. Please visit https://cloud.google.com/functions/docs/troubleshooting for in-depth troubleshooting documentation.
+[debug] [2025-10-18T22:38:00.441Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions 400
+[debug] [2025-10-18T22:38:00.441Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions {"error":{"code":400,"message":"Failed to create 1st Gen function projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime: Default service account '706081294435-compute@developer.gserviceaccount.com' doesn't exist. Please recreate this account or specify a different account. Please visit https://cloud.google.com/functions/docs/troubleshooting for in-depth troubleshooting documentation.","status":"FAILED_PRECONDITION"}}
+[warn] !  functions: failed to create function projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime 
+[error] Failed to create function projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime
+[debug] [2025-10-18T22:38:00.475Z] Total Function Deployment time: 3984
+[debug] [2025-10-18T22:38:00.475Z] 2 Functions Deployed
+[debug] [2025-10-18T22:38:00.475Z] 2 Functions Errored
+[debug] [2025-10-18T22:38:00.476Z] 0 Function Deployments Aborted
+[debug] [2025-10-18T22:38:00.476Z] Average Function Deployment time: 3508.5
+[info] 
+[info] Functions deploy had errors with the following functions:
+	backfillAuthCreationTime(us-central1)
+	onAuthUserCreate(us-central1)
+[info] i  functions: cleaning up build files... 
+[debug] [2025-10-18T22:38:00.596Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:00.596Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:00.597Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:00.597Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:00.599Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:00.600Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:00.601Z] >>> [apiv2][query] DELETE https://artifactregistry.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/repositories/gcf-artifacts/packages/on_auth_user_create [none]
+[debug] [2025-10-18T22:38:00.605Z] >>> [apiv2][query] DELETE https://artifactregistry.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/repositories/gcf-artifacts/packages/backfill_auth_creation_time [none]
+[debug] [2025-10-18T22:38:00.607Z] >>> [apiv2][query] GET https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list [none]
+[debug] [2025-10-18T22:38:01.457Z] <<< [apiv2][status] DELETE https://artifactregistry.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/repositories/gcf-artifacts/packages/on_auth_user_create 404
+[debug] [2025-10-18T22:38:01.458Z] <<< [apiv2][body] DELETE https://artifactregistry.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/repositories/gcf-artifacts/packages/on_auth_user_create {"error":{"code":404,"message":"Package \"projects/munkaido-3cc44/locations/us-central1/repositories/gcf-artifacts/packages/on_auth_user_create\" was not found.","status":"NOT_FOUND"}}
+[debug] [2025-10-18T22:38:01.465Z] <<< [apiv2][status] DELETE https://artifactregistry.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/repositories/gcf-artifacts/packages/backfill_auth_creation_time 404
+[debug] [2025-10-18T22:38:01.465Z] <<< [apiv2][body] DELETE https://artifactregistry.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/repositories/gcf-artifacts/packages/backfill_auth_creation_time {"error":{"code":404,"message":"Package \"projects/munkaido-3cc44/locations/us-central1/repositories/gcf-artifacts/packages/backfill_auth_creation_time\" was not found.","status":"NOT_FOUND"}}
+[debug] [2025-10-18T22:38:02.011Z] <<< [apiv2][status] GET https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list 404
+[debug] [2025-10-18T22:38:02.011Z] <<< [apiv2][body] GET https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list {"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}]}
+[debug] [2025-10-18T22:38:02.012Z] Failed docker command with error  Request to https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list had HTTP Error: 404, Not Found {"name":"FirebaseError","children":[],"context":{"body":{"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}],"error":{"message":"Not Found"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list had HTTP Error: 404, Not Found","status":404}
+[debug] [2025-10-18T22:38:02.013Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:02.014Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:02.014Z] >>> [apiv2][query] GET https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list [none]
+[debug] [2025-10-18T22:38:02.369Z] <<< [apiv2][status] GET https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list 404
+[debug] [2025-10-18T22:38:02.369Z] <<< [apiv2][body] GET https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list {"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}]}
+[debug] [2025-10-18T22:38:02.369Z] Failed docker command with error  Request to https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list had HTTP Error: 404, Not Found {"name":"FirebaseError","children":[],"context":{"body":{"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}],"error":{"message":"Not Found"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list had HTTP Error: 404, Not Found","status":404}
+[debug] [2025-10-18T22:38:02.480Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:02.480Z] Checked if tokens are valid: true, expires at: 1760830230393
+[debug] [2025-10-18T22:38:02.481Z] >>> [apiv2][query] GET https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list [none]
+[debug] [2025-10-18T22:38:02.790Z] <<< [apiv2][status] GET https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list 404
+[debug] [2025-10-18T22:38:02.791Z] <<< [apiv2][body] GET https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list {"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}]}
+[debug] [2025-10-18T22:38:02.792Z] Failed docker command with error  Request to https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list had HTTP Error: 404, Not Found {"name":"FirebaseError","children":[],"context":{"body":{"errors":[{"code":"NAME_UNKNOWN","message":"Repository \"us.gcr.io\" not found"}],"error":{"message":"Not Found"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://us.gcr.io/v2/munkaido-3cc44/gcf/us-central1/tags/list had HTTP Error: 404, Not Found","status":404}
+[warn] !  functions: Unhandled error cleaning up build images. This could result in a small monthly bill if not corrected. You can attempt to delete these images by redeploying or you can delete them manually at https://console.cloud.google.com/gcr/images/munkaido-3cc44/us/gcf 
+[debug] [2025-10-18T22:38:02.794Z] Functions deploy failed.
+[debug] [2025-10-18T22:38:02.795Z] {
+  "endpoint": {
+    "id": "onAuthUserCreate",
+    "project": "munkaido-3cc44",
+    "region": "us-central1",
+    "entryPoint": "onAuthUserCreate",
+    "platform": "gcfv1",
+    "runtime": "nodejs18",
+    "eventTrigger": {
+      "eventType": "providers/firebase.auth/eventTypes/user.create",
+      "retry": false,
+      "eventFilters": {
+        "resource": "projects/munkaido-3cc44"
+      }
+    },
+    "labels": {
+      "deployment-tool": "cli-firebase"
+    },
+    "ingressSettings": null,
+    "availableMemoryMb": null,
+    "serviceAccount": null,
+    "timeoutSeconds": null,
+    "maxInstances": null,
+    "minInstances": null,
+    "vpc": null,
+    "environmentVariables": {
+      "FIREBASE_CONFIG": "{\"projectId\":\"munkaido-3cc44\",\"storageBucket\":\"munkaido-3cc44.firebasestorage.app\"}",
+      "GCLOUD_PROJECT": "munkaido-3cc44",
+      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate"
+    },
+    "codebase": "default",
+    "targetedByOnly": false,
+    "hash": "8c1ceebb1d837025ba27ab9056547057ad9659bf"
+  },
+  "op": "create",
+  "original": {
+    "name": "FirebaseError",
+    "children": [],
+    "exit": 1,
+    "message": "Failed to create 1st Gen function projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate: Default service account '706081294435-compute@developer.gserviceaccount.com' doesn't exist. Please recreate this account or specify a different account. Please visit https://cloud.google.com/functions/docs/troubleshooting for in-depth troubleshooting documentation.",
+    "original": {
+      "code": 9,
+      "message": "Failed to create 1st Gen function projects/munkaido-3cc44/locations/us-central1/functions/onAuthUserCreate: Default service account '706081294435-compute@developer.gserviceaccount.com' doesn't exist. Please recreate this account or specify a different account. Please visit https://cloud.google.com/functions/docs/troubleshooting for in-depth troubleshooting documentation."
+    },
+    "status": 9,
+    "code": 9
+  }
+}
+[debug] [2025-10-18T22:38:02.795Z] {
+  "endpoint": {
+    "id": "backfillAuthCreationTime",
+    "project": "munkaido-3cc44",
+    "region": "us-central1",
+    "entryPoint": "backfillAuthCreationTime",
+    "platform": "gcfv1",
+    "runtime": "nodejs18",
+    "callableTrigger": {},
+    "labels": {
+      "deployment-tool": "cli-firebase"
+    },
+    "ingressSettings": null,
+    "availableMemoryMb": null,
+    "serviceAccount": null,
+    "timeoutSeconds": null,
+    "maxInstances": null,
+    "minInstances": null,
+    "vpc": null,
+    "environmentVariables": {
+      "FIREBASE_CONFIG": "{\"projectId\":\"munkaido-3cc44\",\"storageBucket\":\"munkaido-3cc44.firebasestorage.app\"}",
+      "GCLOUD_PROJECT": "munkaido-3cc44",
+      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime"
+    },
+    "codebase": "default",
+    "targetedByOnly": false,
+    "hash": "8c1ceebb1d837025ba27ab9056547057ad9659bf"
+  },
+  "op": "create",
+  "original": {
+    "name": "FirebaseError",
+    "children": [],
+    "context": {
+      "function": "projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime"
+    },
+    "exit": 1,
+    "message": "Failed to create function projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime",
+    "original": {
+      "name": "FirebaseError",
+      "children": [],
+      "context": {
+        "body": {
+          "error": {
+            "code": 400,
+            "message": "Failed to create 1st Gen function projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime: Default service account '706081294435-compute@developer.gserviceaccount.com' doesn't exist. Please recreate this account or specify a different account. Please visit https://cloud.google.com/functions/docs/troubleshooting for in-depth troubleshooting documentation.",
+            "status": "FAILED_PRECONDITION"
+          }
+        },
+        "response": {
+          "statusCode": 400
+        }
+      },
+      "exit": 1,
+      "message": "Request to https://cloudfunctions.googleapis.com/v1/projects/munkaido-3cc44/locations/us-central1/functions had HTTP Error: 400, Failed to create 1st Gen function projects/munkaido-3cc44/locations/us-central1/functions/backfillAuthCreationTime: Default service account '706081294435-compute@developer.gserviceaccount.com' doesn't exist. Please recreate this account or specify a different account. Please visit https://cloud.google.com/functions/docs/troubleshooting for in-depth troubleshooting documentation.",
+      "status": 400
+    },
+    "status": 400,
+    "code": 400
+  }
+}
+[error] Error: There was an error deploying functions:
+[error] - Error Failed to create function onAuthUserCreate in region us-central1
+[error] - Error Failed to create function backfillAuthCreationTime in region us-central1

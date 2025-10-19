@@ -1,0 +1,69 @@
+// Firestore security rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Admin UID alapú ellenőrzés (stabilabb, mint email)
+    function isAdminUid() {
+      return isSignedIn() && request.auth.uid in [
+        "S1fFr9rXzXQH9ZkPkHRUul8Wg6w1"
+      ];
+    }
+
+    // Opcionális: ha később custom claimet is használsz
+    function isAdminClaim() {
+      return isSignedIn() && (
+        request.auth.token.role == 'admin' ||
+        request.auth.token.admin == true
+      );
+    }
+
+    function isAdmin() {
+      return isAdminUid() || isAdminClaim();
+    }
+
+    // Admin collectionGroup olvasás bármely 'profile' nevű kollekcióra
+    match /{path=**}/profile/{docId} {
+      allow read: if isAdmin();
+    }
+
+    // Profil dokumentumok (saját olvas/ír, admin olvas/ír)
+    match /users/{userId}/profile/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // users/{uid}/settings/* — kanonikus beállítások (pl. subscription)
+    match /users/{userId}/settings/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    }
+
+    // (ha használod) users/{uid}/subscription/*
+    match /users/{userId}/subscription/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+    }
+
+    // User saját fája – minden más alá (ha fentebb nincs szigorúbb szabály)
+    match /users/{userId}/{document=**} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Előfizetési csomagok admin konfigurációja
+    match /subscriptionPlans/{tier} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Admin toggle mentések (ha használatban van)
+    match /plans/{tier} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
