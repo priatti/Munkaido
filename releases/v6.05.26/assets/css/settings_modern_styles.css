@@ -1,0 +1,480 @@
+/* ============================================
+   MODERN SETTINGS STYLES - EXTRA VILÁGOS ZÖLD DIZÁJN
+   ============================================
+   
+   Ez a CSS fájl biztosítja az EGYSÉGES, MODERN megjelenést
+   MINDEN beállítási kártyához:
+   
+   ✅ Gyönyörű EXTRA VILÁGOS ZÖLD színsémával (#f0fdf4 → #dcfce7 gradient)
+   ✅ Minden kártya majdnem fehér, enyhe zöld árnyalattal
+   ✅ Belső elemek nagyon világos zöld (rgba(240, 253, 244, 0.6-0.8))
+   ✅ Sötét szövegek a jó olvashatóságért (#14532d, #166534)
+   ✅ Finom, lágy hover effektek
+   ✅ Tiszta, légies megjelenés
+   
+   Használat: Adj hozzá "preview-like" class-t a settings
+   containerhez az egységes megjelenéshez.
+   
+   ============================================ */
+
+/* Fix: Ensure invoice PDF buttons maintain their styling inside preview-like */
+.preview-like #invoices-content a.bg-indigo-600,
+.preview-like #invoices-content button.bg-indigo-600,
+.preview-like #invoices-section a.bg-indigo-600,
+.preview-like #invoices-section button.bg-indigo-600 {
+    background-color: #4f46e5 !important;
+    color: #ffffff !important;
+}
+
+.preview-like #invoices-content a.bg-indigo-600:hover,
+.preview-like #invoices-content button.bg-indigo-600:hover,
+.preview-like #invoices-section a.bg-indigo-600:hover,
+.preview-like #invoices-section button.bg-indigo-600:hover {
+    background-color: #4338ca !important;
+}
+
+/* Archiválási csomag vásárlása gomb – nappali (világos) téma: jól látható */
+.preview-like .archival-buy-btn {
+    background-color: #4338ca !important;
+    color: #ffffff !important;
+    border: 1px solid #3730a3 !important;
+    box-shadow: 0 1px 3px rgba(67, 56, 202, 0.35);
+}
+.preview-like .archival-buy-btn:hover {
+    background-color: #3730a3 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(67, 56, 202, 0.4);
+}
+
+/* =========================================================
+   V5.02.01 egyedi felülírások – Nyelvválasztó gombok
+   Cél: ugyanaz az érzés, mint a Speciális funkciók togglei
+   - Inaktív: fehér háttér
+   - Aktív: sötétebb zöld háttér + pipa a jobb oldalon
+   ========================================================= */
+
+.preview-like .language-buttons,
+#auth-screen .language-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.preview-like .language-btn-modern,
+#auth-screen .language-btn-modern {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 2px solid #bbf7d0; /* világos zöld keret */
+  background: #ffffff;       /* inaktív: fehér */
+  color: #166534;            /* sötétebb zöld szöveg */
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.language-btn-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.language-flag-img {
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.preview-like .language-btn-modern .language-btn-check,
+#auth-screen .language-btn-modern .language-btn-check {
+  display: none;
+  font-size: 14px;
+}
+
+.preview-like .language-btn-modern:hover,
+#auth-screen .language-btn-modern:hover {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.preview-like .language-btn-modern.active,
+#auth-screen .language-btn-modern.active {
+  background: #16a34a;      /* aktív: sötétebb zöld háttér */
+  border-color: #15803d;
+  color: #ecfdf5;            /* világos szöveg */
+}
+
+.preview-like .language-btn-modern.active .language-btn-check,
+#auth-screen .language-btn-modern.active .language-btn-check {
+  display: inline-flex;      /* pipa csak aktívnál */
+}
+
+html.dark .preview-like .language-btn-modern,
+html.dark #auth-screen .language-btn-modern {
+  background: #111827;       /* sötét háttér inaktívnál */
+  border-color: #374151;
+  color: #d1fae5;
+}
+
+html.dark .preview-like .language-btn-modern:hover,
+html.dark #auth-screen .language-btn-modern:hover {
+  background: #022c22;
+}
+
+html.dark .preview-like .language-btn-modern.active,
+html.dark #auth-screen .language-btn-modern.active {
+  background: #16a34a;
+  border-color: #22c55e;
+  color: #ecfdf5;
+}
+
+/* Speciális funkciók és Riport beállítások – csempék a nyelvgombok stílusában */
+.preview-like #special-features .toggle-grid,
+.preview-like #report-settings-section .toggle-grid,
+.preview-like #report-page-settings-section .toggle-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.preview-like #special-features .enhanced-toggle-container,
+.preview-like #report-settings-section .enhanced-toggle-container,
+.preview-like #report-page-settings-section .enhanced-toggle-container {
+  padding: 10px 14px;
+  margin-bottom: 0;
+  border-radius: 10px;
+  border: 2px solid #bbf7d0; /* világos zöld keret */
+  background: #ffffff;       /* inaktív: fehér háttér */
+  color: #166534;            /* sötétebb zöld szöveg */
+  box-shadow: none;
+  min-height: auto;          /* ne legyen magasabb a kelleténél */
+}
+
+.preview-like #special-features .enhanced-toggle-container .enhanced-toggle-text,
+.preview-like #report-settings-section .enhanced-toggle-container .enhanced-toggle-text,
+.preview-like #report-page-settings-section .enhanced-toggle-container .enhanced-toggle-text {
+  color: #166534;
+  display: flex;
+  flex-direction: row;       /* szöveg + pipa egy sorban */
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-like #special-features .enhanced-toggle-container.active,
+.preview-like #report-settings-section .enhanced-toggle-container.active,
+.preview-like #report-page-settings-section .enhanced-toggle-container.active {
+  background: #16a34a;      /* aktív: sötétebb zöld háttér */
+  border-color: #15803d;
+  color: #ecfdf5;
+}
+
+.preview-like #special-features .enhanced-toggle-container.active .enhanced-toggle-text,
+.preview-like #report-settings-section .enhanced-toggle-container.active .enhanced-toggle-text,
+.preview-like #report-page-settings-section .enhanced-toggle-container.active .enhanced-toggle-text {
+  color: #ecfdf5;
+}
+
+html.dark .preview-like #special-features .enhanced-toggle-container,
+html.dark .preview-like #report-settings-section .enhanced-toggle-container,
+html.dark .preview-like #report-page-settings-section .enhanced-toggle-container {
+  background: #111827;       /* sötét háttér inaktívnál */
+  border-color: #374151;
+  color: #d1fae5;
+}
+
+html.dark .preview-like #special-features .enhanced-toggle-container.active,
+html.dark .preview-like #report-settings-section .enhanced-toggle-container.active,
+html.dark .preview-like #report-page-settings-section .enhanced-toggle-container.active {
+  background: #16a34a;      /* aktív: zöld háttér sötét módban is */
+  border-color: #22c55e;
+  color: #ecfdf5;
+}
+
+/* Speciális funkciók és Riport beállítások pipája – egyezzen a nyelvválasztóval */
+.preview-like #special-features .enhanced-toggle-checkmark,
+.preview-like #report-settings-section .enhanced-toggle-checkmark,
+.preview-like #report-page-settings-section .enhanced-toggle-checkmark {
+  margin-left: 8px;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: inherit;      /* ugyanaz a szín, mint a szöveg */
+}
+
+.preview-like .enhanced-toggle-checkmark.hidden {
+  display: none !important;   /* hidden: tényleg rejtse el a pipát */
+}
+
+html.dark .preview-like #special-features .enhanced-toggle-checkmark,
+html.dark .preview-like #report-settings-section .enhanced-toggle-checkmark,
+html.dark .preview-like #report-page-settings-section .enhanced-toggle-checkmark {
+  background: none;
+  color: inherit;
+}
+
+/* Invoice PDF buttons */
+.preview-like #invoices-content .invoice-pdf-button,
+.preview-like #invoices-section .invoice-pdf-button {
+  --pdf-bg: linear-gradient(135deg, #4338ca, #6366f1);
+  --pdf-bg-hover: linear-gradient(135deg, #3730a3, #4f46e5);
+  --pdf-shadow: 0 10px 20px rgba(99, 102, 241, 0.25);
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background-image: var(--pdf-bg);
+  color: #f8fafc;
+  font-weight: 600;
+  text-decoration: none;
+  min-width: 120px;
+  box-shadow: var(--pdf-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.preview-like #invoices-content .invoice-pdf-button:hover,
+.preview-like #invoices-section .invoice-pdf-button:hover {
+  background-image: var(--pdf-bg-hover);
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 14px 26px rgba(79, 70, 229, 0.3);
+}
+
+.preview-like #invoices-content .invoice-pdf-button:active,
+.preview-like #invoices-section .invoice-pdf-button:active {
+  transform: translateY(0);
+}
+
+.preview-like #invoices-content .invoice-pdf-icon,
+.preview-like #invoices-section .invoice-pdf-icon {
+  background: rgba(248, 250, 252, 0.15);
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-like #invoices-content .invoice-pdf-icon svg,
+.preview-like #invoices-section .invoice-pdf-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.preview-like #invoices-content .invoice-pdf-icon--spinner svg,
+.preview-like #invoices-section .invoice-pdf-icon--spinner svg {
+  animation: invoice-pdf-spin 1s linear infinite;
+}
+
+.preview-like #invoices-content .invoice-pdf-text,
+.preview-like #invoices-section .invoice-pdf-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.preview-like #invoices-content .invoice-pdf-label,
+.preview-like #invoices-section .invoice-pdf-label {
+  font-size: 15px;
+}
+
+.preview-like #invoices-content .invoice-pdf-subtext,
+.preview-like #invoices-section .invoice-pdf-subtext {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.preview-like #invoices-content .invoice-pdf-placeholder,
+.preview-like #invoices-section .invoice-pdf-placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.preview-like #invoices-content .invoice-pdf-placeholder-dot,
+.preview-like #invoices-section .invoice-pdf-placeholder-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #cbd5f5;
+  animation: invoice-pdf-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes invoice-pdf-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes invoice-pdf-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* Globális zöld csempe stílus fontos kapcsolókhoz (split rest, multi pallet, modal) */
+.enhanced-toggle-primary {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 2px solid #bbf7d0;
+  background: #ffffff;
+  color: #166534;
+  box-shadow: none;
+}
+
+.enhanced-toggle-primary.active {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #ecfdf5;
+}
+
+html.dark .enhanced-toggle-primary {
+  background: #111827;
+  border-color: #374151;
+  color: #d1fae5;
+}
+
+html.dark .enhanced-toggle-primary.active {
+  background: #16a34a;
+  border-color: #22c55e;
+  color: #ecfdf5;
+}
+
+.enhanced-toggle-primary .enhanced-toggle-text {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;          /* cím + pipa egy sorban marad */
+  align-items: center;
+  column-gap: 8px;            /* kis rés a szöveg és a pipa között */
+}
+
+.enhanced-toggle-primary .enhanced-toggle-description {
+  margin-top: 4px;       /* leírás a cím+pipa alatt, teljes szélességben */
+}
+
+.enhanced-toggle-primary .enhanced-toggle-checkmark {
+  order: 2;             /* pipa a fő szöveg mellett, nem a leírás alatt */
+}
+
+.enhanced-toggle-primary .enhanced-toggle-checkmark {
+  margin-left: 8px;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: inherit;
+  white-space: nowrap;   /* pipa ne tördelődjön új sorba */
+}
+
+.enhanced-toggle-primary .enhanced-toggle-checkmark.hidden {
+  display: none !important;
+}
+
+/* Teljes nap – nap típusa: kompakt „speciális funkciók” jelleg (soros szöveg+pipa, kisebb kártyák) */
+#full-day-kind-section {
+  padding: 0.65rem 0.75rem !important;
+}
+#full-day-kind-section > h3 {
+  font-size: 0.8125rem;
+  margin-bottom: 0.35rem;
+  line-height: 1.2;
+}
+#full-day-kind-section .toggle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+#full-day-kind-section .enhanced-toggle-container {
+  margin-bottom: 0;
+  min-height: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transform: none;
+  box-shadow: none;
+}
+#full-day-kind-section .enhanced-toggle-container:hover {
+  transform: none;
+}
+#full-day-kind-section .enhanced-toggle-text {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  font-weight: 600;
+}
+#full-day-kind-section .enhanced-toggle-text span:first-of-type {
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
+  flex: 1;
+  min-width: 0;
+}
+#full-day-kind-section .enhanced-toggle-checkmark {
+  margin-left: 0;
+  width: auto;
+  height: auto;
+  min-width: 1rem;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 0;
+  background: none !important;
+  opacity: 1;
+  transform: none;
+  flex-shrink: 0;
+}
+#full-day-kind-section .enhanced-toggle-container:not(.active) .enhanced-toggle-checkmark {
+  opacity: 0;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  font-size: 0;
+}
+#full-day-kind-section .enhanced-toggle-container.active .enhanced-toggle-checkmark {
+  opacity: 1 !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 1rem;
+  font-size: 0.75rem !important;
+  transform: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: inherit;
+}
+html.dark #full-day-kind-section .enhanced-toggle-container.active .enhanced-toggle-checkmark {
+  color: inherit;
+}
+#full-day-kind-section #full-day-holiday-toggle {
+  margin-top: 6px;
+  padding: 6px 8px;
+}
+@media (max-width: 360px) {
+  #full-day-kind-section .toggle-grid {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}
+

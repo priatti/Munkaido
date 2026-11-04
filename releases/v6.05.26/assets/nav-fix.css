@@ -1,0 +1,3 @@
+/* GuriGO nav fix */
+.bottom-nav{pointer-events:none;}
+.bottom-nav a,.bottom-nav button,.bottom-nav .nav-item{pointer-events:auto;}

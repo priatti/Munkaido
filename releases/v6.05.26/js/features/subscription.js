@@ -21,6 +21,45 @@ function createCheckoutAttemptId() {
   return String(Date.now()) + '-' + Math.random().toString(36).slice(2, 12);
 }
 
+/**
+ * Firebase ID token for createCheckoutSession.
+ * The live function answers HTTP 401 MISSING_AUTH when Authorization is missing.
+ * A missing, empty, or failed token throws before any POST. The existing checkout
+ * catch shows the generic alert and does not expose the raw backend message.
+ */
+async function getCheckoutFirebaseIdToken() {
+  const fallbackT = function (_key, fallback) { return fallback; };
+  let user = null;
+  try {
+    if (window.currentUser && typeof window.currentUser.getIdToken === 'function') {
+      user = window.currentUser;
+    } else if (
+      typeof firebase !== 'undefined' &&
+      firebase.auth &&
+      typeof firebase.auth === 'function' &&
+      firebase.auth().currentUser &&
+      typeof firebase.auth().currentUser.getIdToken === 'function'
+    ) {
+      user = firebase.auth().currentUser;
+    }
+  } catch (_) {
+    user = null;
+  }
+  if (!user) {
+    throw createCheckoutSessionError({ error: 'MISSING_AUTH' }, fallbackT);
+  }
+  let token = '';
+  try {
+    token = await user.getIdToken();
+  } catch (_) {
+    throw createCheckoutSessionError({ error: 'INVALID_AUTH' }, fallbackT);
+  }
+  if (typeof token !== 'string' || !token.trim()) {
+    throw createCheckoutSessionError({ error: 'MISSING_AUTH' }, fallbackT);
+  }
+  return token.trim();
+}
+
 function clearStripeCheckoutClientState() {
   STRIPE_CHECKOUT_CLIENT_STORAGE_KEYS.forEach(function (key) {
     try { localStorage.removeItem(key); } catch (_) {}
@@ -3928,10 +3967,7 @@ async function handleSubscriptionAction(action, options = {}) {
     const loadingMsg = i18n.subscriptionCheckoutLoading || 'Stripe fizetési oldal betöltése…\n\nKérlek várj, ez néhány másodpercet igénybe vehet.';
     showStripeCheckoutLoading(loadingMsg);
 
-    // createCheckoutSession rejects requests without a Firebase ID token (HTTP 401 MISSING_AUTH).
-    const idToken = await (window.currentUser.getIdToken
-      ? window.currentUser.getIdToken()
-      : firebase.auth().currentUser.getIdToken());
+    const idToken = await getCheckoutFirebaseIdToken();
     const response = await fetch(CLOUD_FUNCTION_URL, {
       method: 'POST',
       headers: {
@@ -4338,10 +4374,7 @@ async function handleArchivalPurchase(archivalTier) {
     }
     clearStripeCheckoutClientState();
 
-    // Same auth requirement as Pro checkout (HTTP 401 MISSING_AUTH without a Bearer token).
-    const archivalIdToken = await (window.currentUser.getIdToken
-      ? window.currentUser.getIdToken()
-      : firebase.auth().currentUser.getIdToken());
+    const archivalIdToken = await getCheckoutFirebaseIdToken();
     const response = await fetch(CLOUD_FUNCTION_URL, {
       method: 'POST',
       headers: {
