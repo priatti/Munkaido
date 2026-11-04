@@ -1,0 +1,713 @@
+/* Lemondási ok modal – GuriGO stílus */
+
+.cancel-reason-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  background: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  transition: opacity 0.28s ease;
+}
+
+.cancel-reason-overlay.hidden {
+  display: none;
+}
+
+.cancel-reason-overlay.opacity-0 {
+  opacity: 0;
+}
+
+.cancel-reason-card {
+  position: relative;
+  width: min(100%, 440px);
+  max-width: 94vw;
+  max-height: min(90vh, calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem));
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow:
+    0 24px 48px rgba(15, 23, 42, 0.18),
+    0 4px 12px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  transform: scale(0.96);
+  transition: transform 0.28s ease;
+}
+
+.cancel-reason-card.scale-95 {
+  transform: scale(0.96);
+}
+
+.cancel-reason-overlay:not(.opacity-0) .cancel-reason-card:not(.scale-95) {
+  transform: scale(1);
+}
+
+html.dark .cancel-reason-card {
+  background: #1f2937;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.cancel-reason-header {
+  position: relative;
+  flex-shrink: 0;
+  padding: 1.35rem 1.25rem 0.85rem;
+  text-align: center;
+  overflow: hidden;
+}
+
+.cancel-reason-header::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 88px;
+  background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 38%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+html.dark .cancel-reason-header::before {
+  background: linear-gradient(180deg, rgba(244, 63, 94, 0.18) 0%, rgba(244, 63, 94, 0.06) 45%, transparent 100%);
+}
+
+.cancel-reason-header-icon {
+  position: relative;
+  z-index: 1;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #fb7185 0%, #f43f5e 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(244, 63, 94, 0.28);
+}
+
+.cancel-reason-header-icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.cancel-reason-title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #111827;
+  text-align: center;
+}
+
+html.dark .cancel-reason-title {
+  color: #f9fafb;
+}
+
+.cancel-reason-intro {
+  position: relative;
+  z-index: 1;
+  margin: 0.5rem 0 0;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #6b7280;
+  text-align: center;
+}
+
+html.dark .cancel-reason-intro {
+  color: #9ca3af;
+}
+
+.cancel-reason-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.65rem 1rem 0.5rem;
+}
+
+.cancel-reason-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cancel-reason-option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.72rem 0.8rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 13px;
+  background: #fafafa;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.dark .cancel-reason-option {
+  background: rgba(31, 41, 55, 0.65);
+  border-color: #374151;
+}
+
+.cancel-reason-option:hover {
+  border-color: #fecdd3;
+  background: #fff;
+}
+
+html.dark .cancel-reason-option:hover {
+  border-color: #fb7185;
+  background: rgba(55, 65, 81, 0.85);
+}
+
+.cancel-reason-option.is-selected {
+  border-color: #f43f5e;
+  background: #fff7f8;
+  box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.12);
+}
+
+html.dark .cancel-reason-option.is-selected {
+  border-color: #fb7185;
+  background: rgba(244, 63, 94, 0.1);
+  box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.2);
+}
+
+.cancel-reason-option input[type='radio'] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.cancel-reason-option-icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+html.dark .cancel-reason-option-icon {
+  background: #374151;
+  color: #d1d5db;
+}
+
+.cancel-reason-option.is-selected .cancel-reason-option-icon {
+  background: #ffe4e6;
+  color: #e11d48;
+}
+
+html.dark .cancel-reason-option.is-selected .cancel-reason-option-icon {
+  background: rgba(244, 63, 94, 0.22);
+  color: #fda4af;
+}
+
+.cancel-reason-option-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.cancel-reason-option-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+html.dark .cancel-reason-option-text {
+  color: #f3f4f6;
+}
+
+.cancel-reason-option-radio {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  background: #ffffff;
+  position: relative;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+html.dark .cancel-reason-option-radio {
+  background: #111827;
+  border-color: #6b7280;
+}
+
+.cancel-reason-option.is-selected .cancel-reason-option-radio {
+  border-color: #f43f5e;
+  background: #f43f5e;
+}
+
+.cancel-reason-option.is-selected .cancel-reason-option-radio::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.cancel-reason-comment {
+  display: block;
+  width: 100%;
+  min-height: 76px;
+  max-height: 120px;
+  padding: 0.72rem 0.85rem;
+  margin: 0;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 13px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+html.dark .cancel-reason-comment {
+  background: #111827;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.cancel-reason-comment::placeholder {
+  color: #9ca3af;
+}
+
+.cancel-reason-comment:focus {
+  outline: none;
+  border-color: #fda4af;
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+}
+
+.cancel-reason-warning {
+  margin: 0.7rem 0 0;
+  padding: 0 0.15rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #9ca3af;
+  text-align: center;
+}
+
+html.dark .cancel-reason-warning {
+  color: #9ca3af;
+}
+
+.cancel-reason-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem max(1rem, env(safe-area-inset-bottom));
+  border-top: 1px solid #f3f4f6;
+  background: #ffffff;
+}
+
+html.dark .cancel-reason-footer {
+  border-top-color: #374151;
+  background: #1f2937;
+}
+
+.cancel-reason-btn {
+  flex: 1 1 0;
+  min-height: 46px;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    opacity 0.18s ease,
+    transform 0.12s ease,
+    box-shadow 0.18s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.cancel-reason-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.cancel-reason-btn-back {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+html.dark .cancel-reason-btn-back {
+  background: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+.cancel-reason-btn-back:hover {
+  background: #e5e7eb !important;
+}
+
+.cancel-reason-btn-back.hidden {
+  display: none !important;
+}
+
+html.dark .cancel-reason-btn-back:hover {
+  background: #4b5563 !important;
+}
+
+.cancel-reason-btn-continue {
+  background: linear-gradient(145deg, #fb7185 0%, #f43f5e 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 16px rgba(244, 63, 94, 0.28);
+}
+
+.cancel-reason-btn-continue:hover:not(:disabled) {
+  background: linear-gradient(145deg, #f43f5e 0%, #e11d48 100%) !important;
+  box-shadow: 0 8px 20px rgba(244, 63, 94, 0.34);
+}
+
+.cancel-reason-btn-continue:disabled,
+.cancel-reason-btn-continue.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  background: linear-gradient(145deg, #fda4af 0%, #fb7185 100%) !important;
+}
+
+.cancel-reason-card.is-loading .cancel-reason-header,
+.cancel-reason-card.is-loading .cancel-reason-body,
+.cancel-reason-card.is-loading .cancel-reason-footer {
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+}
+
+.cancel-reason-processing {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  pointer-events: none;
+}
+
+.cancel-reason-processing:not(.hidden) {
+  display: flex;
+}
+
+.cancel-reason-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(244, 63, 94, 0.18);
+  border-top-color: #f43f5e;
+  border-radius: 50%;
+  animation: cancelReasonSpin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes cancelReasonSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cancel-reason-processing-text {
+  margin: 0;
+  max-width: 16rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #be123c;
+  text-align: center;
+}
+
+html.dark .cancel-reason-processing-text {
+  color: #fda4af;
+}
+
+.subscription-processing-card {
+  width: min(100%, 320px);
+  max-width: 92vw;
+  padding: 1.5rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow:
+    0 24px 48px rgba(15, 23, 42, 0.18),
+    0 4px 12px rgba(15, 23, 42, 0.08);
+  transform: scale(0.96);
+  transition: transform 0.28s ease;
+}
+
+html.dark .subscription-processing-card {
+  background: #1f2937;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.subscription-processing-card.scale-95 {
+  transform: scale(0.96);
+}
+
+#subscription-processing-overlay:not(.opacity-0) .subscription-processing-card:not(.scale-95) {
+  transform: scale(1);
+}
+
+#subscription-processing-overlay .cancel-reason-processing-text {
+  max-width: 18rem;
+}
+
+@media (max-width: 380px) {
+  .cancel-reason-card {
+    border-radius: 18px;
+  }
+
+  .subscription-processing-card {
+    border-radius: 18px;
+    padding: 1.35rem 1.15rem;
+  }
+
+  .cancel-reason-title {
+    font-size: 1.0625rem;
+  }
+
+  .cancel-reason-option {
+    padding: 0.65rem 0.7rem;
+    gap: 0.55rem;
+  }
+
+  .cancel-reason-footer {
+    flex-direction: column-reverse;
+  }
+}
+
+/* Billing cycle day card (v6.05.20) – soft secondary action */
+.billing-cycle-day-card {
+  padding: 0.75rem 0.85rem;
+  background: #f9fafb;
+  border-radius: 0.75rem;
+}
+
+html.dark .billing-cycle-day-card {
+  background: #1f2937;
+}
+
+.billing-cycle-day-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 0.85rem;
+  flex-wrap: wrap;
+}
+
+.billing-cycle-day-card__info {
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+
+.billing-cycle-day-card__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1f2937;
+}
+
+html.dark .billing-cycle-day-card__title {
+  color: #f3f4f6;
+}
+
+.billing-cycle-day-card__current {
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+html.dark .billing-cycle-day-card__current {
+  color: #9ca3af;
+}
+
+.billing-cycle-day-card__label {
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+html.dark .billing-cycle-day-card__label {
+  color: #6b7280;
+}
+
+.billing-cycle-day-card__value {
+  font-weight: 400;
+  color: #4b5563;
+}
+
+html.dark .billing-cycle-day-card__value {
+  color: #d1d5db;
+}
+
+.billing-cycle-day-card__day {
+  font-weight: 600;
+  color: #111827;
+}
+
+html.dark .billing-cycle-day-card__day {
+  color: #f9fafb;
+}
+
+.billing-cycle-day-card__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: #2563eb;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-radius: 0.55rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.billing-cycle-day-card__btn-icon {
+  flex-shrink: 0;
+  display: block;
+}
+
+.billing-cycle-day-card__btn:hover {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(59, 130, 246, 0.42);
+  color: #1d4ed8;
+}
+
+.billing-cycle-day-card__btn:active {
+  transform: translateY(1px) scale(0.98);
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.billing-cycle-day-card__btn:focus {
+  outline: none;
+}
+
+.billing-cycle-day-card__btn:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.45);
+  outline-offset: 2px;
+}
+
+.billing-cycle-day-card__btn:disabled,
+.billing-cycle-day-card__btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.16);
+  color: #60a5fa;
+}
+
+html.dark .billing-cycle-day-card__btn {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(147, 197, 253, 0.28);
+}
+
+html.dark .billing-cycle-day-card__btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(147, 197, 253, 0.42);
+  color: #bfdbfe;
+}
+
+html.dark .billing-cycle-day-card__btn:disabled,
+html.dark .billing-cycle-day-card__btn[aria-disabled="true"] {
+  color: #64748b;
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(100, 116, 139, 0.35);
+}
+
+/* Billing cycle day modal (v6.05.20) */
+.billing-cycle-day-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.billing-cycle-day-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.dark .billing-cycle-day-label {
+  color: #cbd5e1;
+}
+
+.billing-cycle-day-select {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.dark .billing-cycle-day-select {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+.billing-cycle-day-preview {
+  margin-top: 0.25rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.dark .billing-cycle-day-preview {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: #334155;
+}
